@@ -1,6 +1,9 @@
 import Parser from 'rss-parser';
 import type { EcosystemConfig, RawItem } from './types';
 
+const YELLOW = '\x1b[38;2;245;158;11m'
+const RESET  = '\x1b[0m'
+
 const rssParser = new Parser({ timeout: 10_000 });
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -159,7 +162,7 @@ export async function fetchAllSources(
   for (const url of eco.rssFeeds) {
     tasks.push(
       fetchRss(url, eco.slug).catch((err) => {
-        console.warn(`  [${eco.slug}] RSS ${url}: ${err.message}`);
+        process.stderr.write(`${YELLOW}    ⚠ RSS ${url}: ${err.message}${RESET}\n`);
         return [];
       }),
     );
@@ -168,7 +171,7 @@ export async function fetchAllSources(
   for (const sub of eco.subreddits) {
     tasks.push(
       fetchReddit(sub, eco.slug).catch((err) => {
-        console.warn(`  [${eco.slug}] Reddit r/${sub}: ${err.message}`);
+        process.stderr.write(`${YELLOW}    ⚠ Reddit r/${sub}: ${err.message}${RESET}\n`);
         return [];
       }),
     );
@@ -177,7 +180,7 @@ export async function fetchAllSources(
   for (const repo of eco.githubRepos) {
     tasks.push(
       fetchGithubReleases(repo, eco.slug).catch((err) => {
-        console.warn(`  [${eco.slug}] GitHub ${repo}: ${err.message}`);
+        process.stderr.write(`${YELLOW}    ⚠ GitHub ${repo}: ${err.message}${RESET}\n`);
         return [];
       }),
     );
@@ -186,9 +189,7 @@ export async function fetchAllSources(
   if (eco.integrationsRepo) {
     tasks.push(
       fetchIntegrations(eco.integrationsRepo, eco.slug).catch((err) => {
-        console.warn(
-          `  [${eco.slug}] Integrations ${eco.integrationsRepo}: ${err.message}`,
-        );
+        process.stderr.write(`${YELLOW}    ⚠ Integrations ${eco.integrationsRepo}: ${err.message}${RESET}\n`);
         return [];
       }),
     );
