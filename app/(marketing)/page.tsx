@@ -1,221 +1,409 @@
 import Link from 'next/link'
 
+/* ─── Data ─── */
 const ecosystems = [
-  { name: 'Claude', vendor: 'anthropic', version: '3.7' },
-  { name: 'OpenAI', vendor: 'openai', version: 'gpt-4o' },
-  { name: 'Gemini', vendor: 'google', version: '2.0' },
-  { name: 'LangChain', vendor: 'langchain', version: 'v0.3' },
-  { name: 'Ollama', vendor: 'ollama', version: 'local' },
+  {
+    name: 'Claude',
+    mark: (
+      <svg className="eco-mark" viewBox="0 0 60 60" fill="none" stroke="rgba(255,255,255,0.92)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M30 8 L52 50 L8 50 Z" />
+        <line x1="17" y1="38" x2="43" y2="38" />
+        <circle cx="30" cy="22" r="1.6" fill="rgba(255,255,255,0.92)" stroke="none" />
+      </svg>
+    ),
+  },
+  {
+    name: 'ChatGPT',
+    mark: (
+      <svg className="eco-mark" viewBox="0 0 60 60" fill="none" stroke="rgba(255,255,255,0.92)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <g transform="translate(30 30)">
+          <ellipse cx="0" cy="-13" rx="6.5" ry="13" />
+          <ellipse cx="0" cy="-13" rx="6.5" ry="13" transform="rotate(60)" />
+          <ellipse cx="0" cy="-13" rx="6.5" ry="13" transform="rotate(120)" />
+          <ellipse cx="0" cy="-13" rx="6.5" ry="13" transform="rotate(180)" />
+          <ellipse cx="0" cy="-13" rx="6.5" ry="13" transform="rotate(240)" />
+          <ellipse cx="0" cy="-13" rx="6.5" ry="13" transform="rotate(300)" />
+          <circle cx="0" cy="0" r="2" fill="rgba(255,255,255,0.92)" stroke="none" />
+        </g>
+      </svg>
+    ),
+  },
+  {
+    name: 'Gemini',
+    mark: (
+      <svg className="eco-mark" viewBox="0 0 60 60" fill="none" stroke="rgba(255,255,255,0.92)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M30 6 L34 26 L54 30 L34 34 L30 54 L26 34 L6 30 L26 26 Z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'LangChain',
+    mark: (
+      <svg className="eco-mark" viewBox="0 0 60 60" fill="none" stroke="rgba(255,255,255,0.92)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <ellipse cx="22" cy="30" rx="13" ry="10" transform="rotate(-20 22 30)" />
+        <ellipse cx="38" cy="30" rx="13" ry="10" transform="rotate(-20 38 30)" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Ollama',
+    mark: (
+      <svg className="eco-mark" viewBox="0 0 60 60" fill="none" stroke="rgba(255,255,255,0.92)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M6 48 L22 24 L34 40 Z" />
+        <path d="M26 48 L42 14 L54 48 Z" />
+      </svg>
+    ),
+  },
 ]
 
 const tools = [
   {
-    name: 'get_best_practices()',
-    returns: '→ structured[]',
-    description:
-      'AI-verified best practices per ecosystem and category. Refreshed weekly, community-validated.',
-    params: 'ecosystem: "claude"   category: "tool_use"',
+    fn: 'get_best_practices()',
+    ret: 'structured[]',
+    desc: 'Canonical patterns and anti-patterns per ecosystem, ranked by recency and adoption.',
+    params: '{ ecosystem, topic? }',
   },
   {
-    name: 'get_latest_news()',
-    returns: '→ news[]',
-    description:
-      'Deduplicated news aggregated from RSS, Reddit, and GitHub releases. Real-time on Pro tier.',
-    params: 'ecosystem: "openai"   limit: 10',
+    fn: 'get_latest_news()',
+    ret: 'news[]',
+    desc: 'Releases, deprecations, and changelog deltas — sourced and dated, never paraphrased.',
+    params: '{ since, limit? }',
   },
   {
-    name: 'get_top_integrations()',
-    returns: '→ ranked[]',
-    description:
-      'Ranked integrations and MCP servers by ecosystem and use case. Updated weekly.',
-    params: 'ecosystem: "claude"   use_case: "coding"',
+    fn: 'get_top_integrations()',
+    ret: 'ranked[]',
+    desc: 'Tools, SDKs, and providers ordered by signal — usage, mentions, sustained activity.',
+    params: '{ ecosystem, surface? }',
   },
   {
-    name: 'search_ecosystem()',
-    returns: '→ results[]',
-    description:
-      'Semantic search across all verified content. Structured output — safe for agent pipelines.',
-    params: 'query: "context limits"   ecosystem: "*"',
+    fn: 'search_ecosystem()',
+    ret: 'results[]',
+    desc: 'Free-form semantic search across the indexed corpus, scoped to one ecosystem or all five.',
+    params: '{ q, scope?, k? }',
   },
 ]
 
 const freeFeatures = [
-  { label: 'calls / month', value: '100' },
-  { label: 'ecosystems', value: '2' },
-  { label: 'news lag', value: '24 hrs' },
-  { label: 'refresh rate', value: 'weekly' },
+  '100 calls / month',
+  '2 ecosystems',
+  '24-hour news lag',
+  'Weekly index refresh',
 ]
 
 const proFeatures = [
-  { label: 'calls / month', value: '10,000' },
-  { label: 'ecosystems', value: 'all' },
-  { label: 'news lag', value: 'real-time' },
-  { label: 'refresh rate', value: 'daily' },
+  '10,000 calls / month',
+  'All ecosystems',
+  'Real-time news stream',
+  'Daily index refresh',
 ]
+
+/* ─── Check icon ─── */
+function Check({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+      style={{ width: 16, height: 16, flexShrink: 0 }}
+    >
+      <path d="M3 8.5l3.2 3L13 5" />
+    </svg>
+  )
+}
+
+/* ─── Live badge ─── */
+function LiveBadge() {
+  return (
+    <span
+      aria-label="live"
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 7,
+        fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '0.16em',
+        textTransform: 'uppercase', color: 'rgba(255,255,255,0.78)',
+        padding: '5px 11px 5px 9px',
+        background: 'rgba(255,255,255,0.06)',
+        border: '1px solid rgba(255,255,255,0.14)',
+        borderRadius: 999,
+      }}
+    >
+      <span style={{ position: 'relative', width: 7, height: 7, flexShrink: 0 }}>
+        <span
+          style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            background: '#6ddb9b',
+            boxShadow: '0 0 8px rgba(109,219,155,0.9)',
+          }}
+          aria-hidden="true"
+        />
+        <span
+          className="live-dot-ring"
+          style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            background: '#6ddb9b',
+          }}
+          aria-hidden="true"
+        />
+      </span>
+      live
+    </span>
+  )
+}
 
 export default function LandingPage() {
   return (
     <>
-      {/* ── Hero ── */}
-      <section className="py-16 px-6 border-b border-border">
-        <p className="font-mono text-[9px] uppercase tracking-widest text-[#0F6E56] mb-6">
-          ai ecostelligence — api
+      {/* ══ Hero ══ */}
+      <section style={{ padding: '88px 0 56px' }}>
+        {/* Eyebrow */}
+        <p
+          style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11.5, letterSpacing: '0.18em',
+            textTransform: 'uppercase', color: 'var(--ink-faint)',
+            margin: '0 0 28px', display: 'flex', alignItems: 'center', gap: 12,
+          }}
+        >
+          <span aria-hidden="true" style={{ width: 28, height: 1, background: 'rgba(255,255,255,0.35)', display: 'inline-block', flexShrink: 0 }} />
+          ai ecosystem intelligence — api
         </p>
 
-        <h1 className="font-serif text-5xl font-normal leading-[1.15] mb-8">
-          <span className="block">Verified knowledge,</span>
-          <span className="block ml-[72px]">
+        {/* Headline */}
+        <h1
+          className="hero-headline"
+          style={{
+            fontFamily: 'var(--font-serif), Georgia, serif',
+            fontWeight: 400, fontSize: 64, lineHeight: 1.04,
+            letterSpacing: '-0.025em', margin: 0, color: 'var(--ink)',
+          }}
+        >
+          Verified knowledge,
+          <span className="hero-l2" style={{ display: 'block', marginLeft: 100 }}>
             built for{' '}
-            <span className="italic text-[#1D9E75]">agents.</span>
+            <em
+              style={{
+                fontStyle: 'italic',
+                background: 'linear-gradient(180deg, #7fc9a3 0%, #5fb085 60%, #3d8a65 100%)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              agents.
+            </em>
           </span>
         </h1>
 
-        <hr className="border-t border-border my-6" />
+        {/* Hairline rule */}
+        <div
+          aria-hidden="true"
+          style={{
+            height: 1, maxWidth: 720,
+            background: 'linear-gradient(90deg, rgba(255,255,255,0.28), rgba(255,255,255,0.04))',
+            margin: '56px 0 28px',
+          }}
+        />
 
-        <div className="grid grid-cols-2 gap-12">
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Structured, injection-safe AI ecosystem intelligence. Best
-            practices, top integrations, and live news — grounded in verified
-            sources and safe for agents to consume directly without prompt
-            injection risk.
+        {/* Footer grid */}
+        <div
+          style={{
+            display: 'grid', gridTemplateColumns: '1fr auto',
+            gap: 40, alignItems: 'end', maxWidth: 920,
+          }}
+          className="hero-foot"
+        >
+          <p style={{ color: 'var(--ink-muted)', fontSize: 16, lineHeight: 1.6, maxWidth: 480, margin: 0 }}>
+            Strata is a single endpoint into the moving parts of the AI ecosystem —{' '}
+            <strong style={{ color: 'var(--ink)', fontWeight: 500 }}>best practices, releases, integrations, and signal</strong>
+            {' '}— verified, dated, and shaped for the agents reading it.
           </p>
-          <div className="flex flex-col items-end gap-3">
-            <Link
-              href="/signup"
-              className="bg-foreground text-background rounded-lg px-6 py-2.5 text-sm font-medium hover:opacity-80 transition-opacity"
-            >
-              start for free
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Link href="/signup" className="mkt-btn btn-emerald">
+              get api key <span className="btn-arrow">→</span>
             </Link>
-            <span className="font-mono text-[10px] text-muted-foreground">
-              curl api.strata.dev/v1 →
-            </span>
+            <a href="#methods" className="mkt-btn btn-ghost">read the docs</a>
           </div>
         </div>
       </section>
 
-      {/* ── Ecosystem strip ── */}
-      <div className="border-b border-border grid grid-cols-5">
-        {ecosystems.map((eco, i) => (
-          <div
-            key={eco.name}
-            className={`py-3 px-4${i < ecosystems.length - 1 ? ' border-r border-border' : ''}`}
+      {/* ══ Ecosystems ══ */}
+      <section style={{ padding: '64px 0' }} id="ecosystems">
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 28, gap: 24 }}>
+          <h2
+            style={{
+              fontFamily: 'var(--font-serif), Georgia, serif',
+              fontWeight: 400, fontSize: 32, letterSpacing: '-0.02em',
+              margin: 0, color: 'var(--ink)',
+            }}
           >
-            <p className="text-sm font-medium">{eco.name}</p>
-            <p className="font-mono text-[9px] text-muted-foreground">
-              {eco.vendor} · {eco.version}
-            </p>
-            <div className="flex items-center gap-1 mt-1">
-              <div className="w-[5px] h-[5px] rounded-full bg-[#1D9E75]" />
-              <span className="font-mono text-[9px] text-[#1D9E75]">live</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── API methods ── */}
-      <section className="py-10 px-6 border-b border-border">
-        <div className="flex justify-between mb-6">
-          <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-            api methods
-          </span>
-          <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-            04 tools
+            Ecosystems we track
+          </h2>
+          <span
+            style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}
+          >
+            5 indexed · refreshed continuously
           </span>
         </div>
 
-        <div>
-          {tools.map((tool, i) => (
+        <div className="eco-grid">
+          {ecosystems.map((eco) => (
             <div
-              key={tool.name}
-              className={`border-l-2 border-[#1D9E75] pl-4${i < tools.length - 1 ? ' mb-4' : ''}`}
+              key={eco.name}
+              className="glass shimmer eco-card"
+              style={{ padding: '26px 20px 20px', textAlign: 'center' }}
             >
-              <div className="flex justify-between items-baseline">
-                <span className="font-mono font-medium text-sm">
-                  {tool.name}
-                </span>
-                <span className="font-mono text-[9px] text-[#1D9E75]">
-                  {tool.returns}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {tool.description}
+              <span
+                style={{
+                  display: 'block', width: 60, height: 60, margin: '6px auto 18px',
+                  filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.35))',
+                }}
+              >
+                {eco.mark}
+              </span>
+              <p
+                style={{
+                  fontFamily: 'var(--font-serif), Georgia, serif',
+                  fontSize: 18, letterSpacing: '-0.01em', margin: '0 0 14px', color: 'var(--ink)',
+                }}
+              >
+                {eco.name}
               </p>
-              <p className="font-mono text-[10px] text-muted-foreground mt-1">
-                {tool.params}
-              </p>
+              <LiveBadge />
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── Pricing ── */}
-      <section id="pricing" className="py-10 px-6 border-b border-border">
-        <div className="flex justify-between">
-          <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-            pricing
-          </span>
-          <span className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-            7-day trial · no card required
+      {/* ══ API Methods ══ */}
+      <section style={{ padding: '64px 0' }} id="methods">
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 28, gap: 24 }}>
+          <h2
+            style={{
+              fontFamily: 'var(--font-serif), Georgia, serif',
+              fontWeight: 400, fontSize: 32, letterSpacing: '-0.02em',
+              margin: 0, color: 'var(--ink)',
+            }}
+          >
+            One endpoint. Four verbs.
+          </h2>
+          <span
+            style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}
+          >
+            api/v1 · rest + sse
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mt-6">
-          {/* Free */}
-          <div className="border border-border rounded-xl p-6">
-            <p className="font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-              free
-            </p>
-            <p className="font-serif text-4xl font-normal mt-1">$0</p>
-            <hr className="border-border my-4" />
-            <div>
-              {freeFeatures.map((f) => (
-                <div
-                  key={f.label}
-                  className="flex justify-between text-sm border-b border-border last:border-0 py-1.5"
-                >
-                  <span className="text-muted-foreground">{f.label}</span>
-                  <span className="font-mono text-xs">{f.value}</span>
-                </div>
-              ))}
-            </div>
-            <Link
-              href="/signup"
-              className="mt-4 block w-full border border-border rounded-lg py-2.5 text-sm text-center hover:bg-foreground hover:text-background transition-colors"
+        <div className="glass" style={{ padding: 14 }}>
+          {tools.map((tool, i) => (
+            <div
+              key={tool.fn}
+              className="api-row"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'minmax(280px,360px) 1fr auto',
+                gap: 28,
+                alignItems: 'center',
+                padding: '22px 24px',
+                borderLeft: '2px solid var(--emerald-bright)',
+                borderRadius: 14,
+                marginTop: i > 0 ? 4 : 0,
+                borderTop: i > 0 ? '1px solid rgba(255,255,255,0.06)' : undefined,
+              }}
             >
-              start free
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14.5, color: 'var(--ink)', whiteSpace: 'nowrap' }}>
+                {tool.fn}
+                <span style={{ color: 'var(--ink-faint)', margin: '0 6px' }}>→</span>
+                <span style={{ color: 'var(--emerald-glow)' }}>{tool.ret}</span>
+              </div>
+              <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.5 }}>
+                {tool.desc}
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--ink-faint)', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                {tool.params}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ══ Pricing ══ */}
+      <section style={{ padding: '64px 0' }} id="pricing">
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 28, gap: 24 }}>
+          <h2
+            style={{
+              fontFamily: 'var(--font-serif), Georgia, serif',
+              fontWeight: 400, fontSize: 32, letterSpacing: '-0.02em',
+              margin: 0, color: 'var(--ink)',
+            }}
+          >
+            Pricing
+          </h2>
+          <span
+            style={{ fontFamily: 'var(--font-mono)', fontSize: 11.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}
+          >
+            no card · cancel anytime
+          </span>
+        </div>
+
+        <div className="pricing-grid">
+          {/* Free card */}
+          <div className="glass shimmer price-card" style={{ padding: '36px 36px 32px', borderRadius: 26 }}>
+            <span className="plan-tag">Free</span>
+            <div style={{ fontFamily: 'var(--font-serif), Georgia, serif', fontWeight: 400, fontSize: 52, letterSpacing: '-0.02em', lineHeight: 1, margin: '24px 0 8px' }}>
+              $0
+              <em style={{ fontFamily: 'var(--font-sans)', fontSize: 15, color: 'var(--ink-muted)', letterSpacing: 0, marginLeft: 4, fontStyle: 'normal' }}>
+                / forever
+              </em>
+            </div>
+            <p style={{ fontSize: 14, color: 'var(--ink-muted)', margin: '0 0 26px' }}>
+              Everything you need to wire up a prototype agent.
+            </p>
+            <ul className="feat-list" role="list">
+              {freeFeatures.map((f) => (
+                <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: 'var(--ink)', padding: '10px 0', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                  <Check className="text-[var(--emerald-glow)]" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Link href="/signup" className="mkt-btn btn-outline">
+              start free <span className="btn-arrow">→</span>
             </Link>
           </div>
 
-          {/* Pro */}
-          <div className="border-2 border-[#1D9E75] rounded-xl p-6">
-            <p className="font-mono text-[9px] uppercase tracking-widest text-[#1D9E75]">
-              pro
-            </p>
-            <p className="font-serif text-4xl font-normal mt-1">
-              $29{' '}
-              <span className="text-sm text-muted-foreground font-sans">
-                /mo
-              </span>
-            </p>
-            <hr className="border-border my-4" />
-            <div>
-              {proFeatures.map((f) => (
-                <div
-                  key={f.label}
-                  className="flex justify-between text-sm border-b border-border last:border-0 py-1.5"
-                >
-                  <span className="text-muted-foreground">{f.label}</span>
-                  <span className="font-mono text-xs text-[#1D9E75]">
-                    {f.value}
-                  </span>
-                </div>
-              ))}
+          {/* Pro card */}
+          <div className="price-card-pro price-card" style={{ padding: '36px 36px 32px', borderRadius: 26, color: 'white' }}>
+            <span className="plan-tag" style={{ background: 'rgba(255,255,255,0.18)', borderColor: 'rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.95)' }}>
+              Pro
+            </span>
+            <div style={{ fontFamily: 'var(--font-serif), Georgia, serif', fontWeight: 400, fontSize: 52, letterSpacing: '-0.02em', lineHeight: 1, margin: '24px 0 8px', position: 'relative', zIndex: 1 }}>
+              $29
+              <em style={{ fontFamily: 'var(--font-sans)', fontSize: 15, color: 'rgba(255,255,255,0.75)', letterSpacing: 0, marginLeft: 4, fontStyle: 'normal' }}>
+                / month
+              </em>
             </div>
-            <Link
-              href="/signup"
-              className="mt-4 block w-full bg-[#1D9E75] hover:bg-[#0F6E56] text-white rounded-lg py-2.5 text-sm text-center transition-colors"
-            >
-              get pro access
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.78)', margin: '0 0 26px', position: 'relative', zIndex: 1 }}>
+              Production-grade access for teams shipping real agents.
+            </p>
+            <ul className="feat-list" role="list" style={{ position: 'relative', zIndex: 1 }}>
+              {proFeatures.map((f, i) => (
+                <li
+                  key={f}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12, fontSize: 14, color: 'white', padding: '10px 0',
+                    borderTop: `1px solid ${i === 0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.18)'}`,
+                  }}
+                >
+                  <Check className="text-[#d4f5e2]" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Link href="/signup" className="mkt-btn btn-white" style={{ position: 'relative', zIndex: 1 }}>
+              get pro access <span className="btn-arrow">→</span>
             </Link>
           </div>
         </div>
