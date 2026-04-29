@@ -9,7 +9,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <h1 className="font-serif text-2xl font-semibold mb-1 text-zinc-900 dark:text-zinc-50">Strata</h1>
+      <Link href="/" className="font-serif text-2xl font-semibold mb-1 text-zinc-900 dark:text-zinc-50 no-underline hover:opacity-80 transition-opacity" style={{ textDecoration: 'none', display: 'block' }}>Strata</Link>
       <p className="text-sm text-muted-foreground mb-6">Sign in to your account</p>
 
       <form action={action} className="flex flex-col gap-4">

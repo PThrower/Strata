@@ -1,15 +1,41 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import Link from 'next/link'
 import { signupAction } from '@/app/actions/auth'
 
+function PasswordHint({ password }: { password: string }) {
+  const checks = [
+    { label: 'At least 8 characters', ok: password.length >= 8 },
+    { label: 'Uppercase letter', ok: /[A-Z]/.test(password) },
+    { label: 'Lowercase letter', ok: /[a-z]/.test(password) },
+    { label: 'Number', ok: /\d/.test(password) },
+    { label: 'Special character', ok: /[^a-zA-Z0-9]/.test(password) },
+  ]
+
+  if (!password) return null
+
+  return (
+    <ul className="flex flex-col gap-1 mt-1">
+      {checks.map(({ label, ok }) => (
+        <li key={label} className="flex items-center gap-1.5 text-xs" style={{ color: ok ? '#1D9E75' : 'rgba(255,255,255,0.42)' }}>
+          <span>{ok ? '✓' : '○'}</span>
+          {label}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 export default function SignupPage() {
   const [state, action, pending] = useActionState(signupAction, undefined)
+  const [password, setPassword] = useState('')
+
+  const isAlreadyExists = state?.error?.includes('already exists')
 
   return (
     <>
-      <h1 className="font-serif text-2xl font-semibold mb-1 text-zinc-900 dark:text-zinc-50">Strata</h1>
+      <Link href="/" className="font-serif text-2xl font-semibold mb-1 text-zinc-900 dark:text-zinc-50 no-underline hover:opacity-80 transition-opacity" style={{ textDecoration: 'none', display: 'block' }}>Strata</Link>
       <p className="text-sm text-muted-foreground mb-6">Create your account</p>
 
       <form action={action} className="flex flex-col gap-4">
@@ -37,12 +63,26 @@ export default function SignupPage() {
             type="password"
             required
             autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="border border-border rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:border-transparent"
           />
+          <PasswordHint password={password} />
         </div>
 
         {state?.error && (
-          <p className="text-sm text-red-500">{state.error}</p>
+          <p className="text-sm text-red-500">
+            {isAlreadyExists ? (
+              <>
+                An account with this email already exists.{' '}
+                <Link href="/login" className="text-[#1D9E75] font-medium hover:underline">
+                  Sign in instead?
+                </Link>
+              </>
+            ) : (
+              state.error
+            )}
+          </p>
         )}
 
         <button
