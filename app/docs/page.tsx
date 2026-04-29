@@ -660,8 +660,25 @@ export default function DocsPage() {
         style={{ width: 220 }}
       >
         <div className="p-5 pb-4 border-b border-[--border]">
-          <Link href="/" className="font-mono text-[17px] font-semibold tracking-tight text-[--foreground] hover:opacity-80 transition-opacity">
-            Strata
+          <Link href="/" className="flex items-center gap-2 no-underline" style={{ textDecoration: 'none' }}>
+            <span style={{
+              width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+              background: 'linear-gradient(135deg, #c084fc, #818cf8, #5fb085)',
+              boxShadow: '0 0 8px rgba(192,132,252,0.6)',
+              display: 'inline-block',
+            }} />
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 600,
+              fontSize: 17,
+              letterSpacing: '-0.01em',
+              background: 'linear-gradient(135deg, #c084fc 0%, #818cf8 40%, #38bdf8 70%, #5fb085 100%)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>
+              Strata
+            </span>
           </Link>
           <Link
             href="/dashboard"

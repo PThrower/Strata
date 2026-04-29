@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createUserClient } from '@/lib/supabase-server'
 import SidebarNav from './_components/sidebar-nav'
 import { signoutAction } from '@/app/actions/auth'
@@ -15,10 +16,26 @@ export default async function DashboardLayout({
   return (
     <div className="flex h-screen overflow-hidden">
       <aside className="w-[220px] shrink-0 flex flex-col border-r border-border bg-white dark:bg-zinc-900 px-4 py-6">
-        <div className="flex items-center gap-2 px-3">
-          <span className="text-[#1D9E75] text-lg leading-none">●</span>
-          <span className="font-serif font-semibold text-lg">Strata</span>
-        </div>
+        <Link href="/" className="flex items-center gap-2 px-3 no-underline group" style={{ textDecoration: 'none' }}>
+          <span style={{
+            width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+            background: 'linear-gradient(135deg, #c084fc, #818cf8, #5fb085)',
+            boxShadow: '0 0 8px rgba(192,132,252,0.6)',
+            display: 'inline-block',
+          }} />
+          <span style={{
+            fontFamily: 'var(--font-serif)',
+            fontWeight: 600,
+            fontSize: 18,
+            background: 'linear-gradient(135deg, #c084fc 0%, #818cf8 40%, #38bdf8 70%, #5fb085 100%)',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            letterSpacing: '0.01em',
+          }}>
+            Strata
+          </span>
+        </Link>
 
         <SidebarNav isAdmin={user?.email === process.env.ADMIN_EMAIL} />
 
