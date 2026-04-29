@@ -91,7 +91,7 @@ const tools = [
 ]
 
 const freeFeatures = ['100 calls / month', '2 ecosystems', '24-hour news lag', 'Weekly index refresh']
-const proFeatures  = ['10,000 calls / month', 'All ecosystems', 'Real-time news stream', 'Daily index refresh']
+const proFeatures  = ['10,000 calls / month', 'All ecosystems', 'News updated every 12 hours', 'Daily index refresh']
 
 function Check({ className }: { className?: string }) {
   return (

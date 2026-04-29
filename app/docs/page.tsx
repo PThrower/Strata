@@ -799,7 +799,7 @@ export default function DocsPage() {
               <tr>
                 <td className="py-2.5 pr-4 font-medium" style={{ color: ACCENT }}>Pro</td>
                 <td className="py-2.5 pr-4 text-[--muted-foreground]">10,000</td>
-                <td className="py-2.5 pr-4 text-[--muted-foreground]">Real-time</td>
+                <td className="py-2.5 pr-4 text-[--muted-foreground]">Every 12 hours</td>
                 <td className="py-2.5 text-[--muted-foreground]">Daily</td>
               </tr>
             </tbody>
@@ -857,7 +857,7 @@ export default function DocsPage() {
           <EndpointH id="news" method="GET" path="/news" />
           <p className="text-[17px] text-[--muted-foreground] mb-5 leading-relaxed">
             Returns aggregated news for an ecosystem. Free tier receives items older than 24 hours.
-            Pro tier receives real-time results.
+            Pro tier receives results updated every 12 hours.
           </p>
 
           <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">Parameters</p>
@@ -1059,7 +1059,7 @@ export default function DocsPage() {
           <div className="space-y-6">
             {([
               { name: 'get_best_practices', params: 'ecosystem (required), category (optional)', desc: 'Current AI-verified best practices for a given ecosystem.' },
-              { name: 'get_latest_news', params: 'ecosystem (required), limit (optional, max 20)', desc: 'Latest news and releases. Pro gets real-time; free gets items older than 24 h.' },
+              { name: 'get_latest_news', params: 'ecosystem (required), limit (optional, max 20)', desc: 'Latest news and releases. Pro gets results updated every 12 hours; free gets items older than 24 h.' },
               { name: 'get_top_integrations', params: 'ecosystem (required), use_case (optional)', desc: 'Ranked integrations and MCP servers. Filter by use case for relevance-sorted results.' },
               { name: 'search_ecosystem', params: 'query (required), ecosystem (optional)', desc: 'Full-text search across all verified content. Omit ecosystem to search globally.' },
             ] as const).map(({ name, params, desc }) => (

@@ -20,7 +20,7 @@ function formatBillingDate(timestamp: number): string {
 
 const PRO_FEATURES = [
   '10,000 API calls / month',
-  'Real-time news (no 24 h delay)',
+  'News updated every 12 hours',
   'All ecosystems unlocked',
   'Daily content refreshes',
   'Priority support',
