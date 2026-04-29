@@ -49,9 +49,13 @@ After auth, routes call `checkEcosystemAccess()` to gate pro-only ecosystems, th
 
 ### MCP server (`app/mcp/route.ts`)
 
-HTTP MCP endpoint using `WebStandardStreamableHTTPServerTransport`. `GET /mcp` returns a JSON capability manifest. `POST /mcp` handles tool calls. Auth flows through `lib/mcp-auth.ts` (accepts both `X-API-Key` and `Authorization: Bearer` headers). A stdio transport variant lives at `scripts/mcp-stdio.ts` (`npm run mcp`).
+HTTP MCP endpoint using `WebStandardStreamableHTTPServerTransport`. `GET /mcp` returns a JSON capability manifest (tools, prompts, resources). `POST /mcp` handles tool calls. Auth flows through `lib/mcp-auth.ts` (accepts both `X-API-Key` and `Authorization: Bearer` headers). A stdio transport variant lives at `scripts/mcp-stdio.ts` (`npm run mcp`).
 
-The four tools are defined in `lib/mcp-tools.ts` and registered identically in both the HTTP route and the stdio script: `get_best_practices`, `get_latest_news`, `get_top_integrations`, `search_ecosystem`.
+`lib/mcp-tools.ts` exports three things, all registered identically in both the HTTP route and the stdio script:
+
+- **`TOOL_DEFINITIONS` / `handleToolCall`** — four tools: `get_best_practices`, `get_latest_news`, `get_top_integrations`, `search_ecosystem`.
+- **`RESOURCES`** — one static resource: `strata://formatting-guide` (plain-text briefing format guide for agents).
+- **`PROMPTS`** — three prompt templates: `ecosystem_briefing`, `cross_ecosystem_compare`, `agent_stack_review`. Each prompt's `arguments` array drives both the MCP argsSchema (Zod) and the `{placeholder}` substitution in its `template` string.
 
 ### Database schema (Supabase Postgres)
 
