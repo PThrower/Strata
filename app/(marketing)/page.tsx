@@ -103,63 +103,205 @@ function Check({ className }: { className?: string }) {
   )
 }
 
+function AggregationGraphic() {
+  const sources = [
+    { y: 52,  label: 'anthropic.com' },
+    { y: 108, label: 'github.com' },
+    { y: 180, label: 'openai.com' },
+    { y: 252, label: 'reddit.com' },
+    { y: 308, label: 'rss feeds' },
+  ]
+
+  const inPaths = [
+    'M 18,52  C 112,52  112,180 205,180',
+    'M 18,108 C 112,108 112,180 205,180',
+    'M 18,180 L 205,180',
+    'M 18,252 C 112,252 112,180 205,180',
+    'M 18,308 C 112,308 112,180 205,180',
+  ]
+  const outPaths = [
+    'M 205,173 C 300,130 300,118 396,118',
+    'M 205,187 C 300,242 300,242 396,242',
+  ]
+
+  const inDots: { p: number; dur: string; begin: string }[] = [
+    { p: 0, dur: '3.2s', begin: '0s'   }, { p: 0, dur: '3.2s', begin: '1.6s' },
+    { p: 1, dur: '2.8s', begin: '0.5s' }, { p: 1, dur: '2.8s', begin: '1.9s' },
+    { p: 2, dur: '2.2s', begin: '0.9s' }, { p: 2, dur: '2.2s', begin: '2.1s' },
+    { p: 3, dur: '3.0s', begin: '0.3s' }, { p: 3, dur: '3.0s', begin: '1.8s' },
+    { p: 4, dur: '3.5s', begin: '0.7s' }, { p: 4, dur: '3.5s', begin: '2.3s' },
+  ]
+  const outDots: { p: number; dur: string; begin: string }[] = [
+    { p: 0, dur: '2.0s', begin: '0.2s' }, { p: 0, dur: '2.0s', begin: '1.2s' },
+    { p: 1, dur: '2.3s', begin: '0.8s' }, { p: 1, dur: '2.3s', begin: '1.9s' },
+  ]
+
+  return (
+    <svg viewBox="0 0 420 360" width="420" height="360"
+      style={{ maxWidth: '100%', overflow: 'visible' }} aria-hidden="true">
+
+      {/* ── Input paths ── */}
+      {inPaths.map((d, i) => (
+        <path key={i} id={`hg-in-${i}`} d={d}
+          fill="none" stroke="rgba(95,176,133,0.18)" strokeWidth="1" />
+      ))}
+
+      {/* ── Output paths ── */}
+      {outPaths.map((d, i) => (
+        <path key={i} id={`hg-out-${i}`} d={d}
+          fill="none" stroke="rgba(95,176,133,0.18)" strokeWidth="1" />
+      ))}
+
+      {/* ── Column headers ── */}
+      <text x="18" y="26" fontFamily="var(--font-mono)" fontSize="8"
+        fill="rgba(255,255,255,0.22)" letterSpacing="0.18em">SOURCES</text>
+      <text x="396" y="26" textAnchor="end" fontFamily="var(--font-mono)" fontSize="8"
+        fill="rgba(255,255,255,0.22)" letterSpacing="0.18em">OUTPUT</text>
+
+      {/* ── Source nodes + labels ── */}
+      {sources.map(({ y, label }) => (
+        <g key={y}>
+          <circle cx="18" cy={y} r="4" fill="rgba(95,176,133,0.14)" stroke="rgba(95,176,133,0.50)" strokeWidth="1" />
+          <circle cx="18" cy={y} r="1.8" fill="rgba(95,176,133,0.9)" />
+          <text x="29" y={y + 3.5} fontFamily="var(--font-mono)" fontSize="8.5"
+            fill="rgba(255,255,255,0.28)" letterSpacing="0.04em">{label}</text>
+        </g>
+      ))}
+
+      {/* ── Center ripple ── */}
+      <circle cx="205" cy="180" r="36" fill="none" stroke="rgba(95,176,133,0.15)" strokeWidth="1">
+        <animate attributeName="r" values="36;58;36" dur="2.8s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0.4;0;0.4" dur="2.8s" repeatCount="indefinite" />
+      </circle>
+      <circle cx="205" cy="180" r="36" fill="none" stroke="rgba(95,176,133,0.08)" strokeWidth="1">
+        <animate attributeName="r" values="36;52;36" dur="2.8s" begin="0.6s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0.3;0;0.3" dur="2.8s" begin="0.6s" repeatCount="indefinite" />
+      </circle>
+
+      {/* ── Center node ── */}
+      <circle cx="205" cy="180" r="35" fill="rgba(95,176,133,0.09)" stroke="rgba(95,176,133,0.48)" strokeWidth="1.5" />
+      <circle cx="205" cy="180" r="27" fill="rgba(95,176,133,0.05)" stroke="rgba(95,176,133,0.18)" strokeWidth="1" />
+      {/* Slow rotation ring */}
+      <circle cx="205" cy="180" r="30" fill="none" stroke="rgba(95,176,133,0.22)" strokeWidth="1"
+        strokeDasharray="8 6">
+        <animateTransform attributeName="transform" type="rotate"
+          from="0 205 180" to="360 205 180" dur="12s" repeatCount="indefinite" />
+      </circle>
+      <text x="205" y="177" textAnchor="middle" fontFamily="var(--font-mono)"
+        fontSize="9" fill="rgba(255,255,255,0.88)" letterSpacing="0.18em">STRATA</text>
+      <text x="205" y="191" textAnchor="middle" fontFamily="var(--font-mono)"
+        fontSize="6.5" fill="rgba(95,176,133,0.72)" letterSpacing="0.10em">verified</text>
+
+      {/* ── Output nodes ── */}
+      <circle cx="396" cy="118" r="5" fill="rgba(95,176,133,0.16)" stroke="rgba(95,176,133,0.62)" strokeWidth="1.2" />
+      <circle cx="396" cy="242" r="5" fill="rgba(95,176,133,0.16)" stroke="rgba(95,176,133,0.62)" strokeWidth="1.2" />
+
+      {/* ── Output labels ── */}
+      <text x="385" y="114" textAnchor="end" fontFamily="var(--font-mono)" fontSize="9"
+        fill="rgba(255,255,255,0.40)" letterSpacing="0.05em">/api/v1</text>
+      <text x="385" y="238" textAnchor="end" fontFamily="var(--font-mono)" fontSize="9"
+        fill="rgba(255,255,255,0.40)" letterSpacing="0.05em">/mcp</text>
+
+      {/* ── Blinking cursors ── */}
+      <rect x="404" y="109" width="5" height="9" rx="1" fill="rgba(95,176,133,0.75)">
+        <animate attributeName="opacity" values="1;0;1" dur="1.4s" repeatCount="indefinite" />
+      </rect>
+      <rect x="404" y="233" width="5" height="9" rx="1" fill="rgba(95,176,133,0.75)">
+        <animate attributeName="opacity" values="1;0;1" dur="1.1s" begin="0.55s" repeatCount="indefinite" />
+      </rect>
+
+      {/* ── Traveling dots — input ── */}
+      {inDots.map((dot, i) => (
+        <circle key={i} r="2.2" fill="#5fb085">
+          <animateMotion dur={dot.dur} begin={dot.begin} repeatCount="indefinite">
+            <mpath href={`#hg-in-${dot.p}`} />
+          </animateMotion>
+          <animate attributeName="opacity" values="0;1;1;0"
+            keyTimes="0;0.08;0.88;1" dur={dot.dur} begin={dot.begin} repeatCount="indefinite" />
+        </circle>
+      ))}
+
+      {/* ── Traveling dots — output ── */}
+      {outDots.map((dot, i) => (
+        <circle key={`o${i}`} r="2.2" fill="#9be0bd">
+          <animateMotion dur={dot.dur} begin={dot.begin} repeatCount="indefinite">
+            <mpath href={`#hg-out-${dot.p}`} />
+          </animateMotion>
+          <animate attributeName="opacity" values="0;1;1;0"
+            keyTimes="0;0.08;0.88;1" dur={dot.dur} begin={dot.begin} repeatCount="indefinite" />
+        </circle>
+      ))}
+    </svg>
+  )
+}
+
 export default function LandingPage() {
   return (
     <>
       {/* ══ Hero ══ */}
       <section style={{ padding: '96px 0 64px' }}>
-        {/* Eyebrow */}
-        <p style={{
-          fontFamily: 'var(--font-mono)', fontSize: 11.5, fontWeight: 500,
-          letterSpacing: '0.20em', textTransform: 'uppercase', color: 'var(--ink-faint)',
-          margin: '0 0 32px', display: 'flex', alignItems: 'center', gap: 14,
-        }}>
-          <span aria-hidden="true" style={{ width: 32, height: 1, background: 'rgba(255,255,255,0.35)', display: 'inline-block', flexShrink: 0 }} />
-          ai ecosystem intelligence — api & mcp
-        </p>
-
-        {/* Headline */}
-        <h1
-          className="hero-headline"
-          style={{
-            fontFamily: 'var(--font-serif)',
-            fontWeight: 500, fontSize: 72, lineHeight: 1.02,
-            letterSpacing: '-0.025em', margin: 0, color: 'var(--ink)',
-          }}
-        >
-          Verified knowledge,
-          <span className="hero-l2" style={{ display: 'block', marginLeft: 100 }}>
-            built for{' '}
-            <em style={{
-              fontStyle: 'italic',
-              background: 'linear-gradient(180deg, #b6f0d3 0%, #5fb085 55%, #3d8a65 100%)',
-              WebkitBackgroundClip: 'text',
-              backgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 0 24px rgba(95,176,133,0.35))',
+        <div className="hero-grid">
+          {/* ── Left: copy ── */}
+          <div>
+            {/* Eyebrow */}
+            <p style={{
+              fontFamily: 'var(--font-mono)', fontSize: 11.5, fontWeight: 500,
+              letterSpacing: '0.20em', textTransform: 'uppercase', color: 'var(--ink-faint)',
+              margin: '0 0 32px', display: 'flex', alignItems: 'center', gap: 14,
             }}>
-              agents.
-            </em>
-          </span>
-        </h1>
+              <span aria-hidden="true" style={{ width: 32, height: 1, background: 'rgba(255,255,255,0.35)', display: 'inline-block', flexShrink: 0 }} />
+              ai ecosystem intelligence — api & mcp
+            </p>
 
-        {/* Hairline rule */}
-        <div aria-hidden="true" style={{
-          height: 1, maxWidth: 720,
-          background: 'linear-gradient(90deg, rgba(255,255,255,0.30), rgba(255,255,255,0.02))',
-          margin: '60px 0 28px',
-        }} />
+            {/* Headline */}
+            <h1
+              className="hero-headline"
+              style={{
+                fontFamily: 'var(--font-serif)',
+                fontWeight: 500, fontSize: 72, lineHeight: 1.02,
+                letterSpacing: '-0.025em', margin: 0, color: 'var(--ink)',
+              }}
+            >
+              Verified knowledge,
+              <span className="hero-l2" style={{ display: 'block', marginLeft: 100 }}>
+                built for{' '}
+                <em style={{
+                  fontStyle: 'italic',
+                  background: 'linear-gradient(180deg, #b6f0d3 0%, #5fb085 55%, #3d8a65 100%)',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  filter: 'drop-shadow(0 0 24px rgba(95,176,133,0.35))',
+                }}>
+                  agents.
+                </em>
+              </span>
+            </h1>
 
-        {/* Footer grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 40, alignItems: 'end', maxWidth: 940 }} className="hero-foot">
-          <p style={{ color: 'var(--ink-soft)', fontSize: 16.5, lineHeight: 1.6, maxWidth: 480, margin: 0 }}>
-            Strata is the API and MCP server for the moving parts of the AI ecosystem —{' '}
-            <strong style={{ color: 'var(--ink)', fontWeight: 500 }}>best practices, releases, integrations, and signal</strong>
-            {' '}— verified, dated, and shaped for the agents reading it.
-          </p>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <Btn variant="emerald" href="/signup">get api key</Btn>
-            <Btn variant="ghost" href="/docs" arrow={false}>read the docs</Btn>
+            {/* Hairline rule */}
+            <div aria-hidden="true" style={{
+              height: 1, maxWidth: 560,
+              background: 'linear-gradient(90deg, rgba(255,255,255,0.30), rgba(255,255,255,0.02))',
+              margin: '60px 0 28px',
+            }} />
+
+            {/* Body + buttons */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 32, alignItems: 'end' }} className="hero-foot">
+              <p style={{ color: 'var(--ink-soft)', fontSize: 16.5, lineHeight: 1.6, maxWidth: 420, margin: 0 }}>
+                Strata is the API and MCP server for the moving parts of the AI ecosystem —{' '}
+                <strong style={{ color: 'var(--ink)', fontWeight: 500 }}>best practices, releases, integrations, and signal</strong>
+                {' '}— verified, dated, and shaped for the agents reading it.
+              </p>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <Btn variant="emerald" href="/signup">get api key</Btn>
+                <Btn variant="ghost" href="/docs" arrow={false}>read the docs</Btn>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Right: aggregation graphic ── */}
+          <div className="hero-graphic-col">
+            <AggregationGraphic />
           </div>
         </div>
       </section>

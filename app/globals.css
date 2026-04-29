@@ -628,3 +628,17 @@ body {
   .sjar-note-1, .sjar-note-2, .sjar-note-3, .sjar-note-4,
   .sjar-svg, .sjar-svg:hover, .sjar-note-fall { animation: none; }
 }
+
+/* ─── Hero two-column grid ─── */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 56px;
+  align-items: center;
+}
+.hero-graphic-col { display: flex; justify-content: flex-end; align-items: center; }
+
+@media (max-width: 980px) {
+  .hero-grid { display: block; }
+  .hero-graphic-col { display: none; }
+}
