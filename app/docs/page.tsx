@@ -652,12 +652,12 @@ export default function DocsPage() {
   const panel = PANELS[active] ?? PANELS['quickstart']
 
   return (
-    <div className="flex min-h-screen bg-[--background] text-[--foreground]">
+    <div className="flex min-h-screen text-[--foreground]" style={{ background: '#000' }}>
 
       {/* ── Sidebar ──────────────────────────────────────────────────────── */}
       <nav
-        className="fixed top-0 left-0 h-screen overflow-y-auto z-20 border-r border-[--border] bg-[--background]"
-        style={{ width: 220 }}
+        className="fixed top-0 left-0 h-screen overflow-y-auto z-20 border-r border-[--border]"
+        style={{ width: 220, background: '#000' }}
       >
         <div className="p-5 pb-4 border-b border-[--border]">
           <Link href="/" className="flex items-center gap-2 no-underline" style={{ textDecoration: 'none' }}>
@@ -731,7 +731,7 @@ export default function DocsPage() {
       </nav>
 
       {/* ── Content + Panel ──────────────────────────────────────────────── */}
-      <div className="flex flex-1 min-w-0 justify-center" style={{ marginLeft: 220, marginRight: 340 }}>
+      <div className="flex flex-1 min-w-0 justify-center" style={{ marginLeft: 220, marginRight: 460 }}>
 
         {/* Main content */}
         <main className="w-full py-16 px-10 lg:px-14" style={{ maxWidth: 680 }}>
@@ -1077,7 +1077,7 @@ export default function DocsPage() {
         {/* ── Right panel ── */}
         <aside
           className="hidden lg:flex flex-col fixed top-0 right-0 h-screen overflow-hidden z-10"
-          style={{ width: 340, background: CODE_BG }}
+          style={{ width: 460, background: CODE_BG }}
         >
           {/* Tab bar */}
           <div
