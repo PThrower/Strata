@@ -44,8 +44,9 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             </Link>
 
             <div className="flex items-center gap-7">
-              <Link href="/docs"    className="mkt-nav-link hidden sm:block">docs</Link>
-              <a    href="#pricing" className="mkt-nav-link hidden sm:block">pricing</a>
+              <Link href="/docs"           className="mkt-nav-link hidden sm:block">docs</Link>
+              <Link href="/how-it-works"  className="mkt-nav-link hidden sm:block">how it works</Link>
+              <a    href="#pricing"       className="mkt-nav-link hidden sm:block">pricing</a>
               <Btn variant="emerald" href="/signup">get api key</Btn>
             </div>
           </nav>

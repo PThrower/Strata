@@ -642,3 +642,16 @@ body {
   .hero-grid { display: block; }
   .hero-graphic-col { display: none; }
 }
+
+/* ─── How It Works pipeline grid (landing page teaser section) ─── */
+.hiw-pipeline-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+
+@media (max-width: 700px) {
+  .hiw-pipeline-grid { grid-template-columns: 1fr; }
+  .hiw-pipeline-visual { display: none; }
+}

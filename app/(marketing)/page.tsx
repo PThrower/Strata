@@ -441,6 +441,102 @@ export default function LandingPage() {
         </Glass>
       </section>
 
+      {/* ══ How It Works teaser ══ */}
+      <div style={{
+        borderTop: '1px solid var(--hair)', borderBottom: '1px solid var(--hair)',
+        padding: '64px 0',
+      }}>
+        <div className="hiw-pipeline-grid">
+          {/* Left: copy */}
+          <div>
+            <p style={{
+              fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500,
+              letterSpacing: '0.20em', textTransform: 'uppercase', color: '#00c472',
+              margin: '0 0 16px',
+            }}>
+              content integrity
+            </p>
+            <h2 style={{
+              fontFamily: 'var(--font-serif)', fontSize: 30, fontWeight: 400,
+              letterSpacing: '-0.02em', lineHeight: 1.18,
+              color: 'var(--ink)', margin: '0 0 16px',
+            }}>
+              Not all signals are equal.
+            </h2>
+            <p style={{
+              fontSize: 15, color: 'var(--ink-muted)', lineHeight: 1.65,
+              margin: '0 0 24px',
+            }}>
+              Every item passes through source filtering, AI review,
+              deduplication, and community moderation — so your agents get
+              signal, not noise.
+            </p>
+            <a href="/how-it-works" style={{
+              fontSize: 14, color: '#00c472', fontWeight: 500, textDecoration: 'none',
+            }}>
+              How validation works →
+            </a>
+          </div>
+
+          {/* Right: pipeline visual */}
+          <div className="hiw-pipeline-visual" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {[
+              { label: 'source collection', badge: '4 sources',    live: false },
+              { label: 'recency filter',    badge: '7 day window', live: false },
+              { label: 'deduplication',     badge: 'url matched',  live: false },
+              { label: 'ai validation',     badge: '4 criteria',   live: false },
+              { label: 'published',         badge: 'live',         live: true  },
+            ].map(({ label, badge, live }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 500,
+                  letterSpacing: '0.12em', textTransform: 'uppercase',
+                  color: 'var(--ink-faint)', width: 130, flexShrink: 0,
+                }}>
+                  {label}
+                </span>
+                <div style={{ flex: 1, height: 0, borderTop: '1px dashed rgba(255,255,255,0.12)' }} />
+                {live ? (
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 500,
+                    color: 'var(--emerald-glow)',
+                    border: '1px solid rgba(95,176,133,0.35)',
+                    borderRadius: 999,
+                    padding: '3px 10px',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    <span style={{ position: 'relative', width: 6, height: 6, flexShrink: 0 }}>
+                      <span style={{
+                        position: 'absolute', inset: 0, borderRadius: '50%',
+                        background: 'var(--emerald-glow)',
+                      }} />
+                      <span
+                        className="live-dot-ring"
+                        style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--emerald-glow)' }}
+                        aria-hidden="true"
+                      />
+                    </span>
+                    live
+                  </span>
+                ) : (
+                  <span style={{
+                    fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 500,
+                    color: 'var(--ink-muted)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: 999,
+                    padding: '3px 10px',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {badge}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* ══ Pricing ══ */}
       <section style={{ padding: '72px 0' }} id="pricing">
         <SectionHeading title="Pricing" meta="no card · cancel anytime" />
