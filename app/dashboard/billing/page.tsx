@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server'
 import { stripe } from '@/lib/stripe'
-import UpgradeCTA from '../_components/upgrade-cta'
+import UpgradeButton from '../_components/upgrade-button'
 import ManageSubscriptionButton from '../_components/manage-subscription-button'
 
 type BillingProfile = {
@@ -18,12 +18,66 @@ function formatBillingDate(timestamp: number): string {
   })
 }
 
+const PRO_FEATURES = [
+  '10,000 API calls / month',
+  'Real-time news (no 24 h delay)',
+  'All ecosystems unlocked',
+  'Daily content refreshes',
+  'Priority support',
+]
+
+const FREE_FEATURES = [
+  '100 API calls / month',
+  'News with 24 h delay',
+  'Claude ecosystem only',
+  'Weekly content refreshes',
+]
+
+function Check() {
+  return (
+    <span style={{ color: 'var(--emerald-glow)', fontSize: 13, flexShrink: 0, lineHeight: 1 }}>✓</span>
+  )
+}
+
+function FeatureRow({ text }: { text: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0' }}>
+      <Check />
+      <span style={{ color: 'var(--ink-soft)', fontSize: 14 }}>{text}</span>
+    </div>
+  )
+}
+
+function DimRow({ text }: { text: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0' }}>
+      <span style={{ color: 'var(--ink-faint)', fontSize: 13, flexShrink: 0 }}>–</span>
+      <span style={{ color: 'var(--ink-faint)', fontSize: 14 }}>{text}</span>
+    </div>
+  )
+}
+
+const glowPanel = {
+  background: 'linear-gradient(135deg, rgba(45,106,79,0.18) 0%, rgba(95,176,133,0.06) 100%)',
+  border: '1px solid rgba(95,176,133,0.28)',
+  borderRadius: 18,
+  padding: '28px 32px',
+  position: 'relative' as const,
+  overflow: 'hidden' as const,
+}
+
+const flatPanel = {
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 18,
+  padding: '24px 28px',
+}
+
 export default async function BillingPage() {
   const userClient = await createUserClient()
   const {
     data: { user },
   } = await userClient.auth.getUser()
-
   if (!user) redirect('/login')
 
   const serviceClient = createServiceRoleClient()
@@ -32,7 +86,6 @@ export default async function BillingPage() {
     .select('tier, stripe_customer_id, stripe_subscription_id')
     .eq('id', user.id)
     .maybeSingle<BillingProfile>()
-
   if (!profile) redirect('/login')
 
   let nextBillingDate: string | null = null
@@ -51,24 +104,178 @@ export default async function BillingPage() {
   }
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="font-serif text-2xl font-semibold mb-6">Billing</h1>
+    <div style={{ maxWidth: 600, margin: '0 auto' }}>
+      {/* Header */}
+      <div style={{ marginBottom: 36 }}>
+        <p style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: 'var(--ink-faint)',
+          marginBottom: 8,
+        }}>
+          subscription
+        </p>
+        <h1 style={{
+          fontFamily: 'var(--font-serif)',
+          fontSize: 28,
+          fontWeight: 500,
+          color: 'var(--ink)',
+          lineHeight: 1.1,
+          margin: 0,
+        }}>
+          Billing
+        </h1>
+      </div>
 
       {profile.tier === 'free' ? (
-        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-border p-6">
-          <UpgradeCTA />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Current plan */}
+          <div style={flatPanel}>
+            <p style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: 'var(--ink-faint)',
+              marginBottom: 12,
+            }}>
+              current plan
+            </p>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16 }}>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: 0 }}>
+                Free
+              </p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-faint)', margin: 0 }}>
+                $0 / month
+              </p>
+            </div>
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 14 }}>
+              {FREE_FEATURES.map(f => <DimRow key={f} text={f} />)}
+            </div>
+          </div>
+
+          {/* Upgrade to pro */}
+          <div style={glowPanel}>
+            {/* Background glow */}
+            <div style={{
+              position: 'absolute',
+              top: -60,
+              right: -60,
+              width: 200,
+              height: 200,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(95,176,133,0.14) 0%, transparent 70%)',
+              pointerEvents: 'none',
+            }} />
+
+            <p style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: 'var(--emerald-glow)',
+              marginBottom: 14,
+              position: 'relative',
+            }}>
+              recommended
+            </p>
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              marginBottom: 20,
+              position: 'relative',
+            }}>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 400, color: 'var(--ink)', margin: 0 }}>
+                Strata Pro
+              </p>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: 30, fontWeight: 600, color: 'var(--ink)', lineHeight: 1, margin: 0 }}>$29</p>
+                <p style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 3, fontFamily: 'var(--font-mono)' }}>/ month</p>
+              </div>
+            </div>
+
+            <div style={{
+              borderTop: '1px solid rgba(95,176,133,0.18)',
+              paddingTop: 16,
+              marginBottom: 24,
+              position: 'relative',
+            }}>
+              {PRO_FEATURES.map(f => <FeatureRow key={f} text={f} />)}
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <UpgradeButton />
+            </div>
+          </div>
+
         </div>
       ) : (
-        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-border p-6">
-          <h2 className="font-serif text-lg font-medium mb-1">Strata Pro</h2>
-          <p className="text-sm text-muted-foreground mb-4">$29/month</p>
+
+        /* Pro — active subscription */
+        <div style={glowPanel}>
+          <div style={{
+            position: 'absolute',
+            top: -60,
+            right: -60,
+            width: 200,
+            height: 200,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(95,176,133,0.12) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+
+          <p style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: 'var(--emerald-glow)',
+            marginBottom: 14,
+            position: 'relative',
+          }}>
+            active subscription
+          </p>
+
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            marginBottom: 6,
+            position: 'relative',
+          }}>
+            <p style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 400, color: 'var(--ink)', margin: 0 }}>
+              Strata Pro
+            </p>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontSize: 30, fontWeight: 600, color: 'var(--ink)', lineHeight: 1, margin: 0 }}>$29</p>
+              <p style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 3, fontFamily: 'var(--font-mono)' }}>/ month</p>
+            </div>
+          </div>
+
           {nextBillingDate && (
-            <p className="text-sm text-muted-foreground mb-4">
-              Next billing date:{' '}
-              <span className="font-medium text-foreground">{nextBillingDate}</span>
+            <p style={{ fontSize: 13, color: 'var(--ink-faint)', marginBottom: 20, position: 'relative' }}>
+              Renews{' '}
+              <span style={{ color: 'var(--ink-soft)' }}>{nextBillingDate}</span>
             </p>
           )}
-          <ManageSubscriptionButton />
+
+          <div style={{
+            borderTop: '1px solid rgba(95,176,133,0.18)',
+            paddingTop: 16,
+            marginBottom: 24,
+            position: 'relative',
+          }}>
+            {PRO_FEATURES.map(f => <FeatureRow key={f} text={f} />)}
+          </div>
+
+          <div style={{ position: 'relative' }}>
+            <ManageSubscriptionButton />
+          </div>
         </div>
       )}
     </div>

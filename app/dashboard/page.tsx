@@ -71,7 +71,7 @@ export default async function DashboardPage() {
   const requests = (recentRequests ?? []) as ApiRequest[]
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl mx-auto">
       <h1 className="font-serif text-2xl font-semibold mb-6">Overview</h1>
 
       {/* Stat cards */}

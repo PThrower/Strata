@@ -67,7 +67,7 @@ export default function AnalyticsDashboard({ initialData }: { initialData: Analy
   // Empty state
   if (data.totalCalls === 0) {
     return (
-      <div className="max-w-4xl">
+      <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-serif text-2xl font-semibold">Analytics</h1>
           <RangeSelector days={days} onChange={handleRange} isPending={isPending} />
@@ -86,7 +86,7 @@ export default function AnalyticsDashboard({ initialData }: { initialData: Analy
   }
 
   return (
-    <div className="max-w-4xl" style={{ opacity: isPending ? 0.6 : 1, transition: 'opacity 150ms' }}>
+    <div className="max-w-4xl mx-auto" style={{ opacity: isPending ? 0.6 : 1, transition: 'opacity 150ms' }}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-serif text-2xl font-semibold">Analytics</h1>

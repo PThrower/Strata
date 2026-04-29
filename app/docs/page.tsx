@@ -663,6 +663,13 @@ export default function DocsPage() {
           <Link href="/" className="font-mono text-[17px] font-semibold tracking-tight text-[--foreground] hover:opacity-80 transition-opacity">
             Strata
           </Link>
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-1.5 mt-3 text-[13px] font-mono transition-colors hover:opacity-80"
+            style={{ color: 'var(--muted-foreground)' }}
+          >
+            ← dashboard
+          </Link>
         </div>
 
         <div className="py-4 px-3">
