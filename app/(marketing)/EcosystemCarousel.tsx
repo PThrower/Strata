@@ -83,6 +83,10 @@ const ECOSYSTEMS: Eco[] = [
     slug: 'bolt', name: 'Bolt',
     mark: <svg {...SVG_PROPS}><path d="M36 8 L16 34 L28 34 L22 52 L44 26 L32 26 L38 8 Z"/></svg>,
   },
+  {
+    slug: 'codex', name: 'Codex',
+    mark: <svg {...SVG_PROPS}><polyline points="14,22 26,30 14,38"/><line x1="30" y1="38" x2="46" y2="38"/><circle cx="38" cy="22" r="4" {...DOT}/></svg>,
+  },
 ]
 
 function EcoTile({ name, mark }: Pick<Eco, 'name' | 'mark'>) {

@@ -309,7 +309,7 @@ export default function LandingPage() {
 
       {/* ══ Ecosystems ══ */}
       <section style={{ padding: '72px 0' }} id="ecosystems">
-        <SectionHeading title="Ecosystems we track" meta="21 indexed · refreshed continuously" />
+        <SectionHeading title="Ecosystems we track" meta="22 indexed · refreshed continuously" />
         <div className="eco-grid">
           {ecosystems.map((eco) => (
             <Glass key={eco.name} shimmer className="eco-card" style={{ padding: '28px 20px 22px', textAlign: 'center' }}>
@@ -422,7 +422,7 @@ export default function LandingPage() {
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: 64, marginBottom: 52 }}>
               {[
-                { value: '21',    label: 'ecosystems tracked' },
+                { value: '22',    label: 'ecosystems tracked' },
                 { value: '4',     label: 'api tools' },
                 { value: 'Daily', label: 'content updates' },
               ].map(({ value, label }) => (

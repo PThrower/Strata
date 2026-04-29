@@ -1038,6 +1038,7 @@ export default function DocsPage() {
               {[
                 { slug: 'cursor',     name: 'Cursor',      vendor: 'Anysphere' },
                 { slug: 'claudecode', name: 'Claude Code', vendor: 'Anthropic' },
+                { slug: 'codex',      name: 'Codex',       vendor: 'OpenAI' },
                 { slug: 'windsurf',   name: 'Windsurf',    vendor: 'Codeium' },
                 { slug: 'copilot',    name: 'Copilot',     vendor: 'Microsoft' },
                 { slug: 'cody',       name: 'Cody',        vendor: 'Sourcegraph' },
