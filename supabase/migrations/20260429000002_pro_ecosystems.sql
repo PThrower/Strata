@@ -1,24 +1,24 @@
 -- 16 new Pro-tier ecosystems
-INSERT INTO public.ecosystems (slug, name, vendor, available_on_free)
+INSERT INTO public.ecosystems (slug, name, vendor, version, available_on_free)
 VALUES
   -- AI Coding Tools
-  ('cursor',      'Cursor',       'Anysphere',        false),
-  ('claudecode',  'Claude Code',  'Anthropic',        false),
-  ('windsurf',    'Windsurf',     'Codeium',          false),
-  ('copilot',     'Copilot',      'Microsoft',        false),
-  ('cody',        'Cody',         'Sourcegraph',      false),
+  ('cursor',      'Cursor',       'Anysphere',        'latest', false),
+  ('claudecode',  'Claude Code',  'Anthropic',        'latest', false),
+  ('windsurf',    'Windsurf',     'Codeium',          'latest', false),
+  ('copilot',     'Copilot',      'Microsoft',        'latest', false),
+  ('cody',        'Cody',         'Sourcegraph',      'latest', false),
   -- AI Search & Research
-  ('perplexity',  'Perplexity',   'Perplexity',       false),
-  ('youcom',      'You.com',      'You.com',          false),
-  ('exa',         'Exa',          'Exa',              false),
+  ('perplexity',  'Perplexity',   'Perplexity',       'latest', false),
+  ('youcom',      'You.com',      'You.com',          'latest', false),
+  ('exa',         'Exa',          'Exa',              'latest', false),
   -- AI Infrastructure
-  ('replicate',   'Replicate',    'Replicate',        false),
-  ('togetherai',  'Together.ai',  'Together',         false),
-  ('groq',        'Groq',         'Groq',             false),
-  ('fireworks',   'Fireworks',    'Fireworks AI',     false),
+  ('replicate',   'Replicate',    'Replicate',        'latest', false),
+  ('togetherai',  'Together.ai',  'Together',         'latest', false),
+  ('groq',        'Groq',         'Groq',             'latest', false),
+  ('fireworks',   'Fireworks',    'Fireworks AI',     'latest', false),
   -- AI Agents & Media
-  ('manus',       'Manus',        'Butterfly Effect', false),
-  ('higgsfield',  'Higgsfield',   'Higgsfield AI',    false),
-  ('v0',          'v0',           'Vercel',           false),
-  ('bolt',        'Bolt',         'StackBlitz',       false)
+  ('manus',       'Manus',        'Butterfly Effect', 'latest', false),
+  ('higgsfield',  'Higgsfield',   'Higgsfield AI',    'latest', false),
+  ('v0',          'v0',           'Vercel',           'latest', false),
+  ('bolt',        'Bolt',         'StackBlitz',       'latest', false)
 ON CONFLICT (slug) DO NOTHING;
