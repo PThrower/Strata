@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Design handoff files — not shipped code
+    "design_handoff_strata_landing/**",
+    "design_handoff_strata_landing 2/**",
   ]),
 ]);
 
