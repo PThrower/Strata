@@ -653,13 +653,19 @@ body {
   to   { transform: translateX(0); }
 }
 .carousel-row {
-  display: flex;
-  width: max-content;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  width: max-content !important;
+  min-width: max-content !important;
 }
+.carousel-row-left  { animation: marquee-left  50s linear infinite !important; }
+.carousel-row-right { animation: marquee-right 50s linear infinite !important; }
 .carousel-row:hover { animation-play-state: paused !important; }
 
 @media (prefers-reduced-motion: reduce) {
-  .carousel-row { animation: none !important; }
+  .carousel-row-left,
+  .carousel-row-right { animation: none !important; }
 }
 
 /* ─── How It Works pipeline grid (landing page teaser section) ─── */
