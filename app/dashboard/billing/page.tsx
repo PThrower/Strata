@@ -55,17 +55,17 @@ export default async function BillingPage() {
       <h1 className="font-serif text-2xl font-semibold mb-6">Billing</h1>
 
       {profile.tier === 'free' ? (
-        <div className="bg-white rounded-lg border p-6">
+        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-border p-6">
           <UpgradeCTA />
         </div>
       ) : (
-        <div className="bg-white rounded-lg border p-6">
+        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-border p-6">
           <h2 className="font-serif text-lg font-medium mb-1">Strata Pro</h2>
-          <p className="text-sm text-gray-500 mb-4">$29/month</p>
+          <p className="text-sm text-muted-foreground mb-4">$29/month</p>
           {nextBillingDate && (
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Next billing date:{' '}
-              <span className="font-medium">{nextBillingDate}</span>
+              <span className="font-medium text-foreground">{nextBillingDate}</span>
             </p>
           )}
           <ManageSubscriptionButton />

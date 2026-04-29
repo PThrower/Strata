@@ -38,6 +38,8 @@ function formatRequestTime(iso: string): string {
   })
 }
 
+const card = 'bg-white dark:bg-zinc-900 rounded-lg border border-border p-4'
+
 export default async function DashboardPage() {
   const userClient = await createUserClient()
   const {
@@ -74,22 +76,22 @@ export default async function DashboardPage() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-white rounded-lg border p-4">
-          <p className="text-xs text-gray-500 mb-1">api calls this month</p>
+        <div className={card}>
+          <p className="text-xs text-muted-foreground mb-1">api calls this month</p>
           <p className="text-xl font-semibold tabular-nums">
             {profile.calls_used.toLocaleString()}{' '}
-            <span className="text-base font-normal text-gray-400">
+            <span className="text-base font-normal text-muted-foreground">
               / {limit.toLocaleString()}
             </span>
           </p>
         </div>
-        <div className="bg-white rounded-lg border p-4">
-          <p className="text-xs text-gray-500 mb-1">current tier</p>
+        <div className={card}>
+          <p className="text-xs text-muted-foreground mb-1">current tier</p>
           <span
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
               profile.tier === 'pro'
                 ? 'bg-[#1D9E75]/10 text-[#1D9E75]'
-                : 'bg-gray-100 text-gray-600'
+                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'
             }`}
           >
             {profile.tier}
@@ -98,41 +100,41 @@ export default async function DashboardPage() {
       </div>
 
       {/* Usage bar */}
-      <div className="bg-white rounded-lg border p-4 mb-6">
-        <p className="text-sm text-gray-500 mb-2">monthly usage</p>
-        <div className="w-full bg-gray-100 rounded-full h-2 mb-1.5">
+      <div className={`${card} mb-6`}>
+        <p className="text-sm text-muted-foreground mb-2">monthly usage</p>
+        <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 mb-1.5">
           <div
             style={{ width: `${pct}%` }}
             className="h-2 rounded-full bg-[#1D9E75] transition-all"
           />
         </div>
-        <p className="text-xs text-gray-400">resets on: {resetDate}</p>
+        <p className="text-xs text-muted-foreground">resets on: {resetDate}</p>
       </div>
 
       {/* API Key */}
-      <div className="bg-white rounded-lg border p-4 mb-6">
+      <div className={`${card} mb-6`}>
         <p className="text-sm font-medium mb-3">api key</p>
         <ApiKeyCard apiKey={profile.api_key} />
       </div>
 
       {/* Upgrade CTA (free tier only) */}
       {profile.tier === 'free' && (
-        <div className="bg-white rounded-lg border p-4 mb-6">
+        <div className={`${card} mb-6`}>
           <UpgradeCTA />
         </div>
       )}
 
       {/* Recent Requests */}
-      <div className="bg-white rounded-lg border p-4">
+      <div className={card}>
         <p className="text-sm font-medium mb-3">recent requests</p>
         {requests.length === 0 ? (
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground">
             no api calls yet — check the docs to get started
           </p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-xs text-gray-400 border-b">
+              <tr className="text-xs text-muted-foreground border-b border-border">
                 <th className="text-left pb-2 font-medium">time</th>
                 <th className="text-left pb-2 font-medium">tool</th>
                 <th className="text-left pb-2 font-medium">ecosystem</th>
@@ -141,8 +143,8 @@ export default async function DashboardPage() {
             </thead>
             <tbody>
               {requests.map((req) => (
-                <tr key={req.id} className="border-b last:border-0">
-                  <td className="py-2 text-gray-500 text-xs tabular-nums">
+                <tr key={req.id} className="border-b border-border last:border-0">
+                  <td className="py-2 text-muted-foreground text-xs tabular-nums">
                     {formatRequestTime(req.created_at)}
                   </td>
                   <td className="py-2 font-mono text-xs">{req.tool}</td>

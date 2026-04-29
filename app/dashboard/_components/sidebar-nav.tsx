@@ -22,8 +22,8 @@ export default function SidebarNav() {
             href={href}
             className={`px-3 py-2 rounded-md text-sm transition-colors ${
               isActive
-                ? 'bg-gray-100 text-gray-900 font-medium'
-                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 font-medium'
+                : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800'
             }`}
           >
             {label}

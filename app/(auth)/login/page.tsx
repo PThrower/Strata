@@ -9,12 +9,12 @@ export default function LoginPage() {
 
   return (
     <>
-      <h1 className="font-serif text-2xl font-semibold mb-1">Strata</h1>
-      <p className="text-sm text-gray-500 mb-6">Sign in to your account</p>
+      <h1 className="font-serif text-2xl font-semibold mb-1 text-zinc-900 dark:text-zinc-50">Strata</h1>
+      <p className="text-sm text-muted-foreground mb-6">Sign in to your account</p>
 
       <form action={action} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Email
           </label>
           <input
@@ -23,12 +23,12 @@ export default function LoginPage() {
             type="email"
             required
             autoComplete="email"
-            className="border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:border-transparent"
+            className="border border-border rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:border-transparent"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="password" className="text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Password
           </label>
           <input
@@ -37,7 +37,7 @@ export default function LoginPage() {
             type="password"
             required
             autoComplete="current-password"
-            className="border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:border-transparent"
+            className="border border-border rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:border-transparent"
           />
         </div>
 
@@ -57,7 +57,7 @@ export default function LoginPage() {
       <div className="mt-4">
         <a
           href="/api/auth/google"
-          className="flex items-center justify-center gap-2 border rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-center gap-2 border border-border rounded-md px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
         >
           <svg viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true">
             <path
@@ -81,7 +81,7 @@ export default function LoginPage() {
         </a>
       </div>
 
-      <p className="mt-6 text-center text-sm text-gray-500">
+      <p className="mt-6 text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{' '}
         <Link href="/signup" className="text-[#1D9E75] font-medium hover:underline">
           Sign up

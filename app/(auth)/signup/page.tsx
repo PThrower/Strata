@@ -9,12 +9,12 @@ export default function SignupPage() {
 
   return (
     <>
-      <h1 className="font-serif text-2xl font-semibold mb-1">Strata</h1>
-      <p className="text-sm text-gray-500 mb-6">Create your account</p>
+      <h1 className="font-serif text-2xl font-semibold mb-1 text-zinc-900 dark:text-zinc-50">Strata</h1>
+      <p className="text-sm text-muted-foreground mb-6">Create your account</p>
 
       <form action={action} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium text-gray-700">
+          <label htmlFor="email" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Email
           </label>
           <input
@@ -23,12 +23,12 @@ export default function SignupPage() {
             type="email"
             required
             autoComplete="email"
-            className="border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:border-transparent"
+            className="border border-border rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:border-transparent"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="password" className="text-sm font-medium text-gray-700">
+          <label htmlFor="password" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
             Password
           </label>
           <input
@@ -37,7 +37,7 @@ export default function SignupPage() {
             type="password"
             required
             autoComplete="new-password"
-            className="border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:border-transparent"
+            className="border border-border rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:border-transparent"
           />
         </div>
 
@@ -54,7 +54,7 @@ export default function SignupPage() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-500">
+      <p className="mt-6 text-center text-sm text-muted-foreground">
         Already have an account?{' '}
         <Link href="/login" className="text-[#1D9E75] font-medium hover:underline">
           Sign in
