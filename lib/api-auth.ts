@@ -18,8 +18,8 @@ export type Profile = {
 
 export type ServiceClient = SupabaseClient
 
-const FREE_LIMIT = 100
-const PRO_LIMIT = 10_000
+export const FREE_LIMIT = 100
+export const PRO_LIMIT = 10_000
 
 type AuthSuccess = { ok: true; profile: Profile; supabase: ServiceClient }
 type AuthFailure = { ok: false; response: Response }
