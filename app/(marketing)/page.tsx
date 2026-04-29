@@ -233,6 +233,67 @@ export default function LandingPage() {
         </a>
       </div>
 
+      {/* ══ Community ══ */}
+      <section style={{
+        padding: '80px 0',
+        borderTop: '1px solid var(--hair)',
+        borderBottom: '1px solid var(--hair)',
+        textAlign: 'center',
+      }}>
+        <div style={{ maxWidth: 560, margin: '0 auto' }}>
+          <p style={{
+            fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500,
+            letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)',
+            marginBottom: 24,
+          }}>
+            community
+          </p>
+
+          <h2 style={{
+            fontFamily: 'var(--font-serif)', fontSize: 36, fontWeight: 500,
+            letterSpacing: '-0.025em', lineHeight: 1.1,
+            color: 'var(--ink)', margin: '0 0 20px',
+          }}>
+            Intelligence that grows with every developer.
+          </h2>
+
+          <p style={{
+            fontSize: 15.5, color: 'var(--ink-muted)', lineHeight: 1.65,
+            maxWidth: 440, margin: '0 auto 40px',
+          }}>
+            Every integration, tip, and breakthrough discovered by the community
+            finds its way into Strata. The more developers use it, the sharper it gets.
+          </p>
+
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 48, marginBottom: 40 }}>
+            {[
+              { value: '5',     label: 'ecosystems tracked' },
+              { value: '4',     label: 'api tools' },
+              { value: 'Daily', label: 'content updates' },
+            ].map(({ value, label }) => (
+              <div key={label}>
+                <p style={{
+                  fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 400,
+                  color: '#00c472', lineHeight: 1, marginBottom: 6,
+                }}>
+                  {value}
+                </p>
+                <p style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 500,
+                  letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)',
+                }}>
+                  {label}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <a href="/dashboard/submit" className="community-cta-btn">
+            Submit a contribution
+          </a>
+        </div>
+      </section>
+
       {/* ══ Pricing ══ */}
       <section style={{ padding: '72px 0' }} id="pricing">
         <SectionHeading title="Pricing" meta="no card · cancel anytime" />

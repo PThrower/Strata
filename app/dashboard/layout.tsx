@@ -20,7 +20,7 @@ export default async function DashboardLayout({
           <span className="font-serif font-semibold text-lg">Strata</span>
         </div>
 
-        <SidebarNav />
+        <SidebarNav isAdmin={user?.email === process.env.ADMIN_EMAIL} />
 
         <div className="mt-auto pt-4 border-t border-border">
           <p className="text-xs text-muted-foreground truncate px-3 mb-2">

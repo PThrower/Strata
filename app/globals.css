@@ -376,6 +376,19 @@ body {
   transition: color 200ms;
 }
 .mkt-nav-link:hover { color: var(--ink); }
+
+.community-cta-btn {
+  display: inline-block;
+  border: 1px solid #00c472;
+  color: #00c472;
+  border-radius: 12px;
+  padding: 12px 32px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 150ms;
+}
+.community-cta-btn:hover { background: rgba(0, 196, 114, 0.08); }
 .mkt-nav-link:focus-visible {
   outline: 2px solid var(--emerald-glow);
   outline-offset: 3px;
