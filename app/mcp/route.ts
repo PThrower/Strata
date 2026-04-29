@@ -6,6 +6,7 @@ import { TOOL_DEFINITIONS, handleToolCall } from '@/lib/mcp-tools'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
   return Response.json({
     name: 'Strata MCP',
     description:
@@ -13,7 +14,7 @@ export async function GET() {
     version: '1.0.0',
     tools: TOOL_DEFINITIONS.map((t) => ({ name: t.name, description: t.description })),
     auth: 'Pass your Strata API key as: Authorization: Bearer sk_your_key or X-API-Key: sk_your_key',
-    endpoint: 'https://strata-fawn-xi.vercel.app/mcp',
+    endpoint: `${appUrl}/mcp`,
   })
 }
 

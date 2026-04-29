@@ -25,57 +25,63 @@ type AuthSuccess = { ok: true; profile: Profile; supabase: ServiceClient }
 type AuthFailure = { ok: false; response: Response }
 export type AuthResult = AuthSuccess | AuthFailure
 
-// Steps 1-7 of the auth pipeline: read header, lookup profile, reset window if
-// elapsed, enforce monthly limit, increment counter. Returns either the
-// authenticated profile or a Response to short-circuit the route.
+type ConsumeResult = {
+  allowed: boolean
+  profile_id: string | null
+  tier: Tier | null
+  calls_used: number
+  was_reset: boolean
+}
+
+// Atomically validates the API key, rolls the monthly window if elapsed,
+// enforces the tier limit, and increments the counter — all in a single
+// SECURITY DEFINER Postgres function under row-level locking. Returns either
+// the authenticated profile or a Response to short-circuit the route.
 export async function authenticateRequest(req: NextRequest): Promise<AuthResult> {
   const apiKey = req.headers.get('x-api-key')
-  if (!apiKey) {
-    return invalidKey()
-  }
+  if (!apiKey) return invalidKey()
+  return consumeApiCall(apiKey)
+}
 
+export async function consumeApiCall(apiKey: string): Promise<AuthResult> {
   const supabase = createServiceRoleClient()
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('api_key', apiKey)
-    .maybeSingle<Profile>()
+  const { data, error } = await supabase
+    .rpc('consume_api_call', { input_api_key: apiKey })
+    .maybeSingle<ConsumeResult>()
 
-  if (!profile) {
-    return invalidKey()
+  if (error || !data) {
+    return {
+      ok: false,
+      response: Response.json({ error: 'Service error' }, { status: 503 }),
+    }
   }
 
-  const now = new Date()
-  const resetAt = profile.calls_reset_at ? new Date(profile.calls_reset_at) : null
+  if (!data.profile_id) return invalidKey()
 
-  if (resetAt === null || resetAt <= now) {
-    const newResetAt = new Date(now)
-    newResetAt.setMonth(newResetAt.getMonth() + 1)
-    await supabase
-      .from('profiles')
-      .update({ calls_used: 0, calls_reset_at: newResetAt.toISOString() })
-      .eq('id', profile.id)
-    profile.calls_used = 0
-    profile.calls_reset_at = newResetAt.toISOString()
-  }
-
-  const limit = profile.tier === 'pro' ? PRO_LIMIT : FREE_LIMIT
-  if (profile.calls_used >= limit) {
+  if (!data.allowed) {
     return {
       ok: false,
       response: Response.json(
-        { error: 'Monthly limit reached', tier: profile.tier },
+        { error: 'Monthly limit reached', tier: data.tier },
         { status: 429 },
       ),
     }
   }
 
-  await supabase
+  // Hydrate the rest of the profile fields the routes expect.
+  const { data: profile, error: profileErr } = await supabase
     .from('profiles')
-    .update({ calls_used: profile.calls_used + 1 })
-    .eq('id', profile.id)
-  profile.calls_used += 1
+    .select('*')
+    .eq('id', data.profile_id)
+    .maybeSingle<Profile>()
+
+  if (profileErr || !profile) {
+    return {
+      ok: false,
+      response: Response.json({ error: 'Service error' }, { status: 503 }),
+    }
+  }
 
   return { ok: true, profile, supabase }
 }
@@ -118,12 +124,15 @@ export async function logApiRequest(
   supabase: ServiceClient,
   args: { apiKey: string; tool: string; ecosystem: string; statusCode: number },
 ) {
-  await supabase.from('api_requests').insert({
+  const { error } = await supabase.from('api_requests').insert({
     api_key: args.apiKey,
     tool: args.tool,
     ecosystem: args.ecosystem,
     status_code: args.statusCode,
   })
+  if (error) {
+    console.error('[api_requests] insert failed:', error.message)
+  }
 }
 
 function invalidKey(): AuthFailure {

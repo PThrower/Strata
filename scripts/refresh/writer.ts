@@ -79,31 +79,19 @@ export async function replaceBestPractices(
   ecosystem: string,
   items: ValidatedItem[],
 ): Promise<void> {
-  const { error: deleteError } = await supabase
-    .from('content_items')
-    .delete()
-    .eq('ecosystem_slug', ecosystem)
-    .eq('category', 'best_practices');
-
-  if (deleteError) {
-    throw new Error(`BP delete failed for ${ecosystem}: ${deleteError.message}`);
-  }
-
-  if (items.length === 0) return;
-
-  const rows = items.map((item) => ({
-    ecosystem_slug: item.ecosystem,
-    category: 'best_practices' as const,
+  const payload = items.map((item) => ({
     title: item.title,
     body: item.body,
-    source_url: null,
     published_at: item.publishedAt,
-    is_pro_only: false,
   }));
 
-  const { error: insertError } = await supabase.from('content_items').insert(rows);
-  if (insertError) {
-    throw new Error(`BP insert failed for ${ecosystem}: ${insertError.message}`);
+  const { error } = await supabase.rpc('replace_best_practices', {
+    ecosystem,
+    items_json: payload,
+  });
+
+  if (error) {
+    throw new Error(`BP replace failed for ${ecosystem}: ${error.message}`);
   }
 }
 

@@ -29,6 +29,20 @@ export async function POST(request: NextRequest) {
 
   const supabase = createServiceRoleClient()
 
+  // Idempotency: insert the event id first. A unique-violation means we have
+  // already processed this event — return 200 so Stripe stops retrying.
+  const { error: dedupErr } = await supabase
+    .from('stripe_events')
+    .insert({ event_id: event.id, event_type: event.type })
+
+  if (dedupErr) {
+    if (dedupErr.code === '23505') {
+      return Response.json({ received: true, duplicate: true })
+    }
+    console.error('[stripe webhook] dedup insert failed:', dedupErr.message)
+    return Response.json({ error: 'Service error' }, { status: 503 })
+  }
+
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object
@@ -43,7 +57,7 @@ export async function POST(request: NextRequest) {
           : session.subscription?.id ?? null
 
       if (profileId) {
-        await supabase
+        const { error } = await supabase
           .from('profiles')
           .update({
             tier: 'pro',
@@ -51,6 +65,10 @@ export async function POST(request: NextRequest) {
             stripe_subscription_id: subscriptionId,
           })
           .eq('id', profileId)
+        if (error) {
+          console.error('[stripe webhook] checkout upgrade failed:', error.message)
+          return Response.json({ error: 'Service error' }, { status: 503 })
+        }
       }
       break
     }
@@ -61,10 +79,17 @@ export async function POST(request: NextRequest) {
           ? subscription.customer
           : subscription.customer.id
 
-      await supabase
+      // Match on subscription_id too: a stale delete event for an old
+      // subscription must not downgrade a re-subscribed customer.
+      const { error } = await supabase
         .from('profiles')
         .update({ tier: 'free', stripe_subscription_id: null })
         .eq('stripe_customer_id', customerId)
+        .eq('stripe_subscription_id', subscription.id)
+      if (error) {
+        console.error('[stripe webhook] subscription delete failed:', error.message)
+        return Response.json({ error: 'Service error' }, { status: 503 })
+      }
       break
     }
   }

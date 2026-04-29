@@ -17,7 +17,11 @@ async function fetchRss(
   const cutoff = Date.now() - SEVEN_DAYS_MS;
   return feed.items
     .filter((item) => {
-      const ts = item.isoDate ? new Date(item.isoDate).getTime() : Date.now();
+      // Items without a parseable date are skipped — defaulting to "now"
+      // would leak ancient items past the freshness cutoff.
+      if (!item.isoDate) return false;
+      const ts = new Date(item.isoDate).getTime();
+      if (Number.isNaN(ts)) return false;
       return ts >= cutoff;
     })
     .map((item) => ({
@@ -26,7 +30,7 @@ async function fetchRss(
       title: (item.title ?? '').trim(),
       body: truncate(item.contentSnippet ?? item.content ?? item.summary ?? ''),
       sourceUrl: item.link ?? item.guid ?? '',
-      publishedAt: item.isoDate ?? new Date().toISOString(),
+      publishedAt: item.isoDate as string,
       sourceType: 'rss' as const,
     }))
     .filter((item) => item.title && item.sourceUrl);
