@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
 
   const logEcosystem = ecosystem ?? 'all'
 
+  let resolvedEcosystem: string | null = null
   if (ecosystem) {
     const access = await checkEcosystemAccess(supabase, ecosystem, profile.tier)
     if (!access.ok) {
@@ -46,11 +47,12 @@ export async function GET(request: NextRequest) {
       })
       return access.response
     }
+    resolvedEcosystem = access.slug
   }
 
   const { data, error } = await supabase.rpc('search_content_items', {
     search_query: query,
-    filter_ecosystem: ecosystem ?? null,
+    filter_ecosystem: resolvedEcosystem,
     filter_category: null,
     user_tier: profile.tier,
   })

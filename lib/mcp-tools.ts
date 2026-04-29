@@ -126,7 +126,7 @@ export async function handleToolCall(
     let query = supabase
       .from('content_items')
       .select('id, title, body, created_at')
-      .eq('ecosystem_slug', ecosystem)
+      .eq('ecosystem_slug', access.slug)
       .eq('category', category)
       .order('published_at', { ascending: false })
 
@@ -179,7 +179,7 @@ export async function handleToolCall(
     let query = supabase
       .from('content_items')
       .select('id, title, body, source_url, published_at')
-      .eq('ecosystem_slug', ecosystem)
+      .eq('ecosystem_slug', access.slug)
       .eq('category', 'news')
       .order('published_at', { ascending: false })
       .limit(limit)
@@ -229,7 +229,7 @@ export async function handleToolCall(
     if (useCase) {
       const { data, error } = await supabase.rpc('search_content_items', {
         search_query: useCase,
-        filter_ecosystem: ecosystem,
+        filter_ecosystem: access.slug,
         filter_category: 'integrations',
         user_tier: profile.tier,
       })
@@ -257,7 +257,7 @@ export async function handleToolCall(
     let query = supabase
       .from('content_items')
       .select('id, title, body')
-      .eq('ecosystem_slug', ecosystem)
+      .eq('ecosystem_slug', access.slug)
       .eq('category', 'integrations')
       .order('published_at', { ascending: false })
 
@@ -291,6 +291,7 @@ export async function handleToolCall(
     const ecosystem = args.ecosystem as string | undefined
     const logEcosystem = ecosystem ?? 'all'
 
+    let resolvedEcosystem: string | null = null
     if (ecosystem) {
       const access = await checkEcosystemAccess(supabase, ecosystem, profile.tier)
       if (!access.ok) {
@@ -304,11 +305,12 @@ export async function handleToolCall(
           'Error: Ecosystem not available on free tier. Upgrade at strata.dev/dashboard/billing',
         )
       }
+      resolvedEcosystem = access.slug
     }
 
     const { data, error } = await supabase.rpc('search_content_items', {
       search_query: query,
-      filter_ecosystem: ecosystem ?? null,
+      filter_ecosystem: resolvedEcosystem,
       filter_category: null,
       user_tier: profile.tier,
     })

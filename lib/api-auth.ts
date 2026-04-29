@@ -93,12 +93,12 @@ export async function checkEcosystemAccess(
   supabase: ServiceClient,
   ecosystemSlug: string,
   tier: Tier,
-): Promise<{ ok: true } | { ok: false; response: Response }> {
+): Promise<{ ok: true; slug: string } | { ok: false; response: Response }> {
   const { data: ecosystem } = await supabase
     .from('ecosystems')
-    .select('available_on_free')
+    .select('slug, available_on_free')
     .or(`slug.eq.${ecosystemSlug},aliases.cs.{${ecosystemSlug}}`)
-    .maybeSingle<{ available_on_free: boolean }>()
+    .maybeSingle<{ slug: string; available_on_free: boolean }>()
 
   if (!ecosystem) {
     return {
@@ -117,7 +117,7 @@ export async function checkEcosystemAccess(
     }
   }
 
-  return { ok: true }
+  return { ok: true, slug: ecosystem.slug }
 }
 
 export async function logApiRequest(

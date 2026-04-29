@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from('content_items')
     .select('id, title, body, created_at')
-    .eq('ecosystem_slug', ecosystem)
+    .eq('ecosystem_slug', access.slug)
     .eq('category', category)
     .order('published_at', { ascending: false })
 

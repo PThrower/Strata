@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
   if (useCase) {
     const { data, error } = await supabase.rpc('search_content_items', {
       search_query: useCase,
-      filter_ecosystem: ecosystem,
+      filter_ecosystem: access.slug,
       filter_category: 'integrations',
       user_tier: profile.tier,
     })
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('content_items')
       .select('id, title, body')
-      .eq('ecosystem_slug', ecosystem)
+      .eq('ecosystem_slug', access.slug)
       .eq('category', 'integrations')
       .order('published_at', { ascending: false })
 
