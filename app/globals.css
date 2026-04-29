@@ -680,3 +680,12 @@ body {
   .hiw-pipeline-grid { grid-template-columns: 1fr; }
   .hiw-pipeline-visual { display: none; }
 }
+
+/* ─── Docs page — mobile table scrolling ─── */
+@media (max-width: 640px) {
+  .docs-main table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

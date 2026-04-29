@@ -435,7 +435,7 @@ function TableHead({ cols }: { cols: string[] }) {
 
 function SectionH({ id, label, sub }: { id: string; label: string; sub?: string }) {
   return (
-    <div id={id} className="mb-8 scroll-mt-8">
+    <div id={id} className="mb-8 scroll-mt-[68px] lg:scroll-mt-8">
       <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-2">
         Strata API
       </p>
@@ -455,7 +455,7 @@ function EndpointH({ id, method, path }: { id: string; method: string; path: str
   return (
     <div
       id={id}
-      className="flex items-center gap-2 mb-3 scroll-mt-8 group"
+      className="flex items-center gap-2 mb-3 scroll-mt-[68px] lg:scroll-mt-8 group"
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
     >
@@ -688,6 +688,7 @@ const PANELS: Record<string, PanelDef> = {
 export default function DocsPage() {
   const [active, setActive] = useState('quickstart')
   const [lang, setLang] = useState<Lang>('curl')
+  const [navOpen, setNavOpen] = useState(false)
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -715,9 +716,116 @@ export default function DocsPage() {
   return (
     <div className="flex min-h-screen text-[--foreground]" style={{ background: '#000' }}>
 
+      {/* ── Mobile header ──────────────────────────────────────────────── */}
+      <div
+        className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 border-b border-[--border]"
+        style={{ background: '#000', height: 52 }}
+      >
+        <Link href="/" className="flex items-center gap-2" style={{ textDecoration: 'none' }}>
+          <span style={{
+            width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+            background: 'linear-gradient(135deg, #c084fc, #818cf8, #5fb085)',
+            boxShadow: '0 0 8px rgba(192,132,252,0.6)',
+            display: 'inline-block',
+          }} />
+          <span style={{
+            fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 15,
+            letterSpacing: '-0.01em',
+            background: 'linear-gradient(135deg, #c084fc 0%, #818cf8 40%, #38bdf8 70%, #5fb085 100%)',
+            WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>Strata Docs</span>
+        </Link>
+        <button
+          onClick={() => setNavOpen(true)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, color: 'var(--muted-foreground)', fontSize: 18 }}
+          aria-label="Open navigation"
+        >☰</button>
+      </div>
+
+      {/* ── Mobile nav overlay ─────────────────────────────────────────── */}
+      {navOpen && (
+        <div className="lg:hidden fixed inset-0 z-40">
+          <div
+            className="absolute inset-0"
+            style={{ background: 'rgba(0,0,0,0.7)' }}
+            onClick={() => setNavOpen(false)}
+          />
+          <nav
+            className="absolute top-0 left-0 h-full overflow-y-auto border-r border-[--border]"
+            style={{ width: 280, background: '#000' }}
+          >
+            <div className="p-5 pb-4 border-b border-[--border] flex items-center justify-between">
+              <Link href="/" className="flex items-center gap-2" style={{ textDecoration: 'none' }}>
+                <span style={{
+                  width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                  background: 'linear-gradient(135deg, #c084fc, #818cf8, #5fb085)',
+                  boxShadow: '0 0 8px rgba(192,132,252,0.6)',
+                  display: 'inline-block',
+                }} />
+                <span style={{
+                  fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 17,
+                  letterSpacing: '-0.01em',
+                  background: 'linear-gradient(135deg, #c084fc 0%, #818cf8 40%, #38bdf8 70%, #5fb085 100%)',
+                  WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                }}>Strata</span>
+              </Link>
+              <button
+                onClick={() => setNavOpen(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', fontSize: 18 }}
+                aria-label="Close navigation"
+              >✕</button>
+            </div>
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-1.5 px-5 py-3 text-[13px] font-mono border-b border-[--border] transition-colors hover:opacity-80"
+              style={{ color: 'var(--muted-foreground)' }}
+            >
+              ← dashboard
+            </Link>
+            <div className="py-4 px-3">
+              {NAV.map(item => {
+                const isActive = active === item.id
+                const parentActive = item.children?.some(c => c.id === active)
+                return (
+                  <div key={item.id} className="mb-0.5">
+                    <button
+                      onClick={() => { scrollTo(item.id); setNavOpen(false) }}
+                      className="w-full text-left px-3 py-1.5 rounded text-[17px] transition-colors flex items-center gap-2"
+                      style={{
+                        color: isActive || parentActive ? ACCENT : 'var(--muted-foreground)',
+                        borderLeft: isActive ? `2px solid ${ACCENT}` : '2px solid transparent',
+                        fontWeight: isActive || parentActive ? 500 : 400,
+                        paddingLeft: isActive ? 10 : 12,
+                      }}
+                    >
+                      {item.label}
+                    </button>
+                    {item.children?.map(child => (
+                      <button
+                        key={child.id}
+                        onClick={() => { scrollTo(child.id); setNavOpen(false) }}
+                        className="w-full text-left py-1 text-[16px] transition-colors font-mono"
+                        style={{
+                          color: active === child.id ? ACCENT : 'var(--muted-foreground)',
+                          paddingLeft: 28,
+                          paddingRight: 12,
+                          borderLeft: active === child.id ? `2px solid ${ACCENT}` : '2px solid transparent',
+                        }}
+                      >
+                        {child.label}
+                      </button>
+                    ))}
+                  </div>
+                )
+              })}
+            </div>
+          </nav>
+        </div>
+      )}
+
       {/* ── Sidebar ──────────────────────────────────────────────────────── */}
       <nav
-        className="fixed top-0 left-0 h-screen overflow-y-auto z-20 border-r border-[--border]"
+        className="hidden lg:block fixed top-0 left-0 h-screen overflow-y-auto z-20 border-r border-[--border]"
         style={{ width: 220, background: '#000' }}
       >
         <div className="p-5 pb-4 border-b border-[--border]">
@@ -792,10 +900,10 @@ export default function DocsPage() {
       </nav>
 
       {/* ── Content + Panel ──────────────────────────────────────────────── */}
-      <div className="flex flex-1 min-w-0 justify-center" style={{ marginLeft: 220, marginRight: 460 }}>
+      <div className="flex flex-1 min-w-0 justify-center lg:ml-[220px] lg:mr-[460px]">
 
         {/* Main content */}
-        <main className="w-full py-16 px-10 lg:px-14" style={{ maxWidth: 680 }}>
+        <main className="w-full pt-[68px] pb-16 lg:py-16 px-5 sm:px-8 lg:px-14 docs-main" style={{ maxWidth: 680 }}>
 
           {/* ── Quickstart ── */}
           <SectionH id="quickstart" label="Quickstart" sub="Make your first API call in under 2 minutes." />
@@ -854,7 +962,7 @@ export default function DocsPage() {
           </p>
 
           {/* Core */}
-          <div id="ecosystems-core" className="scroll-mt-8 mb-1">
+          <div id="ecosystems-core" className="scroll-mt-[68px] lg:scroll-mt-8 mb-1">
             <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">Core — Free + Pro</p>
           </div>
           <table className="w-full text-[17px] mb-8">
@@ -878,7 +986,7 @@ export default function DocsPage() {
           </table>
 
           {/* AI Coding Tools */}
-          <div id="ecosystems-coding" className="scroll-mt-8 mb-1">
+          <div id="ecosystems-coding" className="scroll-mt-[68px] lg:scroll-mt-8 mb-1">
             <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">AI Coding Tools — Pro</p>
           </div>
           <table className="w-full text-[17px] mb-8">
@@ -902,7 +1010,7 @@ export default function DocsPage() {
           </table>
 
           {/* AI Search & Research */}
-          <div id="ecosystems-search" className="scroll-mt-8 mb-1">
+          <div id="ecosystems-search" className="scroll-mt-[68px] lg:scroll-mt-8 mb-1">
             <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">AI Search &amp; Research — Pro</p>
           </div>
           <table className="w-full text-[17px] mb-8">
@@ -924,7 +1032,7 @@ export default function DocsPage() {
           </table>
 
           {/* AI Infrastructure */}
-          <div id="ecosystems-infra" className="scroll-mt-8 mb-1">
+          <div id="ecosystems-infra" className="scroll-mt-[68px] lg:scroll-mt-8 mb-1">
             <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">AI Infrastructure — Pro</p>
           </div>
           <table className="w-full text-[17px] mb-8">
@@ -947,7 +1055,7 @@ export default function DocsPage() {
           </table>
 
           {/* AI Agents & Media */}
-          <div id="ecosystems-agents" className="scroll-mt-8 mb-1">
+          <div id="ecosystems-agents" className="scroll-mt-[68px] lg:scroll-mt-8 mb-1">
             <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">AI Agents &amp; Media — Pro</p>
           </div>
           <table className="w-full text-[17px] mb-6">
