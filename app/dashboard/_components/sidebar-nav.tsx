@@ -33,7 +33,11 @@ export default function SidebarNav({ isAdmin }: { isAdmin?: boolean }) {
                 : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800'
             }`}
           >
-            {href === '/docs' ? <span className="brand-gradient-text">{label}</span> : label}
+            {href === '/docs' ? (
+              <span className="brand-gradient-text">{label}</span>
+            ) : href === '/dashboard/suggest' && !isActive ? (
+              <span style={{ color: '#9be0bd' }}>{label}</span>
+            ) : label}
           </Link>
         )
       })}
