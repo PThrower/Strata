@@ -31,14 +31,7 @@ export default function SuggestionJar() {
   const canSubmit = charCount >= 10 && !pending
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-lg border border-border p-4 mt-6">
-      <h2 style={{ fontFamily: 'ui-serif, Georgia, serif', fontWeight: 600, fontSize: 15, marginBottom: 3 }}>
-        Suggestion Jar
-      </h2>
-      <p className="text-sm text-muted-foreground" style={{ marginBottom: 16 }}>
-        Got an idea? Drop it in.
-      </p>
-
+    <div className="bg-white dark:bg-zinc-900 rounded-lg border border-border p-4">
       {/* Jar + falling note */}
       <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
         {showNoteFall && <div className="sjar-note-fall" />}

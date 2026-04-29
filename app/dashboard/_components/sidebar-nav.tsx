@@ -8,6 +8,7 @@ const BASE_ITEMS = [
   { label: 'Analytics',   href: '/dashboard/analytics' },
   { label: 'Submit',      href: '/dashboard/submit' },
   { label: 'Submissions', href: '/dashboard/submissions' },
+  { label: 'Suggest',    href: '/dashboard/suggest' },
   { label: 'Docs',        href: '/docs' },
   { label: 'Billing',     href: '/dashboard/billing' },
 ]
