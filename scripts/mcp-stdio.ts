@@ -3,12 +3,15 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 import { TOOL_DEFINITIONS, handleToolCall } from '../lib/mcp-tools'
 
+const G     = '\x1b[38;2;0;196;114m'
+const DIM   = '\x1b[2m'
+const BOLD  = '\x1b[1m'
+const RESET = '\x1b[0m'
+
 const apiKey = process.env.STRATA_API_KEY
 if (!apiKey) {
-  console.error('Error: STRATA_API_KEY environment variable is required.')
-  console.error(
-    'Set it in your MCP client config or run: STRATA_API_KEY=sk_... npm run mcp',
-  )
+  process.stderr.write(`\n${G}  ✗${RESET} ${BOLD}STRATA_API_KEY not set${RESET}\n`)
+  process.stderr.write(`${DIM}  Set it: export STRATA_API_KEY=sk_your_key${RESET}\n\n`)
   process.exit(1)
 }
 
@@ -17,6 +20,13 @@ const mockReq = new Request('http://localhost/mcp', {
 })
 
 async function main() {
+  process.stderr.write(`\n${G}${BOLD}  ▲ STRATA${RESET}  MCP Server v1.0.0\n`)
+  process.stderr.write(`${DIM}  ─────────────────────────────────${RESET}\n`)
+  process.stderr.write(`\n${G}  ●${RESET} get_best_practices      ${DIM}→ structured[]${RESET}\n`)
+  process.stderr.write(`${G}  ●${RESET} get_latest_news         ${DIM}→ news[]${RESET}\n`)
+  process.stderr.write(`${G}  ●${RESET} get_top_integrations    ${DIM}→ ranked[]${RESET}\n`)
+  process.stderr.write(`${G}  ●${RESET} search_ecosystem        ${DIM}→ results[]${RESET}\n`)
+
   const server = new McpServer({ name: 'strata', version: '1.0.0' })
 
   server.registerTool(
@@ -58,9 +68,10 @@ async function main() {
 
   const transport = new StdioServerTransport()
   await server.connect(transport)
+  process.stderr.write(`${G}  ✓${RESET} Connected to MCP client\n`)
 }
 
 main().catch((err) => {
-  console.error('Fatal:', err)
+  process.stderr.write(`${G}  ✗${RESET} Fatal: ${err}\n`)
   process.exit(1)
 })
