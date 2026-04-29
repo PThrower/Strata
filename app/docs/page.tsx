@@ -67,6 +67,68 @@ const JSP: HlPat[] = [
 ]
 
 type Lang = 'curl' | 'python' | 'js'
+type McpClient = 'claude-code' | 'claude-desktop' | 'cursor' | 'windsurf' | 'cline' | 'rest'
+
+const MCP_CLIENT_TABS: { id: McpClient; label: string }[] = [
+  { id: 'claude-code',    label: 'Claude Code'    },
+  { id: 'claude-desktop', label: 'Claude Desktop' },
+  { id: 'cursor',         label: 'Cursor'         },
+  { id: 'windsurf',       label: 'Windsurf'       },
+  { id: 'cline',          label: 'Cline'          },
+  { id: 'rest',           label: 'REST API'       },
+]
+
+const MCP_CLIENT_DESCS: Record<McpClient, string> = {
+  'claude-code':    'Add via the CLI:',
+  'claude-desktop': 'Add to ~/Library/Application Support/Claude/claude_desktop_config.json:',
+  'cursor':         'Add to .cursor/mcp.json in your project root:',
+  'windsurf':       'Go to Windsurf Settings → MCP Servers → Add Server:',
+  'cline':          'In VS Code, open the Cline extension → MCP Servers:',
+  'rest':           'Works with any model or framework that can make HTTP requests. No MCP client required.',
+}
+
+const MCP_JSON_CONFIG = `{
+  "mcpServers": {
+    "strata": {
+      "url": "https://usestrata.dev/mcp",
+      "headers": {
+        "Authorization": "Bearer sk_your_key"
+      }
+    }
+  }
+}`
+
+type McpEntry = { code: string; lang: Lang | 'json' }
+const MCP_CLIENT_CODE: Record<McpClient, McpEntry> = {
+  'claude-code': {
+    lang: 'curl',
+    code: `# Add via CLI
+claude mcp add strata --transport http \\
+  https://usestrata.dev/mcp \\
+  --header "Authorization: Bearer sk_your_key"`,
+  },
+  'claude-desktop': { lang: 'json', code: MCP_JSON_CONFIG },
+  'cursor':          { lang: 'json', code: MCP_JSON_CONFIG },
+  'windsurf':        { lang: 'json', code: MCP_JSON_CONFIG },
+  'cline':           { lang: 'json', code: MCP_JSON_CONFIG },
+  'rest': {
+    lang: 'python',
+    code: `# LangChain, CrewAI, AutoGPT, GPT-4, Llama — any agent
+curl -H "X-API-Key: sk_your_key" \\
+  "https://usestrata.dev/api/v1/best-practices?ecosystem=claude"
+
+# OpenAI agents
+import requests
+
+def get_ai_intelligence(ecosystem: str) -> dict:
+    response = requests.get(
+        "https://usestrata.dev/api/v1/best-practices",
+        params={"ecosystem": ecosystem},
+        headers={"X-API-Key": "sk_your_key"}
+    )
+    return response.json()`,
+  },
+}
 
 function CB({ code, lang }: { code: string; lang: Lang | 'json' }) {
   const pats = lang === 'json' ? JP : lang === 'curl' ? BP : lang === 'python' ? PP : JSP
@@ -645,42 +707,7 @@ const PANELS: Record<string, PanelDef> = {
       </div>
     ),
   },
-  'mcp-server': {
-    render: () => (
-      <div className="space-y-5 overflow-y-auto flex-1 p-4">
-        <div>
-          <p className="font-mono text-[13px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Remote (Streamable HTTP)</p>
-          <CB code={`{
-  "mcpServers": {
-    "strata": {
-      "url": "https://strata-fawn-xi.vercel.app/mcp",
-      "headers": {
-        "Authorization": "Bearer sk_your_api_key"
-      }
-    }
-  }
-}`} lang="json" />
-        </div>
-        <div>
-          <p className="font-mono text-[13px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Local (stdio)</p>
-          <CB code={`{
-  "mcpServers": {
-    "strata": {
-      "command": "npx",
-      "args": [
-        "tsx",
-        "/path/to/strata/scripts/mcp-stdio.ts"
-      ],
-      "env": {
-        "STRATA_API_KEY": "sk_your_api_key"
-      }
-    }
-  }
-}`} lang="json" />
-        </div>
-      </div>
-    ),
-  },
+  'mcp-server': { render: () => null },
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -688,6 +715,7 @@ const PANELS: Record<string, PanelDef> = {
 export default function DocsPage() {
   const [active, setActive] = useState('quickstart')
   const [lang, setLang] = useState<Lang>('curl')
+  const [mcpClient, setMcpClient] = useState<McpClient>('claude-code')
   const [navOpen, setNavOpen] = useState(false)
 
   useEffect(() => {
@@ -1316,19 +1344,35 @@ export default function DocsPage() {
           </p>
 
           <h3 className="text-[17px] font-semibold text-[--foreground] mb-3">Remote connection (Streamable HTTP)</h3>
-          <p className="text-[16px] text-[--muted-foreground] mb-4 leading-relaxed">
-            Add to your MCP client config:
+
+          <p className="font-mono text-[10px] uppercase tracking-widest mb-4" style={{ color: ACCENT }}>
+            Strata works with any MCP-compatible client and any model that can make HTTP requests — not just Claude.
           </p>
-          <CB code={`{
-  "mcpServers": {
-    "strata": {
-      "url": "https://strata-fawn-xi.vercel.app/mcp",
-      "headers": {
-        "Authorization": "Bearer sk_your_api_key_here"
-      }
-    }
-  }
-}`} lang="json" />
+
+          {/* Client tab switcher */}
+          <div className="flex flex-wrap" style={{ borderBottom: '1px solid var(--border)', marginBottom: 16 }}>
+            {MCP_CLIENT_TABS.map(c => (
+              <button
+                key={c.id}
+                onClick={() => setMcpClient(c.id)}
+                className="px-3 pb-2.5 text-[13px] font-mono transition-colors cursor-pointer"
+                style={{
+                  color: mcpClient === c.id ? 'var(--foreground)' : 'var(--muted-foreground)',
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: mcpClient === c.id ? `2px solid ${ACCENT}` : '2px solid transparent',
+                  marginBottom: -1,
+                  paddingTop: 8,
+                }}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+
+          <p className="text-[16px] text-[--muted-foreground] mb-6 leading-relaxed">
+            {MCP_CLIENT_DESCS[mcpClient]}
+          </p>
 
           <h3 className="text-[17px] font-semibold text-[--foreground] mt-8 mb-3">Local connection (stdio)</h3>
           <p className="text-[16px] text-[--muted-foreground] mb-4 leading-relaxed">
@@ -1349,6 +1393,11 @@ export default function DocsPage() {
     }
   }
 }`} lang="json" />
+          <p className="text-[15px] text-[--muted-foreground] mt-3 leading-relaxed">
+            The stdio transport works with any client that supports local MCP servers via{' '}
+            <code className="font-mono text-[14px] bg-[--border] px-1 py-0.5 rounded">command + args</code>{' '}
+            config, including Cursor and Windsurf.
+          </p>
 
           <h3 className="text-[17px] font-semibold text-[--foreground] mt-8 mb-4">Available tools</h3>
           <div className="space-y-6">
@@ -1379,7 +1428,11 @@ export default function DocsPage() {
             className="flex flex-shrink-0 items-end gap-0 px-4 pt-4"
             style={{ borderBottom: '1px solid #21262d', minHeight: 44 }}
           >
-            {panel.tabs ? (
+            {active === 'mcp-server' ? (
+              <div className="pb-2.5 px-1 text-[17px] font-mono" style={{ color: SYN.cmt }}>
+                {MCP_CLIENT_TABS.find(t => t.id === mcpClient)?.label ?? 'Claude Code'}
+              </div>
+            ) : panel.tabs ? (
               (['curl', 'python', 'js'] as Lang[]).map(l => (
                 <button
                   key={l}
@@ -1407,7 +1460,14 @@ export default function DocsPage() {
 
           {/* Code content */}
           <div className="flex-1 overflow-y-auto p-4">
-            {panel.render(lang)}
+            {active === 'mcp-server' ? (
+              <CB
+                code={MCP_CLIENT_CODE[mcpClient].code}
+                lang={MCP_CLIENT_CODE[mcpClient].lang}
+              />
+            ) : (
+              panel.render(lang)
+            )}
           </div>
         </aside>
 
