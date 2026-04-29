@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
-import { TOOL_DEFINITIONS, handleToolCall } from '../lib/mcp-tools'
+import { TOOL_DEFINITIONS, handleToolCall, RESOURCES, PROMPTS } from '../lib/mcp-tools'
 
 const G     = '\x1b[38;2;0;196;114m'
 const DIM   = '\x1b[2m'
@@ -26,6 +26,8 @@ async function main() {
   process.stderr.write(`${G}  ●${RESET} get_latest_news         ${DIM}→ news[]${RESET}\n`)
   process.stderr.write(`${G}  ●${RESET} get_top_integrations    ${DIM}→ ranked[]${RESET}\n`)
   process.stderr.write(`${G}  ●${RESET} search_ecosystem        ${DIM}→ results[]${RESET}\n`)
+  process.stderr.write(`${DIM}  prompts: ecosystem_briefing, cross_ecosystem_compare, agent_stack_review${RESET}\n`)
+  process.stderr.write(`${DIM}  resources: strata://formatting-guide${RESET}\n`)
 
   const server = new McpServer({ name: 'strata', version: '1.0.0' })
 
@@ -65,6 +67,41 @@ async function main() {
     },
     (args) => handleToolCall('search_ecosystem', args as Record<string, unknown>, mockReq),
   )
+
+  for (const resource of RESOURCES) {
+    server.registerResource(
+      resource.name,
+      resource.uri,
+      { description: resource.description, mimeType: resource.mimeType },
+      async () => ({
+        contents: [{ uri: resource.uri, text: resource.text, mimeType: resource.mimeType }],
+      })
+    )
+  }
+
+  for (const p of PROMPTS) {
+    server.registerPrompt(
+      p.name,
+      {
+        description: p.description,
+        argsSchema: Object.fromEntries(
+          p.arguments.map(arg => [
+            arg.name,
+            arg.required ? z.string().describe(arg.description) : z.string().optional().describe(arg.description),
+          ])
+        ),
+      },
+      (args) => {
+        let text = p.template
+        for (const [key, value] of Object.entries(args as Record<string, string | undefined>)) {
+          text = text.replaceAll(`{${key}}`, String(value ?? ''))
+        }
+        return {
+          messages: [{ role: 'user' as const, content: { type: 'text' as const, text } }],
+        }
+      }
+    )
+  }
 
   const transport = new StdioServerTransport()
   await server.connect(transport)

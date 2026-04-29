@@ -352,3 +352,195 @@ export async function handleToolCall(
 
   return err(`Error: Unknown tool: ${name}`)
 }
+
+export const RESOURCES = [
+  {
+    uri: 'strata://formatting-guide',
+    name: 'Strata Formatting Guide',
+    description: 'Instructions for presenting Strata intelligence results',
+    mimeType: 'text/plain',
+    text: `STRATA INTELLIGENCE FORMATTING GUIDE
+
+When presenting results from Strata MCP tools, always format
+output as a structured intelligence briefing. Follow these rules:
+
+STRUCTURE
+Use this layout for any Strata response:
+
+─────────────────────────────────────────
+STRATA INTELLIGENCE BRIEF
+[Ecosystem] · [Category] · [Date]
+─────────────────────────────────────────
+
+[SECTION HEADING]
+- [Item 1 — punchy one-line summary]
+- [Item 2 — punchy one-line summary]
+- [Item 3 — punchy one-line summary]
+
+TL;DR
+[2-3 sentence synthesis of the most important takeaway]
+─────────────────────────────────────────
+Powered by Strata · usestrata.dev
+─────────────────────────────────────────
+
+SECTION HEADINGS BY CATEGORY
+- best_practices  → "BEST PRACTICES"
+- news            → "WHAT JUST SHIPPED"
+- integrations    → "TOP INTEGRATIONS"
+- search results  → "RELEVANT RESULTS"
+
+MULTI-TOOL BRIEFINGS
+When multiple tools are called, combine into one briefing
+with a section per tool call. Add a SIGNAL OF THE WEEK
+section at the end with the single most important insight.
+
+TONE
+- Punchy and dense — every line earns its place
+- Write for a senior developer, not a beginner
+- Lead with the most surprising or actionable item
+- Never use filler phrases like "In conclusion" or "Overall"`,
+  },
+]
+
+export const PROMPTS = [
+  {
+    name: 'ecosystem_briefing',
+    description: 'Generate a structured intelligence briefing for any AI ecosystem using Strata tools',
+    arguments: [
+      {
+        name: 'ecosystem',
+        description: 'The ecosystem to brief on: claude, openai, gemini, langchain, ollama, cursor, groq, etc.',
+        required: true,
+      },
+    ],
+    template: `You are an AI intelligence analyst using the Strata MCP server.
+
+Generate a complete intelligence briefing for the {ecosystem} ecosystem.
+
+Steps:
+1. Call get_best_practices(ecosystem="{ecosystem}")
+2. Call get_latest_news(ecosystem="{ecosystem}")
+3. Call get_top_integrations(ecosystem="{ecosystem}")
+4. Synthesize all results into a structured briefing
+
+Format the output exactly like this:
+
+─────────────────────────────────────────
+STRATA INTELLIGENCE BRIEF
+{ecosystem} · [Date]
+─────────────────────────────────────────
+
+WHAT JUST SHIPPED
+[3 bullet points from news — most recent first]
+
+BEST PRACTICES RIGHT NOW
+[3 bullet points — most actionable first]
+
+TOP INTEGRATIONS
+[3 bullet points — most relevant first]
+
+SIGNAL OF THE WEEK
+[1 paragraph — the single most important thing a developer
+building with {ecosystem} should know right now]
+─────────────────────────────────────────
+Powered by Strata · usestrata.dev
+─────────────────────────────────────────
+
+Be punchy. Every line should earn its place.
+Write for a senior developer who has 60 seconds to read this.`,
+  },
+  {
+    name: 'cross_ecosystem_compare',
+    description: 'Compare two AI ecosystems side by side using Strata intelligence',
+    arguments: [
+      {
+        name: 'ecosystem_a',
+        description: 'First ecosystem to compare',
+        required: true,
+      },
+      {
+        name: 'ecosystem_b',
+        description: 'Second ecosystem to compare',
+        required: true,
+      },
+    ],
+    template: `You are an AI intelligence analyst using the Strata MCP server.
+
+Compare {ecosystem_a} and {ecosystem_b} for a developer
+deciding between them or integrating both.
+
+Steps:
+1. Call get_best_practices(ecosystem="{ecosystem_a}")
+2. Call get_best_practices(ecosystem="{ecosystem_b}")
+3. Call get_latest_news(ecosystem="{ecosystem_a}")
+4. Call get_latest_news(ecosystem="{ecosystem_b}")
+
+Format output as:
+
+─────────────────────────────────────────
+STRATA COMPARISON BRIEF
+{ecosystem_a} vs {ecosystem_b} · [Today's Date]
+─────────────────────────────────────────
+
+{ecosystem_a} STRENGTHS
+[3 bullet points]
+
+{ecosystem_b} STRENGTHS
+[3 bullet points]
+
+WHERE THEY OVERLAP
+[2-3 bullet points]
+
+RECENT MOMENTUM
+[Which ecosystem has more activity right now and why]
+
+VERDICT
+[When to use {ecosystem_a}, when to use {ecosystem_b},
+when to use both]
+─────────────────────────────────────────
+Powered by Strata · usestrata.dev
+─────────────────────────────────────────`,
+  },
+  {
+    name: 'agent_stack_review',
+    description: 'Stack recommendation for a specific use case based on current Strata intelligence',
+    arguments: [
+      {
+        name: 'use_case',
+        description: 'What you are building e.g. "RAG pipeline", "coding assistant", "data analysis agent"',
+        required: true,
+      },
+    ],
+    template: `You are a senior AI architect using the Strata MCP server.
+
+A developer is building: {use_case}
+
+Research the most relevant ecosystems for this use case
+and recommend a stack.
+
+Steps:
+1. Use search_ecosystem(query="{use_case}") to find relevant content
+2. Call get_best_practices for the 2-3 most relevant ecosystems
+3. Call get_top_integrations for the primary ecosystem
+
+Format output as:
+
+─────────────────────────────────────────
+STRATA STACK RECOMMENDATION
+For: {use_case} · [Today's Date]
+─────────────────────────────────────────
+
+RECOMMENDED STACK
+[Primary tool/framework — one line why]
+[Secondary tool — one line why]
+
+INTEGRATIONS TO KNOW
+[2-3 integrations most relevant to this use case]
+
+WHAT TO AVOID
+[1-2 common mistakes for this use case based on the data]
+─────────────────────────────────────────
+Powered by Strata · usestrata.dev
+─────────────────────────────────────────`,
+  },
+]

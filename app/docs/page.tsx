@@ -130,6 +130,15 @@ def get_ai_intelligence(ecosystem: str) -> dict:
   },
 }
 
+const MCP_PROMPTS_CODE = `# Access the formatting guide resource
+strata://formatting-guide
+
+# Use a prompt in Claude Desktop
+/ecosystem_briefing ecosystem=claude
+
+# Use a prompt in Claude Code
+Use the ecosystem_briefing prompt for the groq ecosystem`
+
 function CB({ code, lang }: { code: string; lang: Lang | 'json' }) {
   const pats = lang === 'json' ? JP : lang === 'curl' ? BP : lang === 'python' ? PP : JSP
   return (
@@ -435,7 +444,12 @@ const NAV = [
   },
   { id: 'errors', label: 'Errors' },
   { id: 'code-examples', label: 'Code Examples' },
-  { id: 'mcp-server', label: 'MCP Server' },
+  {
+    id: 'mcp-server', label: 'MCP Server',
+    children: [
+      { id: 'mcp-server-prompts', label: 'Prompts & Formatting' },
+    ],
+  },
 ]
 
 const ALL_IDS = [
@@ -443,7 +457,7 @@ const ALL_IDS = [
   'ecosystems', 'ecosystems-core', 'ecosystems-coding', 'ecosystems-search', 'ecosystems-infra', 'ecosystems-agents',
   'rate-limits',
   'api-reference', 'best-practices', 'news', 'integrations', 'search',
-  'errors', 'code-examples', 'mcp-server',
+  'errors', 'code-examples', 'mcp-server', 'mcp-server-prompts',
 ]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -708,6 +722,7 @@ const PANELS: Record<string, PanelDef> = {
     ),
   },
   'mcp-server': { render: () => null },
+  'mcp-server-prompts': { render: () => null },
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -1415,6 +1430,57 @@ export default function DocsPage() {
             ))}
           </div>
 
+          <div id="mcp-server-prompts" className="mt-12 scroll-mt-[68px] lg:scroll-mt-8">
+            <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-2">MCP Server</p>
+            <h2 className="font-serif text-3xl font-normal text-[--foreground] leading-tight mb-2">Prompts &amp; Formatting</h2>
+            <p className="text-base text-[--muted-foreground] mb-6">
+              Strata includes built-in MCP prompts that tell your agent how to present intelligence in a structured briefing format.
+              Supported in Claude Desktop and Claude Code.
+            </p>
+
+            {[
+              {
+                name: 'ecosystem_briefing',
+                desc: 'Full intelligence briefing for any ecosystem. Calls best practices, news, and integrations automatically.',
+                args: [{ name: 'ecosystem', hint: 'e.g. "claude", "groq", "cursor"' }],
+                usage: 'Claude Desktop: type /ecosystem_briefing in chat',
+              },
+              {
+                name: 'cross_ecosystem_compare',
+                desc: 'Side-by-side comparison of two ecosystems. Ideal for architecture decisions.',
+                args: [{ name: 'ecosystem_a' }, { name: 'ecosystem_b' }],
+                usage: null,
+              },
+              {
+                name: 'agent_stack_review',
+                desc: 'Stack recommendation for a specific use case based on current Strata intelligence.',
+                args: [{ name: 'use_case', hint: 'e.g. "RAG pipeline", "coding assistant"' }],
+                usage: null,
+              },
+            ].map(prompt => (
+              <div key={prompt.name} className="border border-[--border] rounded-xl p-4 mb-3">
+                <code className="font-mono text-[14px] font-semibold" style={{ color: ACCENT }}>{prompt.name}</code>
+                <p className="text-[15px] text-[--muted-foreground] mt-1.5 mb-2 leading-relaxed">{prompt.desc}</p>
+                <div className="font-mono text-[12px] text-[--muted-foreground] space-y-0.5">
+                  {prompt.args.map(a => (
+                    <p key={a.name}>
+                      <span style={{ color: SYN.num }}>argument:</span>{' '}
+                      {a.name}
+                      {'hint' in a && a.hint ? <span style={{ color: SYN.cmt }}> — {a.hint}</span> : null}
+                    </p>
+                  ))}
+                  {prompt.usage && <p style={{ color: SYN.cmt }}>{prompt.usage}</p>}
+                </div>
+              </div>
+            ))}
+
+            <p className="text-[15px] text-[--muted-foreground] mt-4 leading-relaxed">
+              Even without prompts, Strata tools always return structured JSON. The formatting guide resource at{' '}
+              <code className="font-mono text-[13px] bg-[--border] px-1 py-0.5 rounded">strata://formatting-guide</code>{' '}
+              tells your agent how to present results — Claude reads this automatically when Strata is connected.
+            </p>
+          </div>
+
           <div className="pb-24" />
         </main>
 
@@ -1431,6 +1497,10 @@ export default function DocsPage() {
             {active === 'mcp-server' ? (
               <div className="pb-2.5 px-1 text-[17px] font-mono" style={{ color: SYN.cmt }}>
                 {MCP_CLIENT_TABS.find(t => t.id === mcpClient)?.label ?? 'Claude Code'}
+              </div>
+            ) : active === 'mcp-server-prompts' ? (
+              <div className="pb-2.5 px-1 text-[17px] font-mono" style={{ color: SYN.cmt }}>
+                Prompts &amp; Formatting
               </div>
             ) : panel.tabs ? (
               (['curl', 'python', 'js'] as Lang[]).map(l => (
@@ -1465,6 +1535,8 @@ export default function DocsPage() {
                 code={MCP_CLIENT_CODE[mcpClient].code}
                 lang={MCP_CLIENT_CODE[mcpClient].lang}
               />
+            ) : active === 'mcp-server-prompts' ? (
+              <CB code={MCP_PROMPTS_CODE} lang="curl" />
             ) : (
               panel.render(lang)
             )}

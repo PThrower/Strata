@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
 import { z } from 'zod'
-import { TOOL_DEFINITIONS, handleToolCall } from '@/lib/mcp-tools'
+import { TOOL_DEFINITIONS, handleToolCall, RESOURCES, PROMPTS } from '@/lib/mcp-tools'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +13,8 @@ export async function GET() {
       'AI ecosystem intelligence for agents. Best practices, news, integrations, and search across Claude, ChatGPT, Gemini, LangChain, and Ollama.',
     version: '1.0.0',
     tools: TOOL_DEFINITIONS.map((t) => ({ name: t.name, description: t.description })),
+    prompts: PROMPTS.map(p => ({ name: p.name, description: p.description, arguments: p.arguments })),
+    resources: RESOURCES.map(r => ({ uri: r.uri, name: r.name, description: r.description })),
     auth: 'Pass your Strata API key as: Authorization: Bearer sk_your_key or X-API-Key: sk_your_key',
     endpoint: `${appUrl}/mcp`,
   })
@@ -56,6 +58,41 @@ export async function POST(req: Request) {
     },
     (args) => handleToolCall('search_ecosystem', args as Record<string, unknown>, req),
   )
+
+  for (const resource of RESOURCES) {
+    server.registerResource(
+      resource.name,
+      resource.uri,
+      { description: resource.description, mimeType: resource.mimeType },
+      async () => ({
+        contents: [{ uri: resource.uri, text: resource.text, mimeType: resource.mimeType }],
+      })
+    )
+  }
+
+  for (const p of PROMPTS) {
+    server.registerPrompt(
+      p.name,
+      {
+        description: p.description,
+        argsSchema: Object.fromEntries(
+          p.arguments.map(arg => [
+            arg.name,
+            arg.required ? z.string().describe(arg.description) : z.string().optional().describe(arg.description),
+          ])
+        ),
+      },
+      (args) => {
+        let text = p.template
+        for (const [key, value] of Object.entries(args as Record<string, string | undefined>)) {
+          text = text.replaceAll(`{${key}}`, String(value ?? ''))
+        }
+        return {
+          messages: [{ role: 'user' as const, content: { type: 'text' as const, text } }],
+        }
+      }
+    )
+  }
 
   const transport = new WebStandardStreamableHTTPServerTransport()
   await server.connect(transport)
