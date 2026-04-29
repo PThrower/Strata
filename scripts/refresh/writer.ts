@@ -111,7 +111,7 @@ export async function bestPracticesAreStale(
   supabase: SupabaseClient,
   ecosystem: string,
 ): Promise<boolean> {
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const sevenDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
   const { count, error } = await supabase
     .from('content_items')
     .select('id', { count: 'exact', head: true })
