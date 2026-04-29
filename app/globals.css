@@ -681,9 +681,13 @@ body {
   .hiw-pipeline-visual { display: none; }
 }
 
-/* ─── Docs page: always dark — force CSS var values on every child ─── */
-/* Using .docs-root * so each element has the property defined directly,
-   bypassing any inheritance gap on mobile browsers in light mode.        */
+/* ─── Docs page: always dark background, always light text ─── */
+/* Docs always renders on #000. Force white text regardless of OS color
+   scheme. Setting color directly + overriding CSS vars on every child
+   covers both inherited and explicitly-set text colors.                */
+.docs-root {
+  color: #ededed;
+}
 .docs-root,
 .docs-root * {
   --foreground: #ededed;
