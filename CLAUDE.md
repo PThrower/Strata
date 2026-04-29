@@ -75,14 +75,64 @@ NEXT_PUBLIC_APP_URL
 
 ## Brand & design system
 
-- Primary accent: `#1D9E75` (green)
-- Dark accent: `#0F6E56`
-- Headlines: `font-serif`, `font-weight: 400` (not bold)
-- Italic accent word in headlines: italic + `text-[#1D9E75]`
-- Code/mono elements: `font-mono`
-- Section labels: `font-mono text-[9px] uppercase tracking-widest` muted
-- Tool/method rows: `border-l-2 border-[#1D9E75] pl-4` — never cards
-- Pricing: feature comparison rows — never bullet lists
-- No component libraries (no shadcn, MUI, etc.)
-- `proxy.ts` not `middleware.ts` (Next.js 16 convention)
-- Must support light and dark mode throughout
+### Color tokens (CSS custom properties in `app/globals.css`)
+
+| Token | Value | Usage |
+|---|---|---|
+| `--bg-0` | `#05060d` | Deepest space background base |
+| `--bg-1` | `#0a0d1a` | Mid space tone |
+| `--bg-2` | `#131831` | Lit nebula tone |
+| `--emerald` | `#2d6a4f` | Brand primary |
+| `--emerald-bright` | `#3d8a65` | API row left border, interactive accents |
+| `--emerald-glow` | `#5fb085` | Italic gradient, return types, check icons, focus ring, live dot |
+| `--ink` | `#ffffff` | Primary text |
+| `--ink-soft` | `rgba(255,255,255,0.84)` | Default body text on dark backgrounds |
+| `--ink-muted` | `rgba(255,255,255,0.62)` | Secondary body text, nav links |
+| `--ink-faint` | `rgba(255,255,255,0.42)` | Eyebrows, params, meta labels |
+| `--hair` / `--rule` | `rgba(255,255,255,0.10)` | Dividers |
+
+### Typography
+
+- **Display / headlines**: `var(--font-serif)` = `ui-rounded, system-ui, -apple-system, sans-serif` (SF Pro Rounded on Apple). Weight 500 for h1, 400 for h2+.
+- **Body / UI**: `var(--font-sans)` = Inter (loaded via `next/font`) → Geist Sans → system. Use `font-feature-settings: "ss01", "cv11", "calt"`.
+- **Code / labels**: `var(--font-mono)` = `ui-monospace, "SF Mono", Menlo` → Geist Mono.
+- Brand wordmark: `var(--font-serif)` 22px, `letter-spacing: 0.18em`, **"S" uppercase, "trata" lowercase** — preserve exactly.
+- Hero h1: 72px / weight 500 / line-height 1.02 / tracking -0.025em.
+- Section h2: 36px / weight 400.
+
+### Shared UI primitives (`components/ui/`)
+
+Do not recreate these inline — always import them:
+
+| Component | Import | Props |
+|---|---|---|
+| `<Glass>` | `@/components/ui/glass` | `shimmer?`, `as?`, `className?`, `style?` |
+| `<Btn>` | `@/components/ui/button` | `variant` (`emerald\|ghost\|white\|outline`), `href?`, `arrow?` |
+| `<LiveBadge>` | `@/components/ui/live-badge` | none |
+| `<SectionHeading>` | `@/components/ui/section-heading` | `title`, `meta?` |
+
+These wrap the CSS classes in `globals.css` (`glass`, `shimmer`, `mkt-btn`, `btn-{variant}`, etc.). All visual logic stays in CSS.
+
+### Space background (marketing layout)
+
+The page background is a 5-layer fixed stack defined in `app/globals.css` and mounted in `app/(marketing)/layout.tsx`:
+`.mkt-space` → `.mkt-nebula` → `.mkt-stars` (animated) → `.mkt-horizon` → `.mkt-grain`
+
+The same background system should be reused on dashboard, docs, and status pages.
+
+### Glass primitive
+
+`.glass` class provides the frosted panel treatment. Content must be wrapped or `.glass > *` automatically gets `position: relative; z-index: 3`. Add `.shimmer` for hover sweep effect. Key properties: `backdrop-filter: blur(28px) saturate(190%)`, faint emerald corner cast, `::after` top specular sheen.
+
+### Design rules
+
+- Tool/method rows: `border-left: 2px solid var(--emerald-bright)` — never cards.
+- Pricing: feature comparison rows with hairline `border-top` — never bullet lists.
+- Focus ring: `outline: 2px solid var(--emerald-glow); outline-offset: 3px` — globally applied in `globals.css`.
+- All decorative animation gated by `@media (prefers-reduced-motion)`.
+- No component libraries (no shadcn, MUI, etc.).
+- `proxy.ts` not `middleware.ts` (Next.js 16 Turbopack convention).
+
+### MCP server
+
+Strata exposes all four tools (`get_best_practices`, `get_latest_news`, `get_top_integrations`, `search_ecosystem`) as both REST endpoints (`/api/v1/*`) and MCP tools (`/mcp`). Auth helper at `lib/mcp-auth.ts`, tool handlers at `lib/mcp-tools.ts`, stdio transport at `scripts/mcp-stdio.ts` (`npm run mcp`).

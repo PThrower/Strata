@@ -5,13 +5,6 @@ import { Btn } from '@/components/ui/button'
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <div className="mkt-bg">
-      {/* Space background layers — fixed, stacked back-to-front */}
-      <div className="mkt-space"  aria-hidden="true" />
-      <div className="mkt-nebula" aria-hidden="true" />
-      <div className="mkt-stars"  aria-hidden="true" />
-      <div className="mkt-horizon" aria-hidden="true" />
-      <div className="mkt-grain"  aria-hidden="true" />
-
       <div className="relative" style={{ zIndex: 2 }}>
         {/* Floating glass nav — sticky at top:16px */}
         <div className="sticky top-4 z-50 px-4 sm:px-8">
