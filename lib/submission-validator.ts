@@ -16,7 +16,7 @@ Return ONLY a JSON object:
   "confidence": "high" | "medium" | "low",
   "reasoning": "brief explanation under 100 words",
   "improvedTitle": "cleaned title if needed, or null",
-  "improvedBody": "improved version if needed (max 300 chars), or null"
+  "improvedBody": "improved version if needed (max 5000 chars — preserve the full detail of the original), or null"
 }
 
 high = publish automatically

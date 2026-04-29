@@ -118,6 +118,7 @@ export async function getAnalytics(days: number): Promise<AnalyticsData> {
     .eq('api_key', profile.api_key)
     .gte('created_at', since.toISOString())
     .order('created_at', { ascending: false })
+    .limit(50000)
 
   return computeAnalytics((data ?? []) as RawRequest[], days)
 }

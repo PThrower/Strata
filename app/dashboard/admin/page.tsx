@@ -34,7 +34,8 @@ export default async function AdminPage() {
   const userClient = await createUserClient()
   const { data: { user } } = await userClient.auth.getUser()
   if (!user) redirect('/login')
-  if (user.email !== process.env.ADMIN_EMAIL) notFound()
+  const adminEmail = process.env.ADMIN_EMAIL
+  if (!adminEmail || user.email !== adminEmail) notFound()
 
   const serviceClient = createServiceRoleClient()
 

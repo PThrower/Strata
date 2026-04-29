@@ -123,7 +123,10 @@ export async function POST(req: NextRequest) {
 
   if (result.confidence === 'high') {
     const finalTitle = result.improvedTitle || title
-    const finalBody = result.improvedBody || content
+    const finalBody =
+      result.improvedBody && result.improvedBody.length >= content.length * 0.5
+        ? result.improvedBody
+        : content
 
     const { data: contentItem, error: contentErr } = await serviceClient
       .from('content_items')

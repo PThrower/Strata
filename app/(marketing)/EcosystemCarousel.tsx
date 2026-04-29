@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { Glass } from '@/components/ui/glass'
 import { LiveBadge } from '@/components/ui/live-badge'
 
@@ -111,19 +112,38 @@ function EcoTile({ name, mark }: Pick<Eco, 'name' | 'mark'>) {
 
 export function EcosystemCarousel() {
   const tiles = [...ECOSYSTEMS, ...ECOSYSTEMS]
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const rows = el.querySelectorAll<HTMLElement>('.carousel-row')
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const state = entry.isIntersecting ? 'running' : 'paused'
+        rows.forEach(row => { row.style.animationPlayState = state })
+      },
+      { threshold: 0 },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   return (
-    <div style={{
-      width: '100%',
-      overflowX: 'hidden',
-      overflowY: 'visible',
-      maskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)',
-      WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)',
-    }}>
+    <div
+      ref={containerRef}
+      style={{
+        width: '100%',
+        overflowX: 'hidden',
+        overflowY: 'visible',
+        maskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)',
+      }}
+    >
       {/* Row 1 — scrolls left */}
       <div
         className="carousel-row carousel-row-left"
-        style={{ gap: 16, paddingRight: 16, marginBottom: 16 }}
+        style={{ gap: 16, paddingRight: 16, marginBottom: 16, willChange: 'transform', transform: 'translate3d(0, 0, 0)' }}
       >
         {tiles.map((eco, i) => (
           <EcoTile key={`r1-${i}`} name={eco.name} mark={eco.mark} />
@@ -132,7 +152,7 @@ export function EcosystemCarousel() {
       {/* Row 2 — scrolls right */}
       <div
         className="carousel-row carousel-row-right"
-        style={{ gap: 16, paddingRight: 16 }}
+        style={{ gap: 16, paddingRight: 16, willChange: 'transform', transform: 'translate3d(0, 0, 0)' }}
       >
         {tiles.map((eco, i) => (
           <EcoTile key={`r2-${i}`} name={eco.name} mark={eco.mark} />

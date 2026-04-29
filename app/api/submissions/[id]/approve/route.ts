@@ -7,7 +7,8 @@ export async function POST(
 ) {
   const userClient = await createUserClient()
   const { data: { user } } = await userClient.auth.getUser()
-  if (!user || user.email !== process.env.ADMIN_EMAIL) {
+  const adminEmail = process.env.ADMIN_EMAIL
+  if (!user || !adminEmail || user.email !== adminEmail) {
     return Response.json({ error: 'Forbidden' }, { status: 403 })
   }
 

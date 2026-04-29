@@ -18,6 +18,15 @@ export async function submitSuggestionAction(
   if (!user) return { error: 'Not authenticated.' }
 
   const supabase = createServiceRoleClient()
+
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  const { count } = await supabase
+    .from('suggestions')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .gte('submitted_at', oneHourAgo)
+  if ((count ?? 0) >= 5) return { error: 'Rate limit: max 5 suggestions per hour.' }
+
   const { error } = await supabase.from('suggestions').insert({ user_id: user.id, content })
 
   if (error) return { error: 'Something went wrong. Try again.' }

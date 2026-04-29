@@ -1,6 +1,6 @@
 import { ECOSYSTEMS } from './ecosystems';
 import { fetchAllSources } from './sources';
-import { validateBatch, dedupeNearDuplicates, generateBestPractices } from './validate';
+import { validateBatch, dedupeNearDuplicates, generateBestPractices, generateBestPracticesHaiku } from './validate';
 import {
   getServiceClient,
   urlDedup,
@@ -61,10 +61,18 @@ async function main() {
 
       const stale = await bestPracticesAreStale(supabase, eco.slug);
       if (stale) {
-        const bp = await generateBestPractices(eco);
-        await replaceBestPractices(supabase, eco.slug, bp);
-        summary.bestPracticesRegen = true;
-        console.log(`${G}    ↻ best practices regenerated${RESET}`)
+        if (summary.fetched === 0) {
+          console.log(`${DIM}    ↷ bp regen skipped (no new sources)${RESET}`)
+        } else {
+          const useHaiku = summary.written === 0;
+          const bp = useHaiku
+            ? await generateBestPracticesHaiku(eco)
+            : await generateBestPractices(eco);
+          await replaceBestPractices(supabase, eco.slug, bp);
+          summary.bestPracticesRegen = true;
+          const model = useHaiku ? 'haiku' : 'sonnet';
+          console.log(`${G}    ↻ best practices regenerated (${model})${RESET}`)
+        }
       }
     } catch (err) {
       summary.errors.push(String(err));

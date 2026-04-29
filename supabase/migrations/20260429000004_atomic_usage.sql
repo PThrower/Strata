@@ -56,7 +56,7 @@ BEGIN
   END IF;
 
   UPDATE public.profiles
-     SET calls_used = calls_used + 1
+     SET calls_used = v_profile.calls_used + 1
    WHERE id = v_profile.id
   RETURNING * INTO v_profile;
 

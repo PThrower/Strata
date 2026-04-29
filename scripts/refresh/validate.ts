@@ -71,7 +71,7 @@ export async function validateBatch(
   if (items.length === 0) return [];
 
   const validated: ValidatedItem[] = [];
-  for (const chunk of chunkArray(items, 10)) {
+  for (const chunk of chunkArray(items, 20)) {
     const payload = chunk.map((item, i) => ({
       index: i,
       title: item.title,
@@ -152,20 +152,24 @@ export async function dedupeNearDuplicates(
   return items.filter((_, i) => !removeSet.has(i));
 }
 
-export async function generateBestPractices(
+async function generateBestPracticesWithModel(
   eco: EcosystemConfig,
+  model: string,
 ): Promise<ValidatedItem[]> {
   interface BPItem {
     title: string;
     body: string;
   }
 
-  const text = await callClaude(
-    [{ role: 'user', content: eco.bestPracticesPrompt }],
-    'You are a technical writer for Strata, an AI ecosystem intelligence platform. ' +
-      'Return ONLY a JSON array, no prose.',
-  );
-  const cleaned = text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '');
+  const resp = await anthropic.messages.create({
+    model,
+    max_tokens: 4096,
+    system: 'You are a technical writer for Strata, an AI ecosystem intelligence platform. Return ONLY a JSON array, no prose.',
+    messages: [{ role: 'user', content: eco.bestPracticesPrompt }],
+  });
+  const block = resp.content[0];
+  if (block.type !== 'text') throw new Error('Unexpected content block type');
+  const cleaned = block.text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '');
   const items = JSON.parse(cleaned) as BPItem[];
 
   const now = new Date().toISOString();
@@ -179,4 +183,16 @@ export async function generateBestPractices(
     sourceType: 'rss' as const,
     confidence: 'high' as const,
   }));
+}
+
+export async function generateBestPractices(
+  eco: EcosystemConfig,
+): Promise<ValidatedItem[]> {
+  return generateBestPracticesWithModel(eco, 'claude-sonnet-4-6');
+}
+
+export async function generateBestPracticesHaiku(
+  eco: EcosystemConfig,
+): Promise<ValidatedItem[]> {
+  return generateBestPracticesWithModel(eco, 'claude-haiku-4-5-20251001');
 }
