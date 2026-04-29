@@ -87,6 +87,17 @@ export const ECOSYSTEMS: EcosystemConfig[] = [
       'multi-agent workflows, and permission management.' + BP_SUFFIX,
   },
   {
+    slug: 'codex',
+    rssFeeds: ['https://openai.com/blog/rss.xml'],
+    subreddits: ['OpenAI', 'ChatGPT'],
+    githubRepos: ['openai/codex'],
+    bestPracticesPrompt:
+      'Generate 3 current best practices for developers using the OpenAI Codex CLI agent. ' +
+      'Focus on: sandboxed code execution, AGENTS.md context files, approval mode for ' +
+      'production safety, composing multi-step tasks, and integrating Codex into CI/CD ' +
+      'pipelines.' + BP_SUFFIX,
+  },
+  {
     slug: 'windsurf',
     rssFeeds: ['https://codeium.com/blog/rss.xml'],
     subreddits: ['windsurf', 'Codeium'],

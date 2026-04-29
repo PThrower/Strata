@@ -24,7 +24,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       properties: {
         ecosystem: {
           type: 'string',
-          description: 'AI ecosystem slug. One of: claude, openai, gemini, langchain, ollama',
+          description: 'AI ecosystem slug. Call list_ecosystems first to see all available slugs for your tier.',
         },
         category: {
           type: 'string',
@@ -81,6 +81,16 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         },
       },
       required: ['query'],
+    },
+  },
+  {
+    name: 'list_ecosystems',
+    description:
+      'List all AI ecosystems available on your current tier. Call this first to discover valid ecosystem slugs before calling get_best_practices, get_latest_news, or get_top_integrations.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
     },
   },
 ]
@@ -350,6 +360,35 @@ export async function handleToolCall(
       statusCode: 200,
     })
     return ok({ query, results })
+  }
+
+  if (name === 'list_ecosystems') {
+    const { data, error } = await supabase
+      .from('ecosystems')
+      .select('slug, name, vendor, available_on_free')
+      .eq('status', 'live')
+      .order('name')
+
+    if (error) return err('Error: Database error')
+
+    const all = (data ?? []) as Array<{
+      slug: string; name: string; vendor: string; available_on_free: boolean
+    }>
+
+    const ecosystems = profile.tier === 'pro'
+      ? all.map(e => ({ slug: e.slug, name: e.name, vendor: e.vendor, tier: 'pro' as const }))
+      : all
+          .filter(e => e.available_on_free)
+          .map(e => ({ slug: e.slug, name: e.name, vendor: e.vendor, tier: 'free' as const }))
+
+    await logApiRequest(supabase, {
+      apiKey: profile.api_key,
+      tool: 'list-ecosystems',
+      ecosystem: 'all',
+      statusCode: 200,
+    })
+
+    return ok({ your_tier: profile.tier, ecosystems })
   }
 
   return err(`Error: Unknown tool: ${name}`)

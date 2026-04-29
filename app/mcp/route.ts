@@ -10,7 +10,7 @@ export async function GET() {
   return Response.json({
     name: 'Strata MCP',
     description:
-      'AI ecosystem intelligence for agents. Best practices, news, integrations, and search across Claude, ChatGPT, Gemini, LangChain, and Ollama.',
+      'AI ecosystem intelligence for agents. Best practices, news, integrations, and search across 22+ AI ecosystems. Call list_ecosystems first to discover available slugs for your tier.',
     version: '1.0.0',
     tools: TOOL_DEFINITIONS.map((t) => ({ name: t.name, description: t.description })),
     prompts: PROMPTS.map(p => ({ name: p.name, description: p.description, arguments: p.arguments })),
@@ -57,6 +57,15 @@ export async function POST(req: Request) {
       inputSchema: { query: z.string(), ecosystem: z.string().optional() },
     },
     (args) => handleToolCall('search_ecosystem', args as Record<string, unknown>, req),
+  )
+
+  server.registerTool(
+    'list_ecosystems',
+    {
+      description: TOOL_DEFINITIONS[4].description,
+      inputSchema: {},
+    },
+    (args) => handleToolCall('list_ecosystems', args as Record<string, unknown>, req),
   )
 
   for (const resource of RESOURCES) {
