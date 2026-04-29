@@ -56,7 +56,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
 
         <footer className="max-w-[1200px] mx-auto px-4 sm:px-8" style={{ margin: '96px auto 32px' }}>
           <div
-            className="glass flex items-center justify-between"
+            className="glass flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0"
             style={{ padding: '22px 28px', borderRadius: 22 }}
           >
             <span style={{
@@ -68,7 +68,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             }}>
               knowledge that holds.
             </span>
-            <span className="hidden sm:flex items-center" style={{
+            <span className="flex flex-wrap justify-center sm:justify-start items-center" style={{
               fontFamily: 'var(--font-mono)',
               fontSize: 11,
               fontWeight: 500,
