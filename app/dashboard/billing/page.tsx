@@ -43,7 +43,7 @@ function FeatureRow({ text }: { text: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0' }}>
       <Check />
-      <span style={{ color: 'var(--ink-soft)', fontSize: 14 }}>{text}</span>
+      <span style={{ color: 'var(--foreground)', fontSize: 14 }}>{text}</span>
     </div>
   )
 }
@@ -51,15 +51,15 @@ function FeatureRow({ text }: { text: string }) {
 function DimRow({ text }: { text: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0' }}>
-      <span style={{ color: 'var(--ink-faint)', fontSize: 13, flexShrink: 0 }}>–</span>
-      <span style={{ color: 'var(--ink-faint)', fontSize: 14 }}>{text}</span>
+      <span style={{ color: 'var(--muted-foreground)', fontSize: 13, flexShrink: 0 }}>–</span>
+      <span style={{ color: 'var(--muted-foreground)', fontSize: 14 }}>{text}</span>
     </div>
   )
 }
 
 const glowPanel = {
   background: 'linear-gradient(135deg, rgba(45,106,79,0.18) 0%, rgba(95,176,133,0.06) 100%)',
-  border: '1px solid rgba(95,176,133,0.28)',
+  border: '1px solid var(--border)',
   borderRadius: 18,
   padding: '28px 32px',
   position: 'relative' as const,
@@ -67,8 +67,8 @@ const glowPanel = {
 }
 
 const flatPanel = {
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.08)',
+  background: 'var(--background)',
+  border: '1px solid var(--border)',
   borderRadius: 18,
   padding: '24px 28px',
 }
@@ -112,7 +112,7 @@ export default async function BillingPage() {
           fontSize: 10,
           letterSpacing: '0.14em',
           textTransform: 'uppercase',
-          color: 'var(--ink-faint)',
+          color: 'var(--muted-foreground)',
           marginBottom: 8,
         }}>
           subscription
@@ -121,7 +121,7 @@ export default async function BillingPage() {
           fontFamily: 'var(--font-serif)',
           fontSize: 28,
           fontWeight: 500,
-          color: 'var(--ink)',
+          color: 'var(--foreground)',
           lineHeight: 1.1,
           margin: 0,
         }}>
@@ -139,20 +139,20 @@ export default async function BillingPage() {
               fontSize: 10,
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
-              color: 'var(--ink-faint)',
+              color: 'var(--muted-foreground)',
               marginBottom: 12,
             }}>
               current plan
             </p>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16 }}>
-              <p style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: 0 }}>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--foreground)', margin: 0 }}>
                 Free
               </p>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-faint)', margin: 0 }}>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--muted-foreground)', margin: 0 }}>
                 $0 / month
               </p>
             </div>
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 14 }}>
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
               {FREE_FEATURES.map(f => <DimRow key={f} text={f} />)}
             </div>
           </div>
@@ -190,12 +190,12 @@ export default async function BillingPage() {
               marginBottom: 20,
               position: 'relative',
             }}>
-              <p style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 400, color: 'var(--ink)', margin: 0 }}>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 400, color: 'var(--foreground)', margin: 0 }}>
                 Strata Pro
               </p>
               <div style={{ textAlign: 'right' }}>
-                <p style={{ fontSize: 30, fontWeight: 600, color: 'var(--ink)', lineHeight: 1, margin: 0 }}>$29</p>
-                <p style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 3, fontFamily: 'var(--font-mono)' }}>/ month</p>
+                <p style={{ fontSize: 30, fontWeight: 600, color: 'var(--foreground)', lineHeight: 1, margin: 0 }}>$29</p>
+                <p style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 3, fontFamily: 'var(--font-mono)' }}>/ month</p>
               </div>
             </div>
 
@@ -248,19 +248,19 @@ export default async function BillingPage() {
             marginBottom: 6,
             position: 'relative',
           }}>
-            <p style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 400, color: 'var(--ink)', margin: 0 }}>
+            <p style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 400, color: 'var(--foreground)', margin: 0 }}>
               Strata Pro
             </p>
             <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: 30, fontWeight: 600, color: 'var(--ink)', lineHeight: 1, margin: 0 }}>$29</p>
-              <p style={{ fontSize: 11, color: 'var(--ink-faint)', marginTop: 3, fontFamily: 'var(--font-mono)' }}>/ month</p>
+              <p style={{ fontSize: 30, fontWeight: 600, color: 'var(--foreground)', lineHeight: 1, margin: 0 }}>$29</p>
+              <p style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 3, fontFamily: 'var(--font-mono)' }}>/ month</p>
             </div>
           </div>
 
           {nextBillingDate && (
-            <p style={{ fontSize: 13, color: 'var(--ink-faint)', marginBottom: 20, position: 'relative' }}>
+            <p style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 20, position: 'relative' }}>
               Renews{' '}
-              <span style={{ color: 'var(--ink-soft)' }}>{nextBillingDate}</span>
+              <span style={{ color: 'var(--foreground)' }}>{nextBillingDate}</span>
             </p>
           )}
 
