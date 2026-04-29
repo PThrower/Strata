@@ -51,3 +51,39 @@ export async function signoutAction() {
   await supabase.auth.signOut()
   redirect('/login')
 }
+
+export type ForgotPasswordState = { error?: string; success?: boolean } | undefined
+
+export async function forgotPasswordAction(
+  _prev: ForgotPasswordState,
+  formData: FormData,
+): Promise<ForgotPasswordState> {
+  const email = formData.get('email') as string
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+
+  const supabase = await createUserClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${appUrl}/reset-password`,
+  })
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+export async function resetPasswordAction(
+  _prev: AuthFormState,
+  formData: FormData,
+): Promise<AuthFormState> {
+  const password = formData.get('password') as string
+
+  if (!PASSWORD_REGEX.test(password)) {
+    return { error: 'Password must be at least 8 characters and include an uppercase letter, a number, and a special character.' }
+  }
+
+  const supabase = await createUserClient()
+  const { error } = await supabase.auth.updateUser({ password })
+
+  if (error) return { error: error.message }
+
+  redirect('/dashboard')
+}

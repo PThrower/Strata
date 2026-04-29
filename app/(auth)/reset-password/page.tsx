@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react'
 import Link from 'next/link'
-import { signupAction } from '@/app/actions/auth'
+import { resetPasswordAction } from '@/app/actions/auth'
 
 function PasswordHint({ password }: { password: string }) {
   const checks = [
@@ -27,41 +27,20 @@ function PasswordHint({ password }: { password: string }) {
   )
 }
 
-export default function SignupPage() {
-  const [state, action, pending] = useActionState(signupAction, undefined)
+export default function ResetPasswordPage() {
+  const [state, action, pending] = useActionState(resetPasswordAction, undefined)
   const [password, setPassword] = useState('')
-
-  const isAlreadyExists = state?.error?.includes('already exists')
 
   return (
     <>
       <Link href="/" className="font-serif text-2xl font-semibold mb-1 text-zinc-900 dark:text-zinc-50 no-underline hover:opacity-80 transition-opacity" style={{ textDecoration: 'none', display: 'block' }}>Strata</Link>
-      <p className="text-sm text-muted-foreground mb-6">Create your account</p>
+      <p className="text-sm text-muted-foreground mb-6">Choose a new password</p>
 
       <form action={action} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            Email
+          <label htmlFor="password" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            New password
           </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            className="border border-border rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:border-transparent"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between">
-            <label htmlFor="password" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Password
-            </label>
-            <Link href="/forgot-password" className="text-xs text-[#1D9E75] hover:underline">
-              Already have an account? Reset password
-            </Link>
-          </div>
           <input
             id="password"
             name="password"
@@ -76,18 +55,7 @@ export default function SignupPage() {
         </div>
 
         {state?.error && (
-          <p className="text-sm text-red-500">
-            {isAlreadyExists ? (
-              <>
-                An account with this email already exists.{' '}
-                <Link href="/login" className="text-[#1D9E75] font-medium hover:underline">
-                  Sign in instead?
-                </Link>
-              </>
-            ) : (
-              state.error
-            )}
-          </p>
+          <p className="text-sm text-red-500">{state.error}</p>
         )}
 
         <button
@@ -95,16 +63,9 @@ export default function SignupPage() {
           disabled={pending}
           className="bg-[#1D9E75] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#18896a] transition-colors disabled:opacity-60"
         >
-          {pending ? 'Creating account...' : 'Create account'}
+          {pending ? 'Updating...' : 'Update password'}
         </button>
       </form>
-
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        Already have an account?{' '}
-        <Link href="/login" className="text-[#1D9E75] font-medium hover:underline">
-          Sign in
-        </Link>
-      </p>
     </>
   )
 }
