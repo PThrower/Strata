@@ -23,14 +23,10 @@ export default async function DashboardLayout({
             boxShadow: '0 0 8px rgba(192,132,252,0.6)',
             display: 'inline-block',
           }} />
-          <span style={{
+          <span className="brand-gradient-text" style={{
             fontFamily: 'var(--font-serif)',
             fontWeight: 600,
             fontSize: 18,
-            background: 'linear-gradient(135deg, #c084fc 0%, #818cf8 40%, #38bdf8 70%, #5fb085 100%)',
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
             letterSpacing: '0.01em',
           }}>
             Strata

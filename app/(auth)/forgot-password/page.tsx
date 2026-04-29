@@ -10,7 +10,7 @@ export default function ForgotPasswordPage() {
   if (state?.success) {
     return (
       <>
-        <Link href="/" className="font-serif text-2xl font-semibold mb-1 text-zinc-900 dark:text-zinc-50 no-underline hover:opacity-80 transition-opacity" style={{ textDecoration: 'none', display: 'block' }}>Strata</Link>
+        <Link href="/" className="font-serif text-2xl font-semibold mb-1 brand-gradient-text no-underline hover:opacity-80 transition-opacity" style={{ textDecoration: 'none', display: 'block' }}>Strata</Link>
         <p className="text-sm text-muted-foreground mb-6">Reset your password</p>
         <div className="rounded-md border border-border p-4 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
           Check your email — if an account exists for that address, we sent a password reset link. It expires in 1 hour.
@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <>
-      <Link href="/" className="font-serif text-2xl font-semibold mb-1 text-zinc-900 dark:text-zinc-50 no-underline hover:opacity-80 transition-opacity" style={{ textDecoration: 'none', display: 'block' }}>Strata</Link>
+      <Link href="/" className="font-serif text-2xl font-semibold mb-1 brand-gradient-text no-underline hover:opacity-80 transition-opacity" style={{ textDecoration: 'none', display: 'block' }}>Strata</Link>
       <p className="text-sm text-muted-foreground mb-6">Reset your password</p>
 
       <form action={action} className="flex flex-col gap-4">

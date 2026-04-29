@@ -51,14 +51,24 @@ export default async function AdminPage() {
     .order('submitted_at', { ascending: false })
     .limit(20)
 
+  const { data: suggestionRows } = await serviceClient
+    .from('suggestions')
+    .select('id, content, submitted_at, user_id')
+    .order('submitted_at', { ascending: false })
+
   const flagged = (flaggedRows ?? []) as Submission[]
   const recent  = (recentRows  ?? []) as Submission[]
+  const suggestions = (suggestionRows ?? []) as { id: string; content: string; submitted_at: string; user_id: string }[]
 
-  const allUserIds = [...new Set([...flagged, ...recent].map(s => s.user_id))]
+  const allUserIds = [...new Set([
+    ...flagged.map(s => s.user_id),
+    ...recent.map(s => s.user_id),
+    ...suggestions.map(s => s.user_id),
+  ])]
   const { data: profileRows } = await serviceClient
     .from('profiles')
     .select('id, email')
-    .in('id', allUserIds)
+    .in('id', allUserIds.length > 0 ? allUserIds : ['00000000-0000-0000-0000-000000000000'])
 
   const profileMap = Object.fromEntries(
     ((profileRows ?? []) as Profile[]).map(p => [p.id, p.email])
@@ -170,6 +180,36 @@ export default async function AdminPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </section>
+
+      {/* Suggestion Jar */}
+      <section className="mt-10">
+        <h2 className="text-sm font-semibold mb-4">
+          Suggestion Jar
+          {suggestions.length > 0 && (
+            <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 font-normal">
+              {suggestions.length}
+            </span>
+          )}
+        </h2>
+        {suggestions.length === 0 ? (
+          <div className={`${card} p-6 text-sm text-muted-foreground`}>No suggestions yet.</div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {suggestions.map(s => (
+              <div key={s.id} className={`${card} p-4`}>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-xs text-muted-foreground">
+                    {formatDate(s.submitted_at)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">·</span>
+                  <span className="text-xs text-muted-foreground">{profileMap[s.user_id] ?? s.user_id}</span>
+                </div>
+                <p className="text-sm leading-relaxed">{s.content}</p>
+              </div>
+            ))}
           </div>
         )}
       </section>

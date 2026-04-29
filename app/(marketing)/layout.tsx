@@ -15,14 +15,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             <Link
               href="/"
               className="flex items-center gap-3"
-              style={{
-                fontFamily: 'var(--font-serif)',
-                fontSize: 22,
-                fontWeight: 400,
-                letterSpacing: '0.18em',
-                color: 'var(--ink)',
-                textDecoration: 'none',
-              }}
+              style={{ textDecoration: 'none' }}
             >
               <span
                 aria-hidden="true"
@@ -36,7 +29,15 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
                   ].join(', '),
                 }}
               />
-              <span>
+              <span
+                className="brand-gradient-text"
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: 22,
+                  fontWeight: 400,
+                  letterSpacing: '0.18em',
+                }}
+              >
                 <span style={{ textTransform: 'uppercase' }}>S</span>
                 <span style={{ textTransform: 'lowercase' }}>trata</span>
               </span>

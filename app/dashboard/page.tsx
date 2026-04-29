@@ -3,6 +3,7 @@ import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server
 import { FREE_LIMIT, PRO_LIMIT } from '@/lib/api-auth'
 import ApiKeyCard from './_components/api-key-card'
 import UpgradeCTA from './_components/upgrade-cta'
+import SuggestionJar from './SuggestionJar'
 
 type DashboardProfile = {
   id: string
@@ -166,6 +167,8 @@ export default async function DashboardPage() {
           </table>
         )}
       </div>
+
+      <SuggestionJar />
     </div>
   )
 }

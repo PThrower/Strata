@@ -9,7 +9,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <Link href="/" className="font-serif text-2xl font-semibold mb-1 text-zinc-900 dark:text-zinc-50 no-underline hover:opacity-80 transition-opacity" style={{ textDecoration: 'none', display: 'block' }}>Strata</Link>
+      <Link href="/" className="font-serif text-2xl font-semibold mb-1 brand-gradient-text no-underline hover:opacity-80 transition-opacity" style={{ textDecoration: 'none', display: 'block' }}>Strata</Link>
       <p className="text-sm text-muted-foreground mb-6">Sign in to your account</p>
 
       <form action={action} className="flex flex-col gap-4">
@@ -22,7 +22,8 @@ export default function LoginPage() {
             name="email"
             type="email"
             required
-            autoComplete="email"
+            autoFocus
+            autoComplete="username"
             className="border border-border rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:border-transparent"
           />
         </div>

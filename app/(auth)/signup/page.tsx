@@ -35,7 +35,7 @@ export default function SignupPage() {
 
   return (
     <>
-      <Link href="/" className="font-serif text-2xl font-semibold mb-1 text-zinc-900 dark:text-zinc-50 no-underline hover:opacity-80 transition-opacity" style={{ textDecoration: 'none', display: 'block' }}>Strata</Link>
+      <Link href="/" className="font-serif text-2xl font-semibold mb-1 brand-gradient-text no-underline hover:opacity-80 transition-opacity" style={{ textDecoration: 'none', display: 'block' }}>Strata</Link>
       <p className="text-sm text-muted-foreground mb-6">Create your account</p>
 
       <form action={action} className="flex flex-col gap-4">
