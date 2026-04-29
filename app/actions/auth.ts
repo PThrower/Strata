@@ -15,7 +15,12 @@ export async function loginAction(
   const supabase = await createUserClient()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) return { error: error.message }
+  if (error) {
+    if (error.message.toLowerCase().includes('email not confirmed')) {
+      return { error: 'Please verify your email.' }
+    }
+    return { error: error.message }
+  }
 
   redirect('/dashboard')
 }
