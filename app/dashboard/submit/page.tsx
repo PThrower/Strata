@@ -3,12 +3,53 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
-const ECOSYSTEMS = [
-  { value: 'claude',     label: 'Claude' },
-  { value: 'openai',     label: 'ChatGPT / OpenAI' },
-  { value: 'gemini',     label: 'Gemini' },
-  { value: 'langchain',  label: 'LangChain' },
-  { value: 'ollama',     label: 'Ollama' },
+const ECOSYSTEM_GROUPS = [
+  {
+    label: 'Core Ecosystems',
+    options: [
+      { value: 'claude',    label: 'Claude' },
+      { value: 'openai',    label: 'ChatGPT' },
+      { value: 'gemini',    label: 'Gemini' },
+      { value: 'langchain', label: 'LangChain' },
+      { value: 'ollama',    label: 'Ollama' },
+    ],
+  },
+  {
+    label: 'AI Coding Tools (Pro)',
+    options: [
+      { value: 'cursor',     label: 'Cursor' },
+      { value: 'claudecode', label: 'Claude Code' },
+      { value: 'windsurf',   label: 'Windsurf' },
+      { value: 'copilot',    label: 'Copilot' },
+      { value: 'cody',       label: 'Cody' },
+    ],
+  },
+  {
+    label: 'AI Search & Research (Pro)',
+    options: [
+      { value: 'perplexity', label: 'Perplexity' },
+      { value: 'youcom',     label: 'You.com' },
+      { value: 'exa',        label: 'Exa' },
+    ],
+  },
+  {
+    label: 'AI Infrastructure (Pro)',
+    options: [
+      { value: 'replicate',  label: 'Replicate' },
+      { value: 'togetherai', label: 'Together.ai' },
+      { value: 'groq',       label: 'Groq' },
+      { value: 'fireworks',  label: 'Fireworks' },
+    ],
+  },
+  {
+    label: 'AI Agents & Media (Pro)',
+    options: [
+      { value: 'manus',      label: 'Manus' },
+      { value: 'higgsfield', label: 'Higgsfield' },
+      { value: 'v0',         label: 'v0' },
+      { value: 'bolt',       label: 'Bolt' },
+    ],
+  },
 ]
 
 const CATEGORIES = [
@@ -150,7 +191,13 @@ export default function SubmitPage() {
               className={fieldInput}
             >
               <option value="">Select…</option>
-              {ECOSYSTEMS.map(e => <option key={e.value} value={e.value}>{e.label}</option>)}
+              {ECOSYSTEM_GROUPS.map(group => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.options.map(e => (
+                    <option key={e.value} value={e.value}>{e.label}</option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </div>
           <div>
