@@ -74,7 +74,7 @@ function CB({ code, lang }: { code: string; lang: Lang | 'json' }) {
     <pre style={{
       background: CODE_BG, color: CODE_FG,
       fontFamily: 'var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace',
-      fontSize: 12, lineHeight: 1.65, padding: '14px 16px',
+      fontSize: 13.5, lineHeight: 1.65, padding: '14px 16px',
       borderRadius: 8, overflowX: 'auto', margin: 0, whiteSpace: 'pre',
     }}>
       <code>{buildNodes(code, pats)}</code>
@@ -350,12 +350,13 @@ const NAV = [
   },
   { id: 'errors', label: 'Errors' },
   { id: 'code-examples', label: 'Code Examples' },
+  { id: 'mcp-server', label: 'MCP Server' },
 ]
 
 const ALL_IDS = [
   'quickstart', 'authentication', 'rate-limits',
   'api-reference', 'best-practices', 'news', 'integrations', 'search',
-  'errors', 'code-examples',
+  'errors', 'code-examples', 'mcp-server',
 ]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -364,17 +365,17 @@ function ParamRow({ name, type, req, desc }: { name: string; type: string; req: 
   return (
     <tr className="border-b border-[--border]">
       <td className="py-2.5 pr-4 align-top">
-        <code className="font-mono text-[12px] text-[--foreground]">{name}</code>
+        <code className="font-mono text-[16px] text-[--foreground]">{name}</code>
       </td>
       <td className="py-2.5 pr-4 align-top">
-        <code className="font-mono text-[11px]" style={{ color: SYN.num }}>{type}</code>
+        <code className="font-mono text-[17px]" style={{ color: SYN.num }}>{type}</code>
       </td>
-      <td className="py-2.5 pr-4 align-top text-[12px]">
+      <td className="py-2.5 pr-4 align-top text-[16px]">
         {req
-          ? <span style={{ color: SYN.kw }} className="font-mono text-[11px]">required</span>
-          : <span className="text-[--muted-foreground] font-mono text-[11px]">optional</span>}
+          ? <span style={{ color: SYN.kw }} className="font-mono text-[17px]">required</span>
+          : <span className="text-[--muted-foreground] font-mono text-[17px]">optional</span>}
       </td>
-      <td className="py-2.5 text-[13px] text-[--muted-foreground] align-top">{desc}</td>
+      <td className="py-2.5 text-[17px] text-[--muted-foreground] align-top">{desc}</td>
     </tr>
   )
 }
@@ -383,12 +384,12 @@ function RespRow({ name, type, desc }: { name: string; type: string; desc: strin
   return (
     <tr className="border-b border-[--border]">
       <td className="py-2.5 pr-4 align-top">
-        <code className="font-mono text-[12px] text-[--foreground]">{name}</code>
+        <code className="font-mono text-[16px] text-[--foreground]">{name}</code>
       </td>
       <td className="py-2.5 pr-4 align-top">
-        <code className="font-mono text-[11px]" style={{ color: SYN.num }}>{type}</code>
+        <code className="font-mono text-[17px]" style={{ color: SYN.num }}>{type}</code>
       </td>
-      <td className="py-2.5 text-[13px] text-[--muted-foreground] align-top">{desc}</td>
+      <td className="py-2.5 text-[17px] text-[--muted-foreground] align-top">{desc}</td>
     </tr>
   )
 }
@@ -433,15 +434,15 @@ function EndpointH({ id, method, path }: { id: string; method: string; path: str
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
     >
-      <span className="font-mono text-[11px] font-medium px-1.5 py-0.5 rounded"
+      <span className="font-mono text-[17px] font-medium px-1.5 py-0.5 rounded"
         style={{ background: ACCENT + '22', color: ACCENT }}>
         {method}
       </span>
-      <h3 className="font-mono text-[15px]" style={{ color: ACCENT }}>{path}</h3>
+      <h3 className="font-mono text-[17px]" style={{ color: ACCENT }}>{path}</h3>
       {hov && (
         <button
           onClick={copyLink}
-          className="text-[--muted-foreground] text-[12px] hover:text-[--foreground] transition-colors"
+          className="text-[--muted-foreground] text-[16px] hover:text-[--foreground] transition-colors"
           title="Copy link"
         >
           #
@@ -454,13 +455,13 @@ function EndpointH({ id, method, path }: { id: string; method: string; path: str
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-4 mb-6">
-      <div className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-white text-[11px] font-semibold"
+      <div className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-white text-[17px] font-semibold"
         style={{ background: ACCENT }}>
         {n}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[14px] font-semibold text-[--foreground] mb-1">{title}</p>
-        <div className="text-[13px] text-[--muted-foreground] leading-relaxed">{children}</div>
+        <p className="text-[16px] font-semibold text-[--foreground] mb-1">{title}</p>
+        <div className="text-[17px] text-[--muted-foreground] leading-relaxed">{children}</div>
       </div>
     </div>
   )
@@ -482,11 +483,11 @@ const PANELS: Record<string, PanelDef> = {
     render: () => (
       <div className="space-y-4">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Request</p>
+          <p className="font-mono text-[17px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Request</p>
           <CB code={qsCurl} lang="curl" />
         </div>
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Response</p>
+          <p className="font-mono text-[17px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Response</p>
           <CB code={qsJson} lang="json" />
         </div>
       </div>
@@ -502,7 +503,7 @@ const PANELS: Record<string, PanelDef> = {
   'rate-limits': {
     render: () => (
       <div>
-        <p className="font-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>429 Response</p>
+        <p className="font-mono text-[17px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>429 Response</p>
         <CB code={rl429} lang="json" />
       </div>
     ),
@@ -528,7 +529,7 @@ const PANELS: Record<string, PanelDef> = {
       <div className="space-y-4">
         <CB code={newsCurl} lang="curl" />
         <CB code={newsJson} lang="json" />
-        <p className="font-mono text-[11px] leading-relaxed" style={{ color: SYN.cmt }}>
+        <p className="font-mono text-[17px] leading-relaxed" style={{ color: SYN.cmt }}>
           {'// Free tier: published_at will be > 24 hours ago'}
         </p>
       </div>
@@ -554,11 +555,11 @@ const PANELS: Record<string, PanelDef> = {
     render: () => (
       <div className="space-y-4">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>401 Unauthorized</p>
+          <p className="font-mono text-[17px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>401 Unauthorized</p>
           <CB code={err401} lang="json" />
         </div>
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>429 Rate Limited</p>
+          <p className="font-mono text-[17px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>429 Rate Limited</p>
           <CB code={err429} lang="json" />
         </div>
       </div>
@@ -569,16 +570,52 @@ const PANELS: Record<string, PanelDef> = {
     render: (lang) => (
       <div className="space-y-6">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Example 1 — Best practices</p>
+          <p className="font-mono text-[17px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Example 1 — Best practices</p>
           <CB code={ex1[lang]} lang={lang} />
         </div>
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Example 2 — Search</p>
+          <p className="font-mono text-[17px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Example 2 — Search</p>
           <CB code={ex2[lang]} lang={lang} />
         </div>
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Example 3 — Poll news</p>
+          <p className="font-mono text-[17px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Example 3 — Poll news</p>
           <CB code={ex3[lang]} lang={lang} />
+        </div>
+      </div>
+    ),
+  },
+  'mcp-server': {
+    render: () => (
+      <div className="space-y-5 overflow-y-auto flex-1 p-4">
+        <div>
+          <p className="font-mono text-[13px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Remote (Streamable HTTP)</p>
+          <CB code={`{
+  "mcpServers": {
+    "strata": {
+      "url": "https://strata-fawn-xi.vercel.app/mcp",
+      "headers": {
+        "Authorization": "Bearer sk_your_api_key"
+      }
+    }
+  }
+}`} lang="json" />
+        </div>
+        <div>
+          <p className="font-mono text-[13px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Local (stdio)</p>
+          <CB code={`{
+  "mcpServers": {
+    "strata": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "/path/to/strata/scripts/mcp-stdio.ts"
+      ],
+      "env": {
+        "STRATA_API_KEY": "sk_your_api_key"
+      }
+    }
+  }
+}`} lang="json" />
         </div>
       </div>
     ),
@@ -623,7 +660,7 @@ export default function DocsPage() {
         style={{ width: 220 }}
       >
         <div className="p-5 pb-4 border-b border-[--border]">
-          <Link href="/" className="font-mono text-[13px] font-semibold tracking-tight text-[--foreground] hover:opacity-80 transition-opacity">
+          <Link href="/" className="font-mono text-[17px] font-semibold tracking-tight text-[--foreground] hover:opacity-80 transition-opacity">
             Strata
           </Link>
         </div>
@@ -638,7 +675,7 @@ export default function DocsPage() {
               <div key={item.id} className="mb-0.5">
                 <button
                   onClick={() => scrollTo(item.id)}
-                  className="w-full text-left px-3 py-1.5 rounded text-[13px] transition-colors flex items-center gap-2"
+                  className="w-full text-left px-3 py-1.5 rounded text-[17px] transition-colors flex items-center gap-2"
                   style={{
                     color: isActive || parentActive ? ACCENT : 'var(--muted-foreground)',
                     borderLeft: isActive ? `2px solid ${ACCENT}` : '2px solid transparent',
@@ -652,7 +689,7 @@ export default function DocsPage() {
                   <button
                     key={child.id}
                     onClick={() => scrollTo(child.id)}
-                    className="w-full text-left py-1 text-[12px] transition-colors font-mono"
+                    className="w-full text-left py-1 text-[16px] transition-colors font-mono"
                     style={{
                       color: active === child.id ? ACCENT : 'var(--muted-foreground)',
                       paddingLeft: 28,
@@ -670,10 +707,10 @@ export default function DocsPage() {
       </nav>
 
       {/* ── Content + Panel ──────────────────────────────────────────────── */}
-      <div className="flex flex-1 min-w-0" style={{ marginLeft: 220 }}>
+      <div className="flex flex-1 min-w-0 justify-center" style={{ marginLeft: 220, marginRight: 340 }}>
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 py-16 px-10 lg:px-14" style={{ maxWidth: 680 }}>
+        <main className="w-full py-16 px-10 lg:px-14" style={{ maxWidth: 680 }}>
 
           {/* ── Quickstart ── */}
           <SectionH id="quickstart" label="Quickstart" sub="Make your first API call in under 2 minutes." />
@@ -684,22 +721,22 @@ export default function DocsPage() {
               strata.dev/signup
             </a>
             {' '}then open the dashboard. Your key appears under{' '}
-            <span className="font-mono text-[12px] bg-[--border] px-1 py-0.5 rounded">Overview → Your API Key</span>.
+            <span className="font-mono text-[16px] bg-[--border] px-1 py-0.5 rounded">Overview → Your API Key</span>.
           </Step>
 
           <Step n={2} title="Make your first request">
             Pass your key in the{' '}
-            <code className="font-mono text-[12px] bg-[--border] px-1 py-0.5 rounded">X-API-Key</code>
+            <code className="font-mono text-[16px] bg-[--border] px-1 py-0.5 rounded">X-API-Key</code>
             {' '}header. All requests use HTTPS.
           </Step>
 
           <Step n={3} title="Explore the response">
             The response contains an{' '}
-            <code className="font-mono text-[12px] bg-[--border] px-1 py-0.5 rounded">items</code>
+            <code className="font-mono text-[16px] bg-[--border] px-1 py-0.5 rounded">items</code>
             {' '}array. Each item has a{' '}
-            <code className="font-mono text-[12px] bg-[--border] px-1 py-0.5 rounded">title</code>,{' '}
-            <code className="font-mono text-[12px] bg-[--border] px-1 py-0.5 rounded">body</code>, and{' '}
-            <code className="font-mono text-[12px] bg-[--border] px-1 py-0.5 rounded">updated_at</code>{' '}
+            <code className="font-mono text-[16px] bg-[--border] px-1 py-0.5 rounded">title</code>,{' '}
+            <code className="font-mono text-[16px] bg-[--border] px-1 py-0.5 rounded">body</code>, and{' '}
+            <code className="font-mono text-[16px] bg-[--border] px-1 py-0.5 rounded">updated_at</code>{' '}
             timestamp. Items are Claude-validated and safe for injection into AI prompts.
           </Step>
 
@@ -708,14 +745,14 @@ export default function DocsPage() {
           {/* ── Authentication ── */}
           <SectionH id="authentication" label="Authentication" />
 
-          <p className="text-[14px] text-[--muted-foreground] mb-4 leading-relaxed">
+          <p className="text-[16px] text-[--muted-foreground] mb-4 leading-relaxed">
             All API requests require an{' '}
-            <code className="font-mono text-[12px] text-[--foreground] bg-[--border] px-1 py-0.5 rounded">X-API-Key</code>
-            {' '}header. Keys are prefixed with <code className="font-mono text-[12px] text-[--foreground] bg-[--border] px-1 py-0.5 rounded">sk_</code>.
+            <code className="font-mono text-[16px] text-[--foreground] bg-[--border] px-1 py-0.5 rounded">X-API-Key</code>
+            {' '}header. Keys are prefixed with <code className="font-mono text-[16px] text-[--foreground] bg-[--border] px-1 py-0.5 rounded">sk_</code>.
             Never expose your key in client-side code or version control.
           </p>
 
-          <div className="rounded-lg border border-[--border] p-4 mb-6 text-[13px] text-[--muted-foreground] leading-relaxed">
+          <div className="rounded-lg border border-[--border] p-4 mb-6 text-[17px] text-[--muted-foreground] leading-relaxed">
             <strong className="text-[--foreground] font-medium">Finding your key:</strong>{' '}
             Dashboard → Overview → <em>Your API Key</em> section. If your key is compromised, use
             the <strong className="text-[--foreground] font-medium">Regenerate</strong> button — the old key is immediately revoked.
@@ -726,7 +763,7 @@ export default function DocsPage() {
           {/* ── Rate Limits ── */}
           <SectionH id="rate-limits" label="Rate Limits" />
 
-          <table className="w-full text-[13px] mb-6">
+          <table className="w-full text-[17px] mb-6">
             <TableHead cols={['Plan', 'Calls / month', 'News lag', 'Refresh rate']} />
             <tbody>
               <tr className="border-b border-[--border]">
@@ -744,12 +781,12 @@ export default function DocsPage() {
             </tbody>
           </table>
 
-          <p className="text-[13px] text-[--muted-foreground] mb-3 leading-relaxed">
+          <p className="text-[17px] text-[--muted-foreground] mb-3 leading-relaxed">
             When you exceed your monthly limit the API returns a{' '}
-            <code className="font-mono text-[12px] text-[--foreground] bg-[--border] px-1 py-0.5 rounded">429</code> status.
+            <code className="font-mono text-[16px] text-[--foreground] bg-[--border] px-1 py-0.5 rounded">429</code> status.
             Limits reset on the first day of each calendar month.
           </p>
-          <p className="text-[13px] text-[--muted-foreground] leading-relaxed">
+          <p className="text-[17px] text-[--muted-foreground] leading-relaxed">
             To increase your limit,{' '}
             <Link href="/dashboard/billing" className="underline underline-offset-2 hover:opacity-80 transition-opacity" style={{ color: ACCENT }}>
               upgrade to Pro
@@ -760,21 +797,21 @@ export default function DocsPage() {
 
           {/* ── API Reference ── */}
           <SectionH id="api-reference" label="API Reference" />
-          <p className="text-[13px] text-[--muted-foreground] mb-2">
-            Base URL: <code className="font-mono text-[12px] text-[--foreground] bg-[--border] px-1 py-0.5 rounded">https://api.strata.dev/v1</code>
+          <p className="text-[17px] text-[--muted-foreground] mb-2">
+            Base URL: <code className="font-mono text-[16px] text-[--foreground] bg-[--border] px-1 py-0.5 rounded">https://api.strata.dev/v1</code>
           </p>
-          <p className="text-[12px] text-[--muted-foreground] mb-8">
-            In local dev: <code className="font-mono text-[11px] bg-[--border] px-1 py-0.5 rounded">http://localhost:3000/api/v1</code>
+          <p className="text-[16px] text-[--muted-foreground] mb-8">
+            In local dev: <code className="font-mono text-[17px] bg-[--border] px-1 py-0.5 rounded">http://localhost:3000/api/v1</code>
           </p>
 
           {/* /best-practices */}
           <EndpointH id="best-practices" method="GET" path="/best-practices" />
-          <p className="text-[13px] text-[--muted-foreground] mb-5 leading-relaxed">
+          <p className="text-[17px] text-[--muted-foreground] mb-5 leading-relaxed">
             Returns AI-verified best practices for a given ecosystem and category.
           </p>
 
           <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">Parameters</p>
-          <table className="w-full text-[13px] mb-6">
+          <table className="w-full text-[17px] mb-6">
             <TableHead cols={['Parameter', 'Type', 'Required', 'Description']} />
             <tbody>
               <ParamRow name="ecosystem" type="string" req desc="Ecosystem slug: claude, openai, gemini, langchain, ollama" />
@@ -783,7 +820,7 @@ export default function DocsPage() {
           </table>
 
           <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">Response fields</p>
-          <table className="w-full text-[13px] mb-10">
+          <table className="w-full text-[17px] mb-10">
             <TableHead cols={['Field', 'Type', 'Description']} />
             <tbody>
               <RespRow name="ecosystem" type="string" desc="Requested ecosystem slug" />
@@ -794,13 +831,13 @@ export default function DocsPage() {
 
           {/* /news */}
           <EndpointH id="news" method="GET" path="/news" />
-          <p className="text-[13px] text-[--muted-foreground] mb-5 leading-relaxed">
+          <p className="text-[17px] text-[--muted-foreground] mb-5 leading-relaxed">
             Returns aggregated news for an ecosystem. Free tier receives items older than 24 hours.
             Pro tier receives real-time results.
           </p>
 
           <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">Parameters</p>
-          <table className="w-full text-[13px] mb-6">
+          <table className="w-full text-[17px] mb-6">
             <TableHead cols={['Parameter', 'Type', 'Required', 'Description']} />
             <tbody>
               <ParamRow name="ecosystem" type="string" req desc="Ecosystem slug" />
@@ -809,7 +846,7 @@ export default function DocsPage() {
           </table>
 
           <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">Response fields</p>
-          <table className="w-full text-[13px] mb-10">
+          <table className="w-full text-[17px] mb-10">
             <TableHead cols={['Field', 'Type', 'Description']} />
             <tbody>
               <RespRow name="ecosystem" type="string" desc="Requested ecosystem slug" />
@@ -820,12 +857,12 @@ export default function DocsPage() {
 
           {/* /integrations */}
           <EndpointH id="integrations" method="GET" path="/integrations" />
-          <p className="text-[13px] text-[--muted-foreground] mb-5 leading-relaxed">
+          <p className="text-[17px] text-[--muted-foreground] mb-5 leading-relaxed">
             Returns ranked integrations and MCP servers for an ecosystem.
           </p>
 
           <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">Parameters</p>
-          <table className="w-full text-[13px] mb-6">
+          <table className="w-full text-[17px] mb-6">
             <TableHead cols={['Parameter', 'Type', 'Required', 'Description']} />
             <tbody>
               <ParamRow name="ecosystem" type="string" req desc="Ecosystem slug" />
@@ -834,7 +871,7 @@ export default function DocsPage() {
           </table>
 
           <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">Response fields</p>
-          <table className="w-full text-[13px] mb-10">
+          <table className="w-full text-[17px] mb-10">
             <TableHead cols={['Field', 'Type', 'Description']} />
             <tbody>
               <RespRow name="ecosystem" type="string" desc="Requested ecosystem slug" />
@@ -844,12 +881,12 @@ export default function DocsPage() {
 
           {/* /search */}
           <EndpointH id="search" method="GET" path="/search" />
-          <p className="text-[13px] text-[--muted-foreground] mb-5 leading-relaxed">
+          <p className="text-[17px] text-[--muted-foreground] mb-5 leading-relaxed">
             Full-text search across all verified content. Returns results ranked by relevance.
           </p>
 
           <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">Parameters</p>
-          <table className="w-full text-[13px] mb-6">
+          <table className="w-full text-[17px] mb-6">
             <TableHead cols={['Parameter', 'Type', 'Required', 'Description']} />
             <tbody>
               <ParamRow name="query" type="string" req desc="Search query" />
@@ -858,7 +895,7 @@ export default function DocsPage() {
           </table>
 
           <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">Response fields</p>
-          <table className="w-full text-[13px] mb-10">
+          <table className="w-full text-[17px] mb-10">
             <TableHead cols={['Field', 'Type', 'Description']} />
             <tbody>
               <RespRow name="query" type="string" desc="The original search query" />
@@ -871,43 +908,43 @@ export default function DocsPage() {
           {/* ── Errors ── */}
           <SectionH id="errors" label="Error Codes" />
 
-          <table className="w-full text-[13px] mb-6">
+          <table className="w-full text-[17px] mb-6">
             <TableHead cols={['Status', 'Code', 'Description']} />
             <tbody>
               <tr className="border-b border-[--border]">
-                <td className="py-2.5 pr-4 font-mono text-[12px]" style={{ color: SYN.kw }}>401</td>
+                <td className="py-2.5 pr-4 font-mono text-[16px]" style={{ color: SYN.kw }}>401</td>
                 <td className="py-2.5 pr-4 text-[--foreground]">Invalid API key</td>
                 <td className="py-2.5 text-[--muted-foreground]">Key missing or not found</td>
               </tr>
               <tr className="border-b border-[--border]">
-                <td className="py-2.5 pr-4 font-mono text-[12px]" style={{ color: SYN.kw }}>403</td>
+                <td className="py-2.5 pr-4 font-mono text-[16px]" style={{ color: SYN.kw }}>403</td>
                 <td className="py-2.5 pr-4 text-[--foreground]">Ecosystem not available on free tier</td>
                 <td className="py-2.5 text-[--muted-foreground]">Upgrade to Pro for this ecosystem</td>
               </tr>
               <tr className="border-b border-[--border]">
-                <td className="py-2.5 pr-4 font-mono text-[12px]" style={{ color: SYN.kw }}>404</td>
+                <td className="py-2.5 pr-4 font-mono text-[16px]" style={{ color: SYN.kw }}>404</td>
                 <td className="py-2.5 pr-4 text-[--foreground]">Ecosystem not found</td>
                 <td className="py-2.5 text-[--muted-foreground]">Check the ecosystem slug</td>
               </tr>
               <tr className="border-b border-[--border]">
-                <td className="py-2.5 pr-4 font-mono text-[12px]" style={{ color: SYN.kw }}>429</td>
+                <td className="py-2.5 pr-4 font-mono text-[16px]" style={{ color: SYN.kw }}>429</td>
                 <td className="py-2.5 pr-4 text-[--foreground]">Monthly limit reached</td>
                 <td className="py-2.5 text-[--muted-foreground]">Upgrade or wait for monthly reset</td>
               </tr>
               <tr>
-                <td className="py-2.5 pr-4 font-mono text-[12px]" style={{ color: SYN.kw }}>500</td>
+                <td className="py-2.5 pr-4 font-mono text-[16px]" style={{ color: SYN.kw }}>500</td>
                 <td className="py-2.5 pr-4 text-[--foreground]">Internal server error</td>
                 <td className="py-2.5 text-[--muted-foreground]">Something went wrong on our end</td>
               </tr>
             </tbody>
           </table>
 
-          <p className="text-[13px] text-[--muted-foreground] mb-2">All error responses share the same shape:</p>
-          <code className="font-mono text-[12px] block bg-[--border] px-3 py-2 rounded text-[--foreground]">
+          <p className="text-[17px] text-[--muted-foreground] mb-2">All error responses share the same shape:</p>
+          <code className="font-mono text-[16px] block bg-[--border] px-3 py-2 rounded text-[--foreground]">
             {'{ "error": "message", "tier": "free" }'}
           </code>
-          <p className="text-[11px] text-[--muted-foreground] mt-1">
-            The <code className="font-mono text-[11px]">tier</code> field is included only on 403 and 429 responses.
+          <p className="text-[17px] text-[--muted-foreground] mt-1">
+            The <code className="font-mono text-[17px]">tier</code> field is included only on 403 and 429 responses.
           </p>
 
           <Divider />
@@ -915,34 +952,99 @@ export default function DocsPage() {
           {/* ── Code Examples ── */}
           <SectionH id="code-examples" label="Code Examples" />
 
-          <div className="space-y-8">
+          <div className="space-y-10">
             <div>
-              <h3 className="text-[14px] font-semibold text-[--foreground] mb-1">
+              <h3 className="text-[16px] font-semibold text-[--foreground] mb-1">
                 1. Get Claude best practices
               </h3>
-              <p className="text-[13px] text-[--muted-foreground]">
+              <p className="text-[17px] text-[--muted-foreground] mb-4">
                 Fetch the current top best practices for the Claude ecosystem.
               </p>
+              <CB code={ex1[lang]} lang={lang} />
             </div>
 
             <div>
-              <h3 className="text-[14px] font-semibold text-[--foreground] mb-1">
+              <h3 className="text-[16px] font-semibold text-[--foreground] mb-1">
                 2. Search across all ecosystems
               </h3>
-              <p className="text-[13px] text-[--muted-foreground]">
+              <p className="text-[17px] text-[--muted-foreground] mb-4">
                 Run a full-text search across every verified content item.
               </p>
+              <CB code={ex2[lang]} lang={lang} />
             </div>
 
             <div>
-              <h3 className="text-[14px] font-semibold text-[--foreground] mb-1">
+              <h3 className="text-[16px] font-semibold text-[--foreground] mb-1">
                 3. Poll for latest news with pagination
               </h3>
-              <p className="text-[13px] text-[--muted-foreground]">
+              <p className="text-[17px] text-[--muted-foreground] mb-4">
                 Continuously poll the news endpoint, tracking seen items by ID to surface
                 only new arrivals.
               </p>
+              <CB code={ex3[lang]} lang={lang} />
             </div>
+          </div>
+
+          <Divider />
+
+          {/* ── MCP Server ── */}
+          <SectionH id="mcp-server" label="MCP Server" sub="Connect your agent once and get access to all Strata tools automatically." />
+
+          <p className="text-[16px] text-[--muted-foreground] mb-6 leading-relaxed">
+            Strata is available as a native MCP server. Any MCP-compatible client — Claude.ai,
+            Cursor, Windsurf, or a custom agent — can call all four tools without making
+            individual REST requests.
+          </p>
+
+          <h3 className="text-[17px] font-semibold text-[--foreground] mb-3">Remote connection (Streamable HTTP)</h3>
+          <p className="text-[16px] text-[--muted-foreground] mb-4 leading-relaxed">
+            Add to your MCP client config:
+          </p>
+          <CB code={`{
+  "mcpServers": {
+    "strata": {
+      "url": "https://strata-fawn-xi.vercel.app/mcp",
+      "headers": {
+        "Authorization": "Bearer sk_your_api_key_here"
+      }
+    }
+  }
+}`} lang="json" />
+
+          <h3 className="text-[17px] font-semibold text-[--foreground] mt-8 mb-3">Local connection (stdio)</h3>
+          <p className="text-[16px] text-[--muted-foreground] mb-4 leading-relaxed">
+            For local development with Claude Desktop, clone the repo and add to{' '}
+            <code className="font-mono text-[14px] bg-[--border] px-1 py-0.5 rounded">claude_desktop_config.json</code>:
+          </p>
+          <CB code={`{
+  "mcpServers": {
+    "strata": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "/path/to/strata/scripts/mcp-stdio.ts"
+      ],
+      "env": {
+        "STRATA_API_KEY": "sk_your_api_key_here"
+      }
+    }
+  }
+}`} lang="json" />
+
+          <h3 className="text-[17px] font-semibold text-[--foreground] mt-8 mb-4">Available tools</h3>
+          <div className="space-y-6">
+            {([
+              { name: 'get_best_practices', params: 'ecosystem (required), category (optional)', desc: 'Current AI-verified best practices for a given ecosystem.' },
+              { name: 'get_latest_news', params: 'ecosystem (required), limit (optional, max 20)', desc: 'Latest news and releases. Pro gets real-time; free gets items older than 24 h.' },
+              { name: 'get_top_integrations', params: 'ecosystem (required), use_case (optional)', desc: 'Ranked integrations and MCP servers. Filter by use case for relevance-sorted results.' },
+              { name: 'search_ecosystem', params: 'query (required), ecosystem (optional)', desc: 'Full-text search across all verified content. Omit ecosystem to search globally.' },
+            ] as const).map(({ name, params, desc }) => (
+              <div key={name} className="border-l-2 pl-4" style={{ borderColor: ACCENT }}>
+                <code className="font-mono text-[15px] text-[--foreground] font-semibold">{name}</code>
+                <p className="font-mono text-[13px] mt-0.5 mb-1" style={{ color: SYN.cmt }}>{params}</p>
+                <p className="text-[15px] text-[--muted-foreground]">{desc}</p>
+              </div>
+            ))}
           </div>
 
           <div className="pb-24" />
@@ -950,7 +1052,7 @@ export default function DocsPage() {
 
         {/* ── Right panel ── */}
         <aside
-          className="hidden lg:flex flex-col flex-shrink-0 sticky top-0 h-screen overflow-hidden"
+          className="hidden lg:flex flex-col fixed top-0 right-0 h-screen overflow-hidden z-10"
           style={{ width: 340, background: CODE_BG }}
         >
           {/* Tab bar */}
@@ -963,7 +1065,7 @@ export default function DocsPage() {
                 <button
                   key={l}
                   onClick={() => setLang(l)}
-                  className="px-3 pb-2.5 text-[12px] font-mono transition-colors cursor-pointer"
+                  className="px-3 pb-2.5 text-[16px] font-mono transition-colors cursor-pointer"
                   style={{
                     color: lang === l ? CODE_FG : SYN.cmt,
                     background: 'transparent',
@@ -978,7 +1080,7 @@ export default function DocsPage() {
                 </button>
               ))
             ) : (
-              <div className="pb-2.5 px-1 text-[11px] font-mono" style={{ color: SYN.cmt }}>
+              <div className="pb-2.5 px-1 text-[17px] font-mono" style={{ color: SYN.cmt }}>
                 Example
               </div>
             )}

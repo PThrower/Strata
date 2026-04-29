@@ -7,10 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "refresh": "tsx --env-file=.env.local scripts/refresh/index.ts"
+    "refresh": "tsx --env-file=.env.local scripts/refresh/index.ts",
+    "mcp": "tsx --env-file=.env.local scripts/mcp-stdio.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@stripe/stripe-js": "^9.3.1",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.105.1",

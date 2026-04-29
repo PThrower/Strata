@@ -329,6 +329,24 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ══ MCP callout ══ */}
+      <div style={{
+        borderTop: '1px solid var(--rule)',
+        borderBottom: '1px solid var(--rule)',
+        padding: '18px 0',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+      }}>
+        <span style={{ color: '#1D9E75', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em', flexShrink: 0 }}>MCP READY</span>
+        <span style={{ color: 'var(--ink-muted)', fontSize: 14 }}>
+          Also available as a native MCP server — connect once, access all tools automatically.
+        </span>
+        <a href="/docs#mcp-server" style={{ marginLeft: 'auto', color: '#1D9E75', fontSize: 13, fontFamily: 'var(--font-mono)', flexShrink: 0, whiteSpace: 'nowrap' }}>
+          view docs →
+        </a>
+      </div>
+
       {/* ══ Pricing ══ */}
       <section style={{ padding: '64px 0' }} id="pricing">
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 28, gap: 24 }}>
