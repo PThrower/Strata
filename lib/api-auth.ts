@@ -97,7 +97,7 @@ export async function checkEcosystemAccess(
   const { data: ecosystem } = await supabase
     .from('ecosystems')
     .select('available_on_free')
-    .eq('slug', ecosystemSlug)
+    .or(`slug.eq.${ecosystemSlug},aliases.cs.{${ecosystemSlug}}`)
     .maybeSingle<{ available_on_free: boolean }>()
 
   if (!ecosystem) {
