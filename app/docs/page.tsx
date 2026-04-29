@@ -714,12 +714,7 @@ export default function DocsPage() {
   const panel = PANELS[active] ?? PANELS['quickstart']
 
   return (
-    <div className="flex min-h-screen text-[--foreground]" style={{
-      background: '#000',
-      '--foreground': '#ededed',
-      '--muted-foreground': '#a1a1aa',
-      '--border': '#27272a',
-    } as React.CSSProperties}>
+    <div className="docs-root flex min-h-screen text-[--foreground]" style={{ background: '#000' }}>
 
       {/* ── Mobile header ──────────────────────────────────────────────── */}
       <div

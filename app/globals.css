@@ -681,6 +681,16 @@ body {
   .hiw-pipeline-visual { display: none; }
 }
 
+/* ─── Docs page: always dark — force CSS var values on every child ─── */
+/* Using .docs-root * so each element has the property defined directly,
+   bypassing any inheritance gap on mobile browsers in light mode.        */
+.docs-root,
+.docs-root * {
+  --foreground: #ededed;
+  --muted-foreground: #a1a1aa;
+  --border: #27272a;
+}
+
 /* ─── Docs page — mobile table scrolling ─── */
 @media (max-width: 640px) {
   .docs-main table {
