@@ -643,6 +643,25 @@ body {
   .hero-graphic-col { display: none; }
 }
 
+/* ─── Ecosystem Carousel ─── */
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes marquee-right {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+.carousel-row {
+  display: flex;
+  width: max-content;
+}
+.carousel-row:hover { animation-play-state: paused !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-row { animation: none !important; }
+}
+
 /* ─── How It Works pipeline grid (landing page teaser section) ─── */
 .hiw-pipeline-grid {
   display: grid;

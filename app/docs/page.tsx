@@ -217,6 +217,19 @@ const srchJson = `{
   ]
 }`
 
+const ecosystemsCurl = `# Core ecosystem — works on free + pro
+curl -H "X-API-Key: sk_your_key" \\
+  "https://api.strata.dev/v1/news?ecosystem=claude"
+
+# Pro-only ecosystem
+curl -H "X-API-Key: sk_pro_key" \\
+  "https://api.strata.dev/v1/news?ecosystem=groq"`
+
+const ecosystemsErr = `{
+  "error": "Ecosystem not available on free tier",
+  "upgrade": "https://usestrata.dev/dashboard/billing"
+}`
+
 const err401 = `{
   "error": "Invalid API key"
 }`
@@ -338,6 +351,16 @@ pollNews("openai");`,
 const NAV = [
   { id: 'quickstart', label: 'Quickstart' },
   { id: 'authentication', label: 'Authentication' },
+  {
+    id: 'ecosystems', label: 'Ecosystems',
+    children: [
+      { id: 'ecosystems-core',    label: 'Core (Free + Pro)' },
+      { id: 'ecosystems-coding',  label: 'AI Coding Tools' },
+      { id: 'ecosystems-search',  label: 'AI Search & Research' },
+      { id: 'ecosystems-infra',   label: 'AI Infrastructure' },
+      { id: 'ecosystems-agents',  label: 'AI Agents & Media' },
+    ],
+  },
   { id: 'rate-limits', label: 'Rate Limits' },
   {
     id: 'api-reference', label: 'API Reference',
@@ -354,7 +377,9 @@ const NAV = [
 ]
 
 const ALL_IDS = [
-  'quickstart', 'authentication', 'rate-limits',
+  'quickstart', 'authentication',
+  'ecosystems', 'ecosystems-core', 'ecosystems-coding', 'ecosystems-search', 'ecosystems-infra', 'ecosystems-agents',
+  'rate-limits',
   'api-reference', 'best-practices', 'news', 'integrations', 'search',
   'errors', 'code-examples', 'mcp-server',
 ]
@@ -471,6 +496,23 @@ function Divider() {
   return <hr className="border-[--border] my-10" />
 }
 
+function TierBadge({ tier }: { tier: 'free+pro' | 'pro' }) {
+  if (tier === 'free+pro') {
+    return (
+      <span className="font-mono text-[10px] rounded-full px-2 py-0.5 whitespace-nowrap"
+        style={{ background: 'rgba(0,196,114,0.12)', color: '#00c472' }}>
+        Free + Pro
+      </span>
+    )
+  }
+  return (
+    <span className="font-mono text-[10px] rounded-full px-2 py-0.5 whitespace-nowrap"
+      style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.40)' }}>
+      Pro
+    </span>
+  )
+}
+
 // ─── Panel content ───────────────────────────────────────────────────────────
 
 interface PanelDef {
@@ -500,6 +542,25 @@ const PANELS: Record<string, PanelDef> = {
       return <CB code={code} lang={lang} />
     },
   },
+  'ecosystems': {
+    render: () => (
+      <div className="space-y-4">
+        <div>
+          <p className="font-mono text-[17px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Request</p>
+          <CB code={ecosystemsCurl} lang="curl" />
+        </div>
+        <div>
+          <p className="font-mono text-[17px] uppercase tracking-widest mb-2" style={{ color: SYN.cmt }}>Free tier on pro ecosystem</p>
+          <CB code={ecosystemsErr} lang="json" />
+        </div>
+      </div>
+    ),
+  },
+  'ecosystems-core': { render: () => <CB code={ecosystemsCurl} lang="curl" /> },
+  'ecosystems-coding': { render: () => <CB code={ecosystemsCurl} lang="curl" /> },
+  'ecosystems-search': { render: () => <CB code={ecosystemsCurl} lang="curl" /> },
+  'ecosystems-infra': { render: () => <CB code={ecosystemsCurl} lang="curl" /> },
+  'ecosystems-agents': { render: () => <CB code={ecosystemsCurl} lang="curl" /> },
   'rate-limits': {
     render: () => (
       <div>
@@ -781,6 +842,132 @@ export default function DocsPage() {
             Dashboard → Overview → <em>Your API Key</em> section. If your key is compromised, use
             the <strong className="text-[--foreground] font-medium">Regenerate</strong> button — the old key is immediately revoked.
           </div>
+
+          <Divider />
+
+          {/* ── Ecosystems ── */}
+          <SectionH id="ecosystems" label="Ecosystems" sub="All ecosystems available via the API." />
+
+          <p className="text-[17px] text-[--muted-foreground] mb-8 leading-relaxed">
+            Pass the ecosystem slug as the <code className="font-mono text-[16px] text-[--foreground] bg-[--border] px-1 py-0.5 rounded">ecosystem</code> parameter
+            in any API call. Core ecosystems are available on all tiers. All others require a Pro subscription.
+          </p>
+
+          {/* Core */}
+          <div id="ecosystems-core" className="scroll-mt-8 mb-1">
+            <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">Core — Free + Pro</p>
+          </div>
+          <table className="w-full text-[17px] mb-8">
+            <TableHead cols={['Slug', 'Name', 'Vendor', 'Tier']} />
+            <tbody>
+              {[
+                { slug: 'claude',    name: 'Claude',    vendor: 'Anthropic' },
+                { slug: 'openai',    name: 'ChatGPT',   vendor: 'OpenAI' },
+                { slug: 'gemini',    name: 'Gemini',    vendor: 'Google' },
+                { slug: 'langchain', name: 'LangChain', vendor: 'LangChain' },
+                { slug: 'ollama',    name: 'Ollama',    vendor: 'Ollama' },
+              ].map(({ slug, name, vendor }) => (
+                <tr key={slug} className="border-b border-[--border]">
+                  <td className="py-2.5 pr-4 align-top"><code className="font-mono text-[13px] text-[--foreground]">{slug}</code></td>
+                  <td className="py-2.5 pr-4 align-top text-[--foreground]">{name}</td>
+                  <td className="py-2.5 pr-4 align-top text-[--muted-foreground]">{vendor}</td>
+                  <td className="py-2.5 align-top"><TierBadge tier="free+pro" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* AI Coding Tools */}
+          <div id="ecosystems-coding" className="scroll-mt-8 mb-1">
+            <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">AI Coding Tools — Pro</p>
+          </div>
+          <table className="w-full text-[17px] mb-8">
+            <TableHead cols={['Slug', 'Name', 'Vendor', 'Tier']} />
+            <tbody>
+              {[
+                { slug: 'cursor',     name: 'Cursor',      vendor: 'Anysphere' },
+                { slug: 'claudecode', name: 'Claude Code', vendor: 'Anthropic' },
+                { slug: 'windsurf',   name: 'Windsurf',    vendor: 'Codeium' },
+                { slug: 'copilot',    name: 'Copilot',     vendor: 'Microsoft' },
+                { slug: 'cody',       name: 'Cody',        vendor: 'Sourcegraph' },
+              ].map(({ slug, name, vendor }) => (
+                <tr key={slug} className="border-b border-[--border]">
+                  <td className="py-2.5 pr-4 align-top"><code className="font-mono text-[13px] text-[--foreground]">{slug}</code></td>
+                  <td className="py-2.5 pr-4 align-top text-[--foreground]">{name}</td>
+                  <td className="py-2.5 pr-4 align-top text-[--muted-foreground]">{vendor}</td>
+                  <td className="py-2.5 align-top"><TierBadge tier="pro" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* AI Search & Research */}
+          <div id="ecosystems-search" className="scroll-mt-8 mb-1">
+            <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">AI Search &amp; Research — Pro</p>
+          </div>
+          <table className="w-full text-[17px] mb-8">
+            <TableHead cols={['Slug', 'Name', 'Vendor', 'Tier']} />
+            <tbody>
+              {[
+                { slug: 'perplexity', name: 'Perplexity', vendor: 'Perplexity' },
+                { slug: 'youcom',     name: 'You.com',    vendor: 'You.com' },
+                { slug: 'exa',        name: 'Exa',        vendor: 'Exa' },
+              ].map(({ slug, name, vendor }) => (
+                <tr key={slug} className="border-b border-[--border]">
+                  <td className="py-2.5 pr-4 align-top"><code className="font-mono text-[13px] text-[--foreground]">{slug}</code></td>
+                  <td className="py-2.5 pr-4 align-top text-[--foreground]">{name}</td>
+                  <td className="py-2.5 pr-4 align-top text-[--muted-foreground]">{vendor}</td>
+                  <td className="py-2.5 align-top"><TierBadge tier="pro" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* AI Infrastructure */}
+          <div id="ecosystems-infra" className="scroll-mt-8 mb-1">
+            <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">AI Infrastructure — Pro</p>
+          </div>
+          <table className="w-full text-[17px] mb-8">
+            <TableHead cols={['Slug', 'Name', 'Vendor', 'Tier']} />
+            <tbody>
+              {[
+                { slug: 'replicate',  name: 'Replicate',   vendor: 'Replicate' },
+                { slug: 'togetherai', name: 'Together AI', vendor: 'Together' },
+                { slug: 'groq',       name: 'Groq',        vendor: 'Groq' },
+                { slug: 'fireworks',  name: 'Fireworks',   vendor: 'Fireworks AI' },
+              ].map(({ slug, name, vendor }) => (
+                <tr key={slug} className="border-b border-[--border]">
+                  <td className="py-2.5 pr-4 align-top"><code className="font-mono text-[13px] text-[--foreground]">{slug}</code></td>
+                  <td className="py-2.5 pr-4 align-top text-[--foreground]">{name}</td>
+                  <td className="py-2.5 pr-4 align-top text-[--muted-foreground]">{vendor}</td>
+                  <td className="py-2.5 align-top"><TierBadge tier="pro" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* AI Agents & Media */}
+          <div id="ecosystems-agents" className="scroll-mt-8 mb-1">
+            <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-3">AI Agents &amp; Media — Pro</p>
+          </div>
+          <table className="w-full text-[17px] mb-6">
+            <TableHead cols={['Slug', 'Name', 'Vendor', 'Tier']} />
+            <tbody>
+              {[
+                { slug: 'manus',      name: 'Manus',      vendor: 'Butterfly Effect' },
+                { slug: 'higgsfield', name: 'Higgsfield', vendor: 'Higgsfield AI' },
+                { slug: 'v0',         name: 'v0',         vendor: 'Vercel' },
+                { slug: 'bolt',       name: 'Bolt',       vendor: 'StackBlitz' },
+              ].map(({ slug, name, vendor }) => (
+                <tr key={slug} className="border-b border-[--border]">
+                  <td className="py-2.5 pr-4 align-top"><code className="font-mono text-[13px] text-[--foreground]">{slug}</code></td>
+                  <td className="py-2.5 pr-4 align-top text-[--foreground]">{name}</td>
+                  <td className="py-2.5 pr-4 align-top text-[--muted-foreground]">{vendor}</td>
+                  <td className="py-2.5 align-top"><TierBadge tier="pro" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
           <Divider />
 

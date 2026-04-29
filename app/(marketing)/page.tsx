@@ -2,6 +2,7 @@ import { Glass } from '@/components/ui/glass'
 import { Btn } from '@/components/ui/button'
 import { LiveBadge } from '@/components/ui/live-badge'
 import { SectionHeading } from '@/components/ui/section-heading'
+import { EcosystemCarousel } from './EcosystemCarousel'
 
 /* ─── Data ─── */
 const ecosystems = [
@@ -323,6 +324,14 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* ══ Ecosystem Carousel ══ */}
+      <div style={{
+        borderTop: '1px solid var(--hair)', borderBottom: '1px solid var(--hair)',
+        padding: '48px 0', overflow: 'hidden',
+      }}>
+        <EcosystemCarousel />
+      </div>
 
       {/* ══ API Methods ══ */}
       <section style={{ padding: '72px 0' }} id="methods">
