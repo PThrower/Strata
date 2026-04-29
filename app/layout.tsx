@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { SpaceBackdrop } from "@/components/ui/space-backdrop";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default function RootLayout({
         <SpaceBackdrop />
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
