@@ -206,42 +206,40 @@ export default function HowItWorksPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginTop: 14 }}>
               {[
                 {
-                  label: 'high confidence',
+                  label: 'High confidence',
                   outcome: 'published automatically',
-                  bg: 'rgba(95,176,133,0.09)',
-                  border: 'rgba(95,176,133,0.45)',
+                  bg: 'linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 35%, rgba(95,176,133,0.09) 70%, rgba(95,176,133,0.17) 100%)',
                   text: 'var(--emerald-glow)',
                 },
                 {
-                  label: 'medium confidence',
+                  label: 'Medium confidence',
                   outcome: 'flagged for review',
-                  bg: 'rgba(245,158,11,0.09)',
-                  border: 'rgba(245,158,11,0.45)',
+                  bg: 'linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 35%, rgba(245,158,11,0.09) 70%, rgba(245,158,11,0.17) 100%)',
                   text: '#f59e0b',
                 },
                 {
-                  label: 'low confidence',
+                  label: 'Low confidence',
                   outcome: 'rejected',
-                  bg: 'rgba(239,68,68,0.09)',
-                  border: 'rgba(239,68,68,0.45)',
+                  bg: 'linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 35%, rgba(239,68,68,0.09) 70%, rgba(239,68,68,0.17) 100%)',
                   text: '#ef4444',
                 },
-              ].map(({ label, outcome, bg, border, text }) => (
-                <div
+              ].map(({ label, outcome, bg, text }) => (
+                <Glass
                   key={label}
-                  style={{ background: bg, border: `1px solid ${border}`, borderRadius: 12, padding: '18px 20px' }}
+                  shimmer
+                  radius="sm"
+                  style={{ padding: '18px 20px', background: bg }}
                 >
                   <p style={{
                     fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700,
-                    color: text, margin: '0 0 8px', letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
+                    color: text, margin: '0 0 8px', letterSpacing: '0.04em',
                   }}>
                     {label}
                   </p>
                   <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: text, margin: 0, opacity: 0.75 }}>
                     {outcome}
                   </p>
-                </div>
+                </Glass>
               ))}
             </div>
           </div>
