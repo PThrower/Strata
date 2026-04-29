@@ -203,7 +203,7 @@ export default function HowItWorksPage() {
             </div>
 
             {/* Confidence badges */}
-            <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginTop: 14 }}>
               {[
                 {
                   label: 'high confidence',
@@ -229,16 +229,16 @@ export default function HowItWorksPage() {
               ].map(({ label, outcome, bg, border, text }) => (
                 <div
                   key={label}
-                  style={{ background: bg, border: `1px solid ${border}`, borderRadius: 8, padding: '8px 14px' }}
+                  style={{ background: bg, border: `1px solid ${border}`, borderRadius: 12, padding: '18px 20px' }}
                 >
                   <p style={{
-                    fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 700,
-                    color: text, margin: '0 0 3px', letterSpacing: '0.06em',
+                    fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 700,
+                    color: text, margin: '0 0 8px', letterSpacing: '0.06em',
                     textTransform: 'uppercase',
                   }}>
                     {label}
                   </p>
-                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: text, margin: 0, opacity: 0.8 }}>
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: text, margin: 0, opacity: 0.75 }}>
                     {outcome}
                   </p>
                 </div>
