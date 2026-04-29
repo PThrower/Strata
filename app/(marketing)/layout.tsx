@@ -68,18 +68,32 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             }}>
               knowledge that holds.
             </span>
-            <span className="hidden sm:block" style={{
+            <span className="hidden sm:flex items-center" style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: 500,
-              letterSpacing: '0.10em',
+              letterSpacing: '0.08em',
               color: 'var(--ink-faint)',
+              gap: 0,
             }}>
-              strata.dev
-              <span style={{ color: 'rgba(255,255,255,0.25)', margin: '0 8px' }}>·</span>
-              docs
-              <span style={{ color: 'rgba(255,255,255,0.25)', margin: '0 8px' }}>·</span>
-              status
+              {[
+                { label: '© 2026 Strata™', href: null },
+                { label: 'Terms',          href: '/terms' },
+                { label: 'Privacy',        href: '/privacy' },
+                { label: 'docs',           href: '/docs' },
+                { label: 'support@strata.dev', href: 'mailto:support@strata.dev' },
+              ].map(({ label, href }, i) => (
+                <span key={label} className="flex items-center">
+                  {i > 0 && <span style={{ color: 'rgba(255,255,255,0.20)', margin: '0 7px' }}>·</span>}
+                  {href ? (
+                    <Link href={href} className="footer-link" style={{ color: 'var(--ink-faint)', textDecoration: 'none' }}>
+                      {label}
+                    </Link>
+                  ) : (
+                    <span>{label}</span>
+                  )}
+                </span>
+              ))}
             </span>
           </div>
         </footer>

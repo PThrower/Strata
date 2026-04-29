@@ -377,6 +377,9 @@ body {
 }
 .mkt-nav-link:hover { color: var(--ink); }
 
+.footer-link { transition: color 0.15s ease; }
+.footer-link:hover { color: #00c472; }
+
 .community-cta-btn {
   display: inline-block;
   border: 1px solid #00c472;
