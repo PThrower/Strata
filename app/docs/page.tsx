@@ -90,7 +90,7 @@ const MCP_CLIENT_DESCS: Record<McpClient, string> = {
 const MCP_JSON_CONFIG = `{
   "mcpServers": {
     "strata": {
-      "url": "https://usestrata.dev/mcp",
+      "url": "https://www.usestrata.dev/mcp",
       "headers": {
         "Authorization": "Bearer sk_your_key"
       }
@@ -104,7 +104,7 @@ const MCP_CLIENT_CODE: Record<McpClient, McpEntry> = {
     lang: 'curl',
     code: `# Add via CLI
 claude mcp add strata --transport http \\
-  https://usestrata.dev/mcp \\
+  https://www.usestrata.dev/mcp \\
   --header "Authorization: Bearer sk_your_key"`,
   },
   'claude-desktop': { lang: 'json', code: MCP_JSON_CONFIG },
