@@ -21,6 +21,24 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  // OAuth discovery flow: Claude Code sends access_token in the body.
+  // Extract it and promote to an Authorization header so existing auth
+  // middleware sees a normal Bearer token — without consuming the body
+  // that the MCP transport needs to read.
+  let effectiveReq = req
+  if (!req.headers.get('authorization') && !req.headers.get('x-api-key')) {
+    try {
+      const body = await req.clone().json() as Record<string, unknown>
+      if (typeof body?.access_token === 'string') {
+        const headers = new Headers(req.headers)
+        headers.set('authorization', `Bearer ${body.access_token}`)
+        effectiveReq = new Request(req, { headers })
+      }
+    } catch {
+      // body is not JSON or has no access_token — proceed as normal
+    }
+  }
+
   const server = new McpServer({ name: 'strata', version: '1.0.0' })
 
   server.registerTool(
@@ -29,7 +47,7 @@ export async function POST(req: Request) {
       description: TOOL_DEFINITIONS[0].description,
       inputSchema: { ecosystem: z.string(), category: z.string().optional() },
     },
-    (args) => handleToolCall('get_best_practices', args as Record<string, unknown>, req),
+    (args) => handleToolCall('get_best_practices', args as Record<string, unknown>, effectiveReq),
   )
 
   server.registerTool(
@@ -38,7 +56,7 @@ export async function POST(req: Request) {
       description: TOOL_DEFINITIONS[1].description,
       inputSchema: { ecosystem: z.string(), limit: z.number().optional() },
     },
-    (args) => handleToolCall('get_latest_news', args as Record<string, unknown>, req),
+    (args) => handleToolCall('get_latest_news', args as Record<string, unknown>, effectiveReq),
   )
 
   server.registerTool(
@@ -47,7 +65,7 @@ export async function POST(req: Request) {
       description: TOOL_DEFINITIONS[2].description,
       inputSchema: { ecosystem: z.string(), use_case: z.string().optional() },
     },
-    (args) => handleToolCall('get_top_integrations', args as Record<string, unknown>, req),
+    (args) => handleToolCall('get_top_integrations', args as Record<string, unknown>, effectiveReq),
   )
 
   server.registerTool(
@@ -56,7 +74,7 @@ export async function POST(req: Request) {
       description: TOOL_DEFINITIONS[3].description,
       inputSchema: { query: z.string(), ecosystem: z.string().optional() },
     },
-    (args) => handleToolCall('search_ecosystem', args as Record<string, unknown>, req),
+    (args) => handleToolCall('search_ecosystem', args as Record<string, unknown>, effectiveReq),
   )
 
   server.registerTool(
@@ -65,7 +83,7 @@ export async function POST(req: Request) {
       description: TOOL_DEFINITIONS[4].description,
       inputSchema: {},
     },
-    (args) => handleToolCall('list_ecosystems', args as Record<string, unknown>, req),
+    (args) => handleToolCall('list_ecosystems', args as Record<string, unknown>, effectiveReq),
   )
 
   for (const resource of RESOURCES) {
@@ -105,5 +123,5 @@ export async function POST(req: Request) {
 
   const transport = new WebStandardStreamableHTTPServerTransport()
   await server.connect(transport)
-  return transport.handleRequest(req)
+  return transport.handleRequest(effectiveReq)
 }
