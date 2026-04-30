@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Strata
 
-## Getting Started
+AI ecosystem intelligence for agents. One endpoint, 22+ AI ecosystems, machine-readable best practices, news, and integrations — delivered as both a REST API and a native MCP server.
 
-First, run the development server:
+**Live:** [usestrata.dev](https://usestrata.dev) · **Docs:** [usestrata.dev/docs](https://usestrata.dev/docs)
 
+## What it does
+
+Agents need current, structured knowledge about the AI tools they work with. Strata provides that knowledge across 22 ecosystems (Claude, OpenAI, Gemini, Cursor, Windsurf, LangChain, Vercel AI SDK, and more) via:
+
+- `GET /api/v1/best-practices` — verified best practices, optionally filtered by category
+- `GET /api/v1/news` — latest news (real-time on Pro, 24h delayed on Free)
+- `GET /api/v1/integrations` — top integrations and MCP servers, optionally by use case
+- `GET /api/v1/search` — full-text search across all content
+- `POST /mcp` — same data exposed as MCP tools (`get_best_practices`, `get_latest_news`, `get_top_integrations`, `search_ecosystem`, `list_ecosystems`)
+
+Content is refreshed continuously: feeds are scraped, validated by Claude for relevance, deduplicated, and written to Postgres. Best practices are regenerated when stale.
+
+## Quick start
+
+Sign up at [usestrata.dev/signup](https://usestrata.dev/signup) for an API key.
+
+**REST:**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+curl -H "X-API-Key: sk_your_key" \
+  "https://www.usestrata.dev/api/v1/best-practices?ecosystem=claude"
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**MCP (Claude Code):**
+```bash
+claude mcp add strata --transport http \
+  https://www.usestrata.dev/mcp \
+  --header "Authorization: Bearer sk_your_key"
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**MCP (Claude Desktop, Cursor, Windsurf, Cline):**
+```json
+{
+  "mcpServers": {
+    "strata": {
+      "url": "https://www.usestrata.dev/mcp",
+      "headers": {
+        "Authorization": "Bearer sk_your_key"
+      }
+    }
+  }
+}
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Free tier: 100 calls/month, free ecosystems only. Pro tier: 10,000 calls/month, all ecosystems, real-time news.
 
-## Learn More
+## Tech stack
 
-To learn more about Next.js, take a look at the following resources:
+- **Next.js 16** (App Router, Turbopack)
+- **Supabase** — Postgres + auth, RLS-enforced
+- **Stripe** — subscriptions
+- **Anthropic Claude** — content validation + best-practice generation in the refresh pipeline
+- **MCP SDK** — `@modelcontextprotocol/sdk` with `WebStandardStreamableHTTPServerTransport`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Local development
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Requires Node 20+ and a `.env.local` with the variables documented in [`CLAUDE.md`](./CLAUDE.md).
 
-## Deploy on Vercel
+```bash
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # production build
+npm run lint     # ESLint
+npm run refresh  # populate content_items from sources (requires ANTHROPIC_API_KEY)
+npm run mcp      # stdio MCP transport for local clients
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Architecture, auth model, refresh pipeline, and design system are all documented in [`CLAUDE.md`](./CLAUDE.md). Migrations live in [`supabase/migrations/`](./supabase/migrations).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Repository status
+
+Source-available for transparency. Not currently accepting external pull requests — feedback and bug reports are welcome via [GitHub Issues](https://github.com/PThrower/Strata/issues).
