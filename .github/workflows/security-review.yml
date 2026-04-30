@@ -1,0 +1,43 @@
+# Required repository secrets (already configured for refresh-content.yml):
+#   ANTHROPIC_API_KEY - Anthropic API key for Claude
+# GITHUB_TOKEN is auto-provided by Actions — no manual setup needed.
+
+name: Security Review
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  security-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: anthropic/claude-code-action@beta
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          direct_prompt: |
+            You are a security reviewer. Review the changed files in this pull request for security vulnerabilities and post your findings as a PR review comment.
+
+            Focus on issues relevant to this codebase (Next.js 16 App Router, Supabase, Stripe, MCP server):
+
+            1. **Auth & authorization** — API key validation bypass, missing `authenticateRequest()` calls on new `/api/v1/*` routes, use of `createServiceRoleClient()` in user-initiated paths without prior identity verification, gaps in the `proxy.ts` session guard for new dashboard routes.
+            2. **Injection** — SQL injection via raw Supabase queries, command injection in scripts, XSS in React output.
+            3. **Stripe** — webhook handlers that call `.json()` before `stripe.webhooks.constructEvent()` (breaks signature verification), missing raw-body preservation.
+            4. **Secrets** — environment variables or API keys hardcoded or accidentally committed, `SUPABASE_SERVICE_ROLE_KEY` or `ANTHROPIC_API_KEY` referenced in client-side code.
+            5. **MCP** — unauthenticated tool calls, missing `checkEcosystemAccess()` on new MCP tools, `Authorization` header logging.
+            6. **Rate limiting** — new routes that bypass `authenticateRequest()` tier enforcement.
+            7. **Input validation** — unvalidated query params or request bodies at API boundaries.
+
+            For each finding state: file path, line number, severity (Critical / High / Medium / Low), and a concrete fix. If no issues are found, say so explicitly. Do not flag informational style notes — only actionable security issues.
