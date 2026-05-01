@@ -10,7 +10,7 @@ CREATE TABLE public.mcp_servers (
   category    text,
   source      text        NOT NULL DEFAULT 'awesome-mcp-servers',
   tags        text[]      NOT NULL DEFAULT '{}',
-  embedding   vector(1536),
+  embedding   vector(1024),
   created_at  timestamptz NOT NULL DEFAULT now(),
   updated_at  timestamptz NOT NULL DEFAULT now()
 );
@@ -32,7 +32,7 @@ CREATE POLICY "service role full access" ON public.mcp_servers
 
 -- Semantic similarity search RPC
 CREATE OR REPLACE FUNCTION public.search_mcp_servers(
-  query_embedding vector(1536),
+  query_embedding vector(1024),
   filter_category text DEFAULT NULL,
   match_count     int  DEFAULT 5
 )

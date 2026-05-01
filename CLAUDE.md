@@ -103,7 +103,7 @@ STRIPE_WEBHOOK_SECRET
 STRIPE_PRO_PRICE_ID
 NEXT_PUBLIC_APP_URL
 ANTHROPIC_API_KEY        # refresh pipeline only
-OPENAI_API_KEY           # mcp-directory embeddings (text-embedding-3-small)
+VOYAGE_API_KEY           # mcp-directory embeddings (voyage-3 via voyageai)
 ADMIN_EMAIL              # email address that gets admin dashboard access
 ```
 

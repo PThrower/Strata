@@ -1,11 +1,28 @@
-import OpenAI from 'openai'
 import { getServiceClient } from './writer'
 
 const AWESOME_MCP_URL =
   'https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md'
 
-const EMBED_MODEL = 'text-embedding-3-small'
-const BATCH_SIZE = 100
+const VOYAGE_API_URL = 'https://api.voyageai.com/v1/embeddings'
+const BATCH_SIZE = 128
+
+type VoyageResponse = {
+  data: { embedding: number[]; index: number }[]
+}
+
+async function embedBatch(texts: string[]): Promise<number[][]> {
+  const res = await fetch(VOYAGE_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.VOYAGE_API_KEY}`,
+    },
+    body: JSON.stringify({ input: texts, model: 'voyage-3' }),
+  })
+  if (!res.ok) throw new Error(`Voyage embed failed: ${res.status} ${await res.text()}`)
+  const json: VoyageResponse = await res.json()
+  return json.data.sort((a, b) => a.index - b.index).map((d) => d.embedding)
+}
 
 interface McpEntry {
   name: string
@@ -60,7 +77,6 @@ function chunk<T>(arr: T[], size: number): T[][] {
 
 export async function refreshMcpDirectory(): Promise<{ upserted: number; errors: string[] }> {
   const supabase = getServiceClient()
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
   // Fetch README
   const res = await fetch(AWESOME_MCP_URL)
@@ -90,8 +106,7 @@ export async function refreshMcpDirectory(): Promise<{ upserted: number; errors:
 
   const embeddings: number[][] = []
   for (const batch of chunk(texts, BATCH_SIZE)) {
-    const resp = await openai.embeddings.create({ model: EMBED_MODEL, input: batch })
-    embeddings.push(...resp.data.sort((a, b) => a.index - b.index).map((d) => d.embedding))
+    embeddings.push(...await embedBatch(batch))
   }
 
   // Upsert rows (conflict on URL)
