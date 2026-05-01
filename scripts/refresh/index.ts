@@ -1,5 +1,6 @@
 import { ECOSYSTEMS } from './ecosystems';
 import { fetchAllSources } from './sources';
+import { refreshMcpDirectory } from './mcp-directory';
 import { validateBatch, dedupeNearDuplicates, generateBestPractices, generateBestPracticesHaiku } from './validate';
 import {
   getServiceClient,
@@ -80,6 +81,19 @@ async function main() {
     }
 
     summaries.push(summary);
+  }
+
+  // ── MCP Directory ─────────────────────────────────────────────
+  console.log(`\n${CYAN}  ◆ mcp-directory${RESET}`)
+  try {
+    const { upserted, errors: mcpErrors } = await refreshMcpDirectory()
+    if (mcpErrors.length > 0) {
+      console.log(`${RED}    errors    ${mcpErrors.join(', ')}${RESET}`)
+    } else {
+      console.log(`${G}    upserted  ${RESET}${upserted} servers`)
+    }
+  } catch (err) {
+    console.log(`${RED}  ✗ mcp-directory FAILED: ${String(err)}${RESET}`)
   }
 
   // ── Summary table ──────────────────────────────────────────────

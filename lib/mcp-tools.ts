@@ -1,6 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import { authenticateMcpRequest } from './mcp-auth'
 import { checkEcosystemAccess, logApiRequest } from './api-auth'
+import { embed } from './embeddings'
 
 export type MCPToolResult = CallToolResult
 
@@ -91,6 +92,29 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       type: 'object',
       properties: {},
       required: [],
+    },
+  },
+  {
+    name: 'find_mcp_servers',
+    description:
+      'Search for MCP servers by use case or keyword using semantic similarity. Returns matching servers from the MCP directory with name, description, URL, and category.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Use case or keyword to search for, e.g. "browser automation", "database", "GitHub"',
+        },
+        category: {
+          type: 'string',
+          description: 'Optional category filter, e.g. "Browser Automation", "Databases", "Developer Tools"',
+        },
+        limit: {
+          type: 'number',
+          description: 'Number of results to return. Default 5, max 20',
+        },
+      },
+      required: ['query'],
     },
   },
 ]
@@ -389,6 +413,44 @@ export async function handleToolCall(
     })
 
     return ok({ your_tier: profile.tier, ecosystems })
+  }
+
+  if (name === 'find_mcp_servers') {
+    const query = args.query as string
+    const category = args.category as string | undefined
+    const rawLimit = typeof args.limit === 'number' ? args.limit : 5
+    const limit = Math.min(Math.max(1, rawLimit), 20)
+
+    let embedding: number[]
+    try {
+      embedding = await embed(query)
+    } catch {
+      await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'mcp-servers', ecosystem: 'mcp', statusCode: 500 })
+      return err('Error: Embedding error')
+    }
+
+    const { data, error } = await supabase.rpc('search_mcp_servers', {
+      query_embedding: embedding,
+      filter_category: category ?? null,
+      match_count: limit,
+    })
+
+    if (error) {
+      await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'mcp-servers', ecosystem: 'mcp', statusCode: 500 })
+      return err('Error: Search error')
+    }
+
+    type McpRow = { id: string; name: string; description: string | null; url: string | null; category: string | null; tags: string[]; similarity: number }
+    const results = ((data ?? []) as McpRow[]).map((r) => ({
+      name: r.name,
+      description: r.description,
+      url: r.url,
+      category: r.category,
+      similarity: Math.round(r.similarity * 1000) / 1000,
+    }))
+
+    await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'mcp-servers', ecosystem: 'mcp', statusCode: 200 })
+    return ok({ query, results })
   }
 
   return err(`Error: Unknown tool: ${name}`)

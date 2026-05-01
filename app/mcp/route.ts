@@ -68,6 +68,19 @@ export async function POST(req: Request) {
     (args) => handleToolCall('list_ecosystems', args as Record<string, unknown>, req),
   )
 
+  server.registerTool(
+    'find_mcp_servers',
+    {
+      description: TOOL_DEFINITIONS[5].description,
+      inputSchema: {
+        query: z.string(),
+        category: z.string().optional(),
+        limit: z.number().optional(),
+      },
+    },
+    (args) => handleToolCall('find_mcp_servers', args as Record<string, unknown>, req),
+  )
+
   for (const resource of RESOURCES) {
     server.registerResource(
       resource.name,
