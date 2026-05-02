@@ -105,8 +105,12 @@ export async function refreshMcpDirectory(): Promise<{ upserted: number; errors:
   )
 
   const embeddings: number[][] = []
-  for (const batch of chunk(texts, BATCH_SIZE)) {
-    embeddings.push(...await embedBatch(batch))
+  const batches = chunk(texts, BATCH_SIZE)
+  for (let i = 0; i < batches.length; i++) {
+    embeddings.push(...await embedBatch(batches[i]))
+    if (i < batches.length - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    }
   }
 
   // Upsert rows (conflict on URL)

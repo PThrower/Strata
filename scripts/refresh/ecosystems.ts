@@ -7,10 +7,7 @@ export const ECOSYSTEMS: EcosystemConfig[] = [
   // ── Core (Free + Pro) ────────────────────────────────────────────────────
   {
     slug: 'claude',
-    rssFeeds: [
-      'https://www.anthropic.com/rss.xml',
-      'https://docs.anthropic.com/rss.xml',
-    ],
+    rssFeeds: [],
     subreddits: ['ClaudeAI'],
     githubRepos: [
       'anthropics/anthropic-sdk-python',
@@ -68,7 +65,7 @@ export const ECOSYSTEMS: EcosystemConfig[] = [
   // ── AI Coding Tools (Pro) ────────────────────────────────────────────────
   {
     slug: 'cursor',
-    rssFeeds: ['https://cursor.com/blog/rss.xml'],
+    rssFeeds: [],
     subreddits: ['cursor', 'cursorAI'],
     githubRepos: ['getcursor/cursor'],
     bestPracticesPrompt:
@@ -78,7 +75,7 @@ export const ECOSYSTEMS: EcosystemConfig[] = [
   },
   {
     slug: 'claudecode',
-    rssFeeds: ['https://www.anthropic.com/rss.xml'],
+    rssFeeds: [],
     subreddits: ['ClaudeAI', 'claudecode'],
     githubRepos: ['anthropics/claude-code'],
     bestPracticesPrompt:
@@ -131,7 +128,7 @@ export const ECOSYSTEMS: EcosystemConfig[] = [
   // ── AI Search & Research (Pro) ───────────────────────────────────────────
   {
     slug: 'perplexity',
-    rssFeeds: ['https://blog.perplexity.ai/rss.xml'],
+    rssFeeds: [],
     subreddits: ['perplexity_ai', 'PerplexityAI'],
     githubRepos: ['perplexity-ai/perplexity-mcp'],
     bestPracticesPrompt:
@@ -151,7 +148,7 @@ export const ECOSYSTEMS: EcosystemConfig[] = [
   },
   {
     slug: 'exa',
-    rssFeeds: ['https://exa.ai/blog/rss.xml'],
+    rssFeeds: [],
     subreddits: ['exa_ai'],
     githubRepos: ['exa-labs/exa-mcp-server'],
     bestPracticesPrompt:
@@ -163,7 +160,7 @@ export const ECOSYSTEMS: EcosystemConfig[] = [
   // ── AI Infrastructure (Pro) ──────────────────────────────────────────────
   {
     slug: 'replicate',
-    rssFeeds: ['https://replicate.com/blog/rss.xml'],
+    rssFeeds: ['https://replicate.com/changelog/rss'],
     subreddits: ['replicate'],
     githubRepos: [
       'replicate/replicate-python',
@@ -186,7 +183,7 @@ export const ECOSYSTEMS: EcosystemConfig[] = [
   },
   {
     slug: 'groq',
-    rssFeeds: ['https://groq.com/blog/rss.xml'],
+    rssFeeds: ['https://groq.com/feed/'],
     subreddits: ['groq', 'GroqInc'],
     githubRepos: ['groq/groq-python', 'groq/groq-typescript'],
     bestPracticesPrompt:
@@ -197,7 +194,7 @@ export const ECOSYSTEMS: EcosystemConfig[] = [
   },
   {
     slug: 'fireworks',
-    rssFeeds: ['https://fireworks.ai/blog/rss.xml'],
+    rssFeeds: [],
     subreddits: ['fireworksai'],
     githubRepos: ['fw-ai/fireworks-js'],
     bestPracticesPrompt:
@@ -209,7 +206,7 @@ export const ECOSYSTEMS: EcosystemConfig[] = [
   // ── AI Agents & Media (Pro) ──────────────────────────────────────────────
   {
     slug: 'manus',
-    rssFeeds: ['https://manus.im/blog/rss.xml'],
+    rssFeeds: [],
     subreddits: ['manus_ai', 'ManusAI'],
     githubRepos: [],
     bestPracticesPrompt:
@@ -220,7 +217,7 @@ export const ECOSYSTEMS: EcosystemConfig[] = [
   },
   {
     slug: 'higgsfield',
-    rssFeeds: ['https://higgsfield.ai/blog/rss.xml'],
+    rssFeeds: [],
     subreddits: ['higgsfield', 'AIVideo'],
     githubRepos: ['higgsfield-ai/higgsfield-client'],
     bestPracticesPrompt:
@@ -231,7 +228,7 @@ export const ECOSYSTEMS: EcosystemConfig[] = [
   },
   {
     slug: 'v0',
-    rssFeeds: ['https://vercel.com/blog/rss.xml'],
+    rssFeeds: ['https://vercel.com/feed.xml'],
     subreddits: ['vercel', 'nextjs'],
     githubRepos: ['vercel/v0'],
     bestPracticesPrompt:
