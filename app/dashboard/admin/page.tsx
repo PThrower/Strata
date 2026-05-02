@@ -1,6 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server'
 import AdminActions from './AdminActions'
+import McpAdminActions from './McpAdminActions'
 
 type Submission = {
   id: string
@@ -13,6 +14,18 @@ type Submission = {
   claude_reasoning: string | null
   submitted_at: string
   user_id: string
+}
+
+type McpSubmission = {
+  id: string
+  name: string
+  url: string | null
+  description: string | null
+  category: string | null
+  security_score: number | null
+  injection_risk_score: number | null
+  submitter_email: string | null
+  created_at: string
 }
 
 type Profile = {
@@ -52,6 +65,12 @@ export default async function AdminPage() {
     .order('submitted_at', { ascending: false })
     .limit(20)
 
+  const { data: pendingMcpRows } = await serviceClient
+    .from('mcp_servers')
+    .select('id, name, url, description, category, security_score, injection_risk_score, submitter_email, created_at')
+    .eq('score_status', 'pending_review')
+    .order('created_at', { ascending: false })
+
   const { data: suggestionRows } = await serviceClient
     .from('suggestions')
     .select('id, content, submitted_at, user_id')
@@ -59,6 +78,7 @@ export default async function AdminPage() {
 
   const flagged = (flaggedRows ?? []) as Submission[]
   const recent  = (recentRows  ?? []) as Submission[]
+  const pendingMcp = (pendingMcpRows ?? []) as McpSubmission[]
   const suggestions = (suggestionRows ?? []) as { id: string; content: string; submitted_at: string; user_id: string }[]
 
   const allUserIds = [...new Set([
@@ -181,6 +201,66 @@ export default async function AdminPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </section>
+
+      {/* Pending MCP Submissions */}
+      <section className="mt-10">
+        <h2 className="text-sm font-semibold mb-4">
+          Pending MCP Submissions
+          {pendingMcp.length > 0 && (
+            <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 font-normal">
+              {pendingMcp.length}
+            </span>
+          )}
+        </h2>
+
+        {pendingMcp.length === 0 ? (
+          <div className={`${card} p-6 text-sm text-muted-foreground`}>
+            No pending MCP server submissions.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {pendingMcp.map(server => (
+              <div key={server.id} className={`${card} p-5`}>
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  {server.category && (
+                    <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-muted-foreground">
+                      {server.category}
+                    </span>
+                  )}
+                  {server.security_score !== null && (
+                    <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
+                      score {server.security_score}/100
+                    </span>
+                  )}
+                  {server.injection_risk_score !== null && server.injection_risk_score >= 3 && (
+                    <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                      L1 injection {server.injection_risk_score}/10
+                    </span>
+                  )}
+                  <span className="text-xs text-muted-foreground ml-auto">
+                    {formatDate(server.created_at)}
+                    {server.submitter_email && ` · ${server.submitter_email}`}
+                  </span>
+                </div>
+
+                <p className="font-medium text-sm mb-1">{server.name}</p>
+                {server.description && (
+                  <p className="text-sm text-muted-foreground mb-2 leading-relaxed">{server.description}</p>
+                )}
+                {server.url && (
+                  <p className="text-xs text-muted-foreground mb-3">
+                    <a href={server.url} target="_blank" rel="noopener noreferrer" style={{ color: '#00c472' }}>
+                      {server.url}
+                    </a>
+                  </p>
+                )}
+
+                <McpAdminActions id={server.id} />
+              </div>
+            ))}
           </div>
         )}
       </section>
