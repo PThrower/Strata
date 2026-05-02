@@ -4,21 +4,38 @@ const AWESOME_MCP_URL =
   'https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md'
 
 const VOYAGE_API_URL = 'https://api.voyageai.com/v1/embeddings'
-const BATCH_SIZE = 128
+const BATCH_SIZE = 20
 
 type VoyageResponse = {
   data: { embedding: number[]; index: number }[]
 }
 
 async function embedBatch(texts: string[]): Promise<number[][]> {
-  const res = await fetch(VOYAGE_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.VOYAGE_API_KEY}`,
-    },
-    body: JSON.stringify({ input: texts, model: 'voyage-3' }),
-  })
+  const key = process.env.VOYAGE_API_KEY
+  if (!key) throw new Error('VOYAGE_API_KEY is not set')
+  console.log(`    [voyage] key: ${key.slice(0, 8)}… | url: ${VOYAGE_API_URL} | texts: ${texts.length}`)
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 60000)
+
+  let res: Response
+  try {
+    res = await fetch(VOYAGE_API_URL, {
+      signal: controller.signal,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({ input: texts, model: 'voyage-3' }),
+    })
+  } catch (err) {
+    const cause = (err as NodeJS.ErrnoException & { cause?: unknown }).cause
+    throw new Error(`Voyage fetch network error: ${err} | cause: ${cause}`)
+  } finally {
+    clearTimeout(timer)
+  }
+
   if (!res.ok) throw new Error(`Voyage embed failed: ${res.status} ${await res.text()}`)
   const json: VoyageResponse = await res.json()
   return json.data.sort((a, b) => a.index - b.index).map((d) => d.embedding)

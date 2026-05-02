@@ -10,6 +10,10 @@ Your job is to review content items and determine if they are:
 3. Useful to developers building AI applications
 4. Not a duplicate or near-duplicate of another item in this batch
 
+Important: Age of content is NOT a rejection criterion. Accept any developer-useful content
+regardless of publish date. Only reject items that are irrelevant, inaccurate, non-technical,
+or truly low-quality (e.g. pure marketing fluff, memes, personal announcements).
+
 For each item, return a JSON array with objects containing:
 - keep: boolean
 - reason: brief explanation
