@@ -53,7 +53,7 @@ async function main() {
     .or(
       `runtime_updated_at.is.null,` +
       `runtime_updated_at.lt.${new Date(Date.now() - STALE_DAYS * 86_400_000).toISOString()},` +
-      `runtime_status.in.(error_transient,error_rate_limited)`,
+      `runtime_status.eq.error_rate_limited`,
     )
     .order('id')
     .limit(100_000)
