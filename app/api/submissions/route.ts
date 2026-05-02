@@ -121,6 +121,35 @@ export async function POST(req: NextRequest) {
     category,
   })
 
+  // If injection was detected, quarantine the submission regardless of confidence
+  if (result.injection_detected) {
+    // Write to content_items quarantined so admins can audit, but don't serve it
+    await serviceClient.from('content_items').insert({
+      ecosystem_slug: ecosystem,
+      category,
+      title,
+      body: content,
+      source_url: sourceUrl || null,
+      is_pro_only: false,
+      is_quarantined: true,
+      injection_risk_score: result.injection_risk_score,
+      last_verified_at: new Date().toISOString(),
+      confidence: 'low',
+    })
+    await serviceClient.from('submissions').update({
+      status: 'rejected',
+      claude_confidence: 'low',
+      claude_reasoning: 'Prompt injection detected — quarantined.',
+      reviewed_at: new Date().toISOString(),
+    }).eq('id', submission.id)
+    return Response.json({
+      submissionId: submission.id,
+      status: 'rejected',
+      reasoning: 'Submission did not meet quality standards.',
+      message: 'Submission did not meet quality standards.',
+    })
+  }
+
   if (result.confidence === 'high') {
     const finalTitle = result.improvedTitle || title
     const finalBody =
@@ -137,6 +166,10 @@ export async function POST(req: NextRequest) {
         body: finalBody,
         source_url: sourceUrl || null,
         is_pro_only: false,
+        is_quarantined: false,
+        injection_risk_score: result.injection_risk_score,
+        last_verified_at: new Date().toISOString(),
+        confidence: result.confidence,
       })
       .select('id')
       .single()

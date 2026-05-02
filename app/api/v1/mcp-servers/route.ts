@@ -1,5 +1,5 @@
 import { type NextRequest } from 'next/server'
-import { authenticateRequest, logApiRequest } from '@/lib/api-auth'
+import { authenticateRequest, logApiRequest, logQueryAudit } from '@/lib/api-auth'
 import { embed } from '@/lib/embeddings'
 
 const TOOL = 'mcp-servers'
@@ -18,6 +18,9 @@ type McpServerRow = {
 }
 
 export async function GET(request: NextRequest) {
+  const t0 = Date.now()
+  const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null
+
   const auth = await authenticateRequest(request)
   if (!auth.ok) return auth.response
 
@@ -54,7 +57,8 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: 'Search error' }, { status: 500 })
   }
 
-  const results = ((data ?? []) as McpServerRow[]).map((row) => ({
+  const rows = ((data ?? []) as McpServerRow[])
+  const results = rows.map((row) => ({
     id: row.id,
     name: row.name,
     description: row.description,
@@ -67,6 +71,12 @@ export async function GET(request: NextRequest) {
   }))
 
   await logApiRequest(supabase, { apiKey: profile.api_key, tool: TOOL, ecosystem: 'mcp', statusCode: 200 })
+  void logQueryAudit(supabase, {
+    apiKey: profile.api_key, tool: TOOL,
+    queryParams: { q, category, limit, min_security_score: minSecurityScore },
+    resultIds: rows.map(r => r.id), resultCount: rows.length,
+    statusCode: 200, clientIp, latencyMs: Date.now() - t0,
+  })
 
   return Response.json({ query: q, results })
 }

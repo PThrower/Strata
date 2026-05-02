@@ -12,7 +12,9 @@ export interface RawItem {
 }
 
 export interface ValidatedItem extends RawItem {
-  confidence: 'high' | 'medium';
+  confidence: 'high' | 'medium' | 'low';
+  injection_risk_score: number;
+  is_quarantined: boolean;
 }
 
 export interface EcosystemConfig {

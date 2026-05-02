@@ -1,3 +1,4 @@
+import { createHash } from 'crypto'
 import type { NextRequest } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createServiceRoleClient } from './supabase-server'
@@ -132,6 +133,36 @@ export async function logApiRequest(
   })
   if (error) {
     console.error('[api_requests] insert failed:', error.message)
+  }
+}
+
+export async function logQueryAudit(
+  supabase: ServiceClient,
+  args: {
+    apiKey: string
+    tool: string
+    queryParams?: Record<string, unknown>
+    resultIds?: string[]
+    resultCount?: number
+    statusCode: number
+    clientIp?: string | null
+    latencyMs?: number
+  },
+) {
+  const { error } = await supabase.from('api_query_log').insert({
+    api_key_hash: createHash('sha256').update(args.apiKey).digest('hex'),
+    tool_name: args.tool,
+    query_params: args.queryParams ?? null,
+    result_count: args.resultCount ?? null,
+    result_ids: args.resultIds && args.resultIds.length > 0 ? args.resultIds : null,
+    client_ip_hash: args.clientIp
+      ? createHash('sha256').update(args.clientIp).digest('hex')
+      : null,
+    status_code: args.statusCode,
+    latency_ms: args.latencyMs ?? null,
+  })
+  if (error) {
+    console.error('[api_query_log] insert failed:', error.message)
   }
 }
 

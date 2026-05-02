@@ -3,6 +3,7 @@ import {
   authenticateRequest,
   checkEcosystemAccess,
   logApiRequest,
+  logQueryAudit,
 } from '@/lib/api-auth'
 
 const TOOL = 'search'
@@ -18,6 +19,9 @@ type SearchRow = {
 }
 
 export async function GET(request: NextRequest) {
+  const t0 = Date.now()
+  const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null
+
   const auth = await authenticateRequest(request)
   if (!auth.ok) return auth.response
 
@@ -27,10 +31,7 @@ export async function GET(request: NextRequest) {
   const ecosystem = params.get('ecosystem')
 
   if (!query) {
-    return Response.json(
-      { error: 'query param is required' },
-      { status: 400 },
-    )
+    return Response.json({ error: 'query param is required' }, { status: 400 })
   }
 
   const logEcosystem = ecosystem ?? 'all'
@@ -39,12 +40,7 @@ export async function GET(request: NextRequest) {
   if (ecosystem) {
     const access = await checkEcosystemAccess(supabase, ecosystem, profile.tier)
     if (!access.ok) {
-      await logApiRequest(supabase, {
-        apiKey: profile.api_key,
-        tool: TOOL,
-        ecosystem: logEcosystem,
-        statusCode: access.response.status,
-      })
+      await logApiRequest(supabase, { apiKey: profile.api_key, tool: TOOL, ecosystem: logEcosystem, statusCode: access.response.status })
       return access.response
     }
     resolvedEcosystem = access.slug
@@ -58,29 +54,26 @@ export async function GET(request: NextRequest) {
   })
 
   if (error) {
-    await logApiRequest(supabase, {
-      apiKey: profile.api_key,
-      tool: TOOL,
-      ecosystem: logEcosystem,
-      statusCode: 500,
-    })
+    await logApiRequest(supabase, { apiKey: profile.api_key, tool: TOOL, ecosystem: logEcosystem, statusCode: 500 })
     return Response.json({ error: 'Search error' }, { status: 500 })
   }
 
-  const results = ((data ?? []) as SearchRow[]).map((row) => ({
+  const rows = ((data ?? []) as SearchRow[])
+  const results = rows.map((row) => ({
     id: row.id,
     title: row.title,
     body: row.body,
     category: row.category,
     ecosystem_slug: row.ecosystem_slug,
-    source_url: row.source_url,
+    source_urls: row.source_url ? [row.source_url] : [],
   }))
 
-  await logApiRequest(supabase, {
-    apiKey: profile.api_key,
-    tool: TOOL,
-    ecosystem: logEcosystem,
-    statusCode: 200,
+  await logApiRequest(supabase, { apiKey: profile.api_key, tool: TOOL, ecosystem: logEcosystem, statusCode: 200 })
+  void logQueryAudit(supabase, {
+    apiKey: profile.api_key, tool: TOOL,
+    queryParams: { query, ecosystem: logEcosystem },
+    resultIds: rows.map(r => r.id), resultCount: rows.length,
+    statusCode: 200, clientIp, latencyMs: Date.now() - t0,
   })
 
   return Response.json({ query, results })

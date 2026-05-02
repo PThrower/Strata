@@ -3,14 +3,30 @@ import {
   authenticateRequest,
   checkEcosystemAccess,
   logApiRequest,
+  logQueryAudit,
 } from '@/lib/api-auth'
+import { freshnessEnvelope } from '@/lib/freshness'
 
 const TOOL = 'news'
 const DEFAULT_LIMIT = 5
 const MAX_LIMIT = 20
 const FREE_TIER_DELAY_MS = 24 * 60 * 60 * 1000
 
+type Row = {
+  id: string
+  title: string
+  body: string
+  source_url: string | null
+  published_at: string
+  last_verified_at: string | null
+  confidence: string | null
+  source_count: number | null
+}
+
 export async function GET(request: NextRequest) {
+  const t0 = Date.now()
+  const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null
+
   const auth = await authenticateRequest(request)
   if (!auth.ok) return auth.response
 
@@ -20,28 +36,21 @@ export async function GET(request: NextRequest) {
   const limit = parseLimit(params.get('limit'))
 
   if (!ecosystem) {
-    return Response.json(
-      { error: 'ecosystem query param is required' },
-      { status: 400 },
-    )
+    return Response.json({ error: 'ecosystem query param is required' }, { status: 400 })
   }
 
   const access = await checkEcosystemAccess(supabase, ecosystem, profile.tier)
   if (!access.ok) {
-    await logApiRequest(supabase, {
-      apiKey: profile.api_key,
-      tool: TOOL,
-      ecosystem,
-      statusCode: access.response.status,
-    })
+    await logApiRequest(supabase, { apiKey: profile.api_key, tool: TOOL, ecosystem, statusCode: access.response.status })
     return access.response
   }
 
   let query = supabase
     .from('content_items')
-    .select('id, title, body, source_url, published_at')
+    .select('id, title, body, source_url, published_at, last_verified_at, confidence, source_count')
     .eq('ecosystem_slug', access.slug)
     .eq('category', 'news')
+    .eq('is_quarantined', false)
     .order('published_at', { ascending: false })
     .limit(limit)
 
@@ -52,23 +61,31 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await query
   if (error) {
-    await logApiRequest(supabase, {
-      apiKey: profile.api_key,
-      tool: TOOL,
-      ecosystem,
-      statusCode: 500,
-    })
+    await logApiRequest(supabase, { apiKey: profile.api_key, tool: TOOL, ecosystem, statusCode: 500 })
     return Response.json({ error: 'Database error' }, { status: 500 })
   }
 
-  await logApiRequest(supabase, {
-    apiKey: profile.api_key,
-    tool: TOOL,
-    ecosystem,
-    statusCode: 200,
+  const rows = (data ?? []) as Row[]
+  const items = rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    body: row.body,
+    source_urls: row.source_url ? [row.source_url] : [],
+    confidence: row.confidence ?? 'medium',
+    source_count: row.source_count ?? 1,
+    published_at: row.published_at,
+    ...freshnessEnvelope(row.published_at, row.last_verified_at),
+  }))
+
+  await logApiRequest(supabase, { apiKey: profile.api_key, tool: TOOL, ecosystem, statusCode: 200 })
+  void logQueryAudit(supabase, {
+    apiKey: profile.api_key, tool: TOOL,
+    queryParams: { ecosystem, limit },
+    resultIds: rows.map(r => r.id), resultCount: rows.length,
+    statusCode: 200, clientIp, latencyMs: Date.now() - t0,
   })
 
-  return Response.json({ ecosystem, tier: profile.tier, items: data ?? [] })
+  return Response.json({ ecosystem, tier: profile.tier, items })
 }
 
 function parseLimit(raw: string | null): number {

@@ -55,6 +55,10 @@ export async function writeContent(
     source_url: item.sourceUrl || null,
     published_at: item.publishedAt,
     is_pro_only: false,
+    injection_risk_score: item.injection_risk_score ?? null,
+    is_quarantined: item.is_quarantined ?? false,
+    last_verified_at: new Date().toISOString(),
+    confidence: item.confidence ?? null,
   }));
 
   let inserted = 0;

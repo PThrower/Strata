@@ -51,11 +51,17 @@ async function main() {
       summary.newAfterUrlDedup = fresh.length;
 
       const validated = await validateBatch(fresh, eco.slug);
-      const deduped = await dedupeNearDuplicates(validated);
+      // Quarantined items skip dedup — don't send injection content to Claude again
+      const quarantined = validated.filter((i) => i.is_quarantined);
+      const clean = validated.filter((i) => !i.is_quarantined);
+      const deduped = await dedupeNearDuplicates(clean);
       summary.validated = deduped.length;
+      if (quarantined.length > 0) {
+        console.log(`${YELLOW}    quarantined ${RESET}${quarantined.length} items (injection detected)`)
+      }
       console.log(`${DIM}    validated ${RESET}${deduped.length} passed`)
 
-      const { inserted, errors } = await writeContent(supabase, deduped);
+      const { inserted, errors } = await writeContent(supabase, [...deduped, ...quarantined]);
       summary.written = inserted;
       if (errors.length > 0) summary.errors.push(...errors);
       console.log(`${G}    written   ${RESET}${inserted} to database`)
