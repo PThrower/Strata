@@ -92,6 +92,18 @@ async function main() {
     } else {
       console.log(`${G}    upserted  ${RESET}${upserted} servers`)
     }
+    // Scoring health check
+    const supabase = getServiceClient()
+    const { count: unscored } = await supabase
+      .from('mcp_servers')
+      .select('*', { count: 'exact', head: true })
+      .is('score_updated_at', null)
+    const { count: scoreErrors } = await supabase
+      .from('mcp_servers')
+      .select('*', { count: 'exact', head: true })
+      .like('score_status', 'error_%')
+    if ((unscored ?? 0) > 0) console.log(`${YELLOW}    unscored  ${unscored} servers (run: npx tsx scripts/score-mcp-security.ts)${RESET}`)
+    if ((scoreErrors ?? 0) > 0) console.log(`${RED}    score_errors  ${scoreErrors} servers${RESET}`)
   } catch (err) {
     console.log(`${RED}  ✗ mcp-directory FAILED: ${String(err)}${RESET}`)
   }

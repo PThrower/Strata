@@ -1,4 +1,8 @@
 import { getServiceClient } from './writer'
+import { parseGitHubUrl, fetchGitHubSignals, RateLimiter } from './github-security'
+import { computeSecurityScore } from './security-score'
+
+const SCORE_BATCH_LIMIT = 200
 
 const AWESOME_MCP_URL =
   'https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md'
@@ -154,6 +158,47 @@ export async function refreshMcpDirectory(): Promise<{ upserted: number; errors:
     } else {
       upserted += count ?? batch.length
     }
+  }
+
+  // Score any newly-inserted (or previously unscored) rows, up to SCORE_BATCH_LIMIT
+  const { data: unscored } = await supabase
+    .from('mcp_servers')
+    .select('id, url')
+    .is('score_updated_at', null)
+    .order('id')
+    .limit(SCORE_BATCH_LIMIT)
+
+  if (unscored && unscored.length > 0) {
+    const limiter = new RateLimiter()
+    let scored = 0
+    for (const row of unscored as { id: string; url: string | null }[]) {
+      if (!row.url) {
+        await supabase.from('mcp_servers').update({ score_status: 'not_github', score_updated_at: new Date().toISOString() }).eq('id', row.id)
+        continue
+      }
+      const parsed = parseGitHubUrl(row.url)
+      if (!parsed) {
+        await supabase.from('mcp_servers').update({ score_status: 'not_github', score_updated_at: new Date().toISOString() }).eq('id', row.id)
+        continue
+      }
+      const result = await fetchGitHubSignals(parsed.owner, parsed.repo, limiter)
+      if (result.status === 'scored' && result.signals) {
+        const { score, components } = computeSecurityScore(result.signals)
+        await supabase.from('mcp_servers').update({
+          security_score: score, stars: result.signals.stars, forks: result.signals.forks,
+          open_issues: result.signals.openIssues, archived: result.signals.archived,
+          is_fork: result.signals.isFork, license_spdx: result.signals.licenseSpdx,
+          pushed_at: result.signals.pushedAt, last_commit_at: result.signals.lastCommitAt,
+          last_release_at: result.signals.lastReleaseAt, has_releases: result.signals.hasReleases,
+          gh_owner: parsed.owner, gh_repo: parsed.repo,
+          score_updated_at: new Date().toISOString(), score_status: 'scored', score_components: components,
+        }).eq('id', row.id)
+        scored++
+      } else {
+        await supabase.from('mcp_servers').update({ score_status: result.status, score_updated_at: new Date().toISOString() }).eq('id', row.id)
+      }
+    }
+    if (scored > 0) console.log(`    scored ${scored} new MCP servers`)
   }
 
   return { upserted, errors }

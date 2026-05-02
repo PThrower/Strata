@@ -97,7 +97,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: 'find_mcp_servers',
     description:
-      'Search for MCP servers by use case or keyword using semantic similarity. Returns matching servers from the MCP directory with name, description, URL, and category.',
+      'Search for MCP servers by use case or keyword using semantic similarity. Returns matching servers from the MCP directory with name, description, URL, category, and a security_score (0–100) reflecting maintenance quality, popularity, and license. Higher scores indicate well-maintained, actively-developed servers. Results exclude archived repos by default.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -112,6 +112,10 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         limit: {
           type: 'number',
           description: 'Number of results to return. Default 5, max 20',
+        },
+        min_security_score: {
+          type: 'number',
+          description: 'Minimum security score (0–100). Default 30. Pass 0 to include all servers including abandoned ones.',
         },
       },
       required: ['query'],
@@ -420,6 +424,8 @@ export async function handleToolCall(
     const category = args.category as string | undefined
     const rawLimit = typeof args.limit === 'number' ? args.limit : 5
     const limit = Math.min(Math.max(1, rawLimit), 20)
+    const rawMinScore = typeof args.min_security_score === 'number' ? args.min_security_score : 30
+    const minSecurityScore = Math.min(100, Math.max(0, rawMinScore))
 
     let embedding: number[]
     try {
@@ -433,6 +439,7 @@ export async function handleToolCall(
       query_embedding: embedding,
       filter_category: category ?? null,
       match_count: limit,
+      min_security_score: minSecurityScore,
     })
 
     if (error) {
@@ -440,13 +447,19 @@ export async function handleToolCall(
       return err('Error: Search error')
     }
 
-    type McpRow = { id: string; name: string; description: string | null; url: string | null; category: string | null; tags: string[]; similarity: number }
+    type McpRow = {
+      id: string; name: string; description: string | null; url: string | null
+      category: string | null; tags: string[]; similarity: number
+      security_score: number | null; stars: number | null; archived: boolean | null
+    }
     const results = ((data ?? []) as McpRow[]).map((r) => ({
       name: r.name,
       description: r.description,
       url: r.url,
       category: r.category,
       similarity: Math.round(r.similarity * 1000) / 1000,
+      security_score: r.security_score,
+      stars: r.stars,
     }))
 
     await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'mcp-servers', ecosystem: 'mcp', statusCode: 200 })
