@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server'
 import { FREE_LIMIT, PRO_LIMIT } from '@/lib/api-auth'
@@ -123,6 +124,23 @@ export default async function DashboardPage() {
           <UpgradeCTA />
         </div>
       )}
+
+      {/* Submit MCP Server */}
+      <div className={`${card} mb-6 flex items-center justify-between gap-4`}>
+        <div>
+          <p className="text-sm font-medium mb-0.5">Submit an MCP server</p>
+          <p className="text-xs text-muted-foreground">
+            Add your server directly to the Strata directory — no waiting for awesome-mcp-servers.
+          </p>
+        </div>
+        <Link
+          href="/submit-mcp"
+          className="shrink-0 text-xs font-medium px-3 py-1.5 rounded-md transition-colors"
+          style={{ background: '#1D9E75', color: 'white', textDecoration: 'none' }}
+        >
+          Submit →
+        </Link>
+      </div>
 
       {/* Recent Requests */}
       <div className={card}>
