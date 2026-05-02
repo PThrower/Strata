@@ -11,7 +11,11 @@ export interface ToolDefinition {
   description: string
   inputSchema: {
     type: 'object'
-    properties: Record<string, { type: string; description: string }>
+    properties: Record<string, {
+      type: string
+      description: string
+      items?: { type: string }
+    }>
     required: string[]
   }
 }
@@ -107,7 +111,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: 'find_mcp_servers',
     description:
-      'Search for MCP servers by use case or keyword using semantic similarity. Returns matching servers from the MCP directory with name, description, URL, category, and a security_score (0–100) reflecting maintenance quality, popularity, and license. Higher scores indicate well-maintained, actively-developed servers. Results exclude archived and quarantined repos by default. ' +
+      'Search for MCP servers by use case or keyword using semantic similarity. Returns matching servers with two trust signals: security_score (0–100, repo maintenance/popularity) and runtime_score (0–100, behavior surface — what the tools actually do). Each result includes capability_flags (e.g. shell_exec, fs_write, dynamic_eval, secret_read), hosted_endpoint if a live MCP URL is known, tool_count, and runtime_freshness (fresh / aging / stale / unknown). Use exclude_capability_flags to filter dangerous capabilities; use require_hosted to only return servers with verified live endpoints. Quarantined and archived servers are always excluded. ' +
       EPISTEMIC_NOTICE,
     inputSchema: {
       type: 'object',
@@ -127,6 +131,19 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         min_security_score: {
           type: 'number',
           description: 'Minimum security score (0–100). Default 30. Pass 0 to include all servers including abandoned ones.',
+        },
+        min_runtime_score: {
+          type: 'number',
+          description: 'Minimum runtime score (0–100). Default 0. Pass e.g. 50 to require behaviorally-trusted servers.',
+        },
+        exclude_capability_flags: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Capability flags to exclude. Common values: "shell_exec", "dynamic_eval", "arbitrary_sql", "fs_write", "secret_read", "process_spawn", "net_egress".',
+        },
+        require_hosted: {
+          type: 'boolean',
+          description: 'If true, only return servers with a discovered live hosted endpoint. Default false.',
         },
       },
       required: ['query'],
@@ -381,6 +398,12 @@ export async function handleToolCall(
     const limit = Math.min(Math.max(1, rawLimit), 20)
     const rawMinScore = typeof args.min_security_score === 'number' ? args.min_security_score : 30
     const minSecurityScore = Math.min(100, Math.max(0, rawMinScore))
+    const rawMinRuntime = typeof args.min_runtime_score === 'number' ? args.min_runtime_score : 0
+    const minRuntimeScore = Math.min(100, Math.max(0, rawMinRuntime))
+    const excludeFlags = Array.isArray(args.exclude_capability_flags)
+      ? (args.exclude_capability_flags as unknown[]).filter((f): f is string => typeof f === 'string').slice(0, 20)
+      : []
+    const requireHosted = args.require_hosted === true
 
     let embedding: number[]
     try {
@@ -395,6 +418,9 @@ export async function handleToolCall(
       filter_category: category ?? null,
       match_count: limit,
       min_security_score: minSecurityScore,
+      min_runtime_score: minRuntimeScore,
+      exclude_capability_flags: excludeFlags,
+      require_hosted: requireHosted,
     })
 
     if (error) {
@@ -405,9 +431,20 @@ export async function handleToolCall(
     type McpRow = {
       id: string; name: string; description: string | null; url: string | null
       category: string | null; tags: string[]; similarity: number
-      security_score: number | null; stars: number | null; archived: boolean | null
+      security_score: number | null; runtime_score: number | null
+      capability_flags: string[] | null; hosted_endpoint: string | null
+      tool_count: number | null; stars: number | null; archived: boolean | null
+      runtime_updated_at: string | null
     }
     const rows = ((data ?? []) as McpRow[])
+    const now = Date.now()
+    const freshness = (iso: string | null): 'fresh' | 'aging' | 'stale' | 'unknown' => {
+      if (!iso) return 'unknown'
+      const days = (now - new Date(iso).getTime()) / 86_400_000
+      if (days < 14) return 'fresh'
+      if (days < 60) return 'aging'
+      return 'stale'
+    }
     const results = rows.map((r) => ({
       name: r.name,
       description: r.description,
@@ -415,7 +452,12 @@ export async function handleToolCall(
       category: r.category,
       similarity: Math.round(r.similarity * 1000) / 1000,
       security_score: r.security_score,
+      runtime_score: r.runtime_score,
+      capability_flags: r.capability_flags ?? [],
+      hosted_endpoint: r.hosted_endpoint,
+      tool_count: r.tool_count,
       stars: r.stars,
+      runtime_freshness: freshness(r.runtime_updated_at),
     }))
 
     await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'mcp-servers', ecosystem: 'mcp', statusCode: 200 })

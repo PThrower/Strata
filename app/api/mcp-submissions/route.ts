@@ -1,9 +1,13 @@
+import Anthropic from '@anthropic-ai/sdk'
 import { type NextRequest } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase-server'
 import { scanForInjection } from '@/lib/injection-scanner'
 import { embedBatch } from '@/lib/embeddings'
 import { parseGitHubUrl, fetchGitHubSignals, RateLimiter } from '@/scripts/refresh/github-security'
 import { computeSecurityScore } from '@/scripts/refresh/security-score'
+import { analyzeRepoStatic } from '@/scripts/refresh/runtime-static'
+import { scanToolDescriptions } from '@/scripts/refresh/runtime-tool-injection'
+import { computeRuntimeScore } from '@/scripts/refresh/runtime-score'
 
 // Per-IP rate limit: max 3 submissions per IP per hour (in-process, per instance)
 const SUBMIT_IP_WINDOW_MS = 60 * 60 * 1000
@@ -163,6 +167,35 @@ export async function POST(req: NextRequest) {
     scoreStatus = 'pending_review'
   }
 
+  // Static runtime analysis (Phase 2 — adds ~3s to submission for typical repo).
+  // Reuse the same RateLimiter so we share the GitHub rate budget with fetchGitHubSignals.
+  const anthropic = process.env.ANTHROPIC_API_KEY
+    ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    : null
+  const staticAnalysis = await analyzeRepoStatic(parsed.owner, parsed.repo, limiter)
+  const toolInjection = staticAnalysis.toolDescriptions.length > 0
+    ? await scanToolDescriptions(staticAnalysis.toolDescriptions, anthropic)
+    : { maxScore: 0, injectionDetected: false, worstToolName: null, worstToolHits: [], llmEscalated: false }
+  const runtime = computeRuntimeScore({
+    toolCount: staticAnalysis.toolDescriptions.length || null,
+    toolNames: staticAnalysis.toolNames,
+    capabilityFlags: staticAnalysis.capabilityFlags,
+    toolInjectionMax: toolInjection.maxScore,
+    hasHostedEndpoint: staticAnalysis.hostedEndpointHint !== null,
+    probeStatus: null, probeLatencyMs: null,
+    probeDriftFromStatic: null, schemaErrors: null,
+  })
+
+  // If a tool description carried injection content, quarantine the submission
+  // (shared semantics with the existing safety layer).
+  let isQuarantined = false
+  let injectionRiskScore = l1.score
+  if (toolInjection.injectionDetected) {
+    isQuarantined = true
+    injectionRiskScore = Math.max(injectionRiskScore, toolInjection.maxScore)
+    scoreStatus = 'pending_review'
+  }
+
   // Generate embedding (required for search_mcp_servers to return this row)
   let embedding: number[]
   try {
@@ -182,8 +215,8 @@ export async function POST(req: NextRequest) {
       source: 'community_submission',
       tags: [] as string[],
       embedding,
-      is_quarantined: false,
-      injection_risk_score: l1.score,
+      is_quarantined: isQuarantined,
+      injection_risk_score: injectionRiskScore,
       injection_scanned_at: now,
       score_status: scoreStatus,
       score_updated_at: scoreUpdatedAt,
@@ -202,6 +235,18 @@ export async function POST(req: NextRequest) {
       gh_owner: parsed.owner,
       gh_repo: parsed.repo,
       submitter_email: email,
+      runtime_score: runtime.score,
+      runtime_components: runtime.components,
+      runtime_status: staticAnalysis.status === 'no_source' ? 'no_source' : 'static_only',
+      runtime_updated_at: now,
+      capability_flags: staticAnalysis.capabilityFlags,
+      tool_count: staticAnalysis.toolDescriptions.length || null,
+      tool_names: staticAnalysis.toolNames.length > 0 ? staticAnalysis.toolNames : null,
+      tool_injection_max: toolInjection.maxScore || null,
+      hosted_endpoint: staticAnalysis.hostedEndpointHint,
+      endpoint_source: staticAnalysis.endpointSource,
+      npm_package: staticAnalysis.npmPackage,
+      pypi_package: staticAnalysis.pypiPackage,
       updated_at: now,
     })
     .select('id')
@@ -216,6 +261,8 @@ export async function POST(req: NextRequest) {
     id: inserted.id,
     status: pending ? 'pending_review' : 'live',
     security_score: securityScore,
+    runtime_score: runtime.score,
+    capability_flags: staticAnalysis.capabilityFlags,
     message: pending
       ? 'Your MCP server has been submitted and is pending review by our team.'
       : 'Your MCP server has been added to the Strata directory.',

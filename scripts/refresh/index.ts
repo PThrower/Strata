@@ -1,7 +1,12 @@
+import Anthropic from '@anthropic-ai/sdk'
 import { ECOSYSTEMS } from './ecosystems';
 import { fetchAllSources } from './sources';
 import { refreshMcpDirectory } from './mcp-directory';
 import { validateBatch, dedupeNearDuplicates, generateBestPractices, generateBestPracticesHaiku } from './validate';
+import { parseGitHubUrl, RateLimiter } from './github-security';
+import { analyzeRepoStatic } from './runtime-static';
+import { scanToolDescriptions } from './runtime-tool-injection';
+import { computeRuntimeScore } from './runtime-score';
 import {
   getServiceClient,
   urlDedup,
@@ -10,6 +15,11 @@ import {
   bestPracticesAreStale,
 } from './writer';
 import type { EcosystemSummary } from './types';
+
+// Cap heavier per-row work to fit the 15-min refresh budget.
+// Each row makes ~2 GitHub API calls + up to 12 raw fetches (~10s/row at 750ms baseline).
+// Backfill script handles the rest: scripts/score-mcp-runtime.ts
+const RUNTIME_BATCH_LIMIT = 30
 
 const G      = '\x1b[38;2;0;196;114m'
 const DIM    = '\x1b[2m'
@@ -112,6 +122,102 @@ async function main() {
     if ((scoreErrors ?? 0) > 0) console.log(`${RED}    score_errors  ${scoreErrors} servers${RESET}`)
   } catch (err) {
     console.log(`${RED}  ✗ mcp-directory FAILED: ${String(err)}${RESET}`)
+  }
+
+  // ── MCP Runtime Behavioral Scoring ────────────────────────────
+  console.log(`\n${CYAN}  ◆ mcp-runtime${RESET}`)
+  try {
+    const supabase = getServiceClient()
+    const limiter = new RateLimiter()
+    const anthropic = process.env.ANTHROPIC_API_KEY
+      ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+      : null
+
+    const { data: unscored } = await supabase
+      .from('mcp_servers')
+      .select('id, url, injection_risk_score')
+      .is('runtime_updated_at', null)
+      .order('id')
+      .limit(RUNTIME_BATCH_LIMIT)
+
+    type Row = { id: string; url: string | null; injection_risk_score: number | null }
+    let scored = 0
+    let quarantined = 0
+    let errors = 0
+
+    for (const row of (unscored ?? []) as Row[]) {
+      const parsed = row.url ? parseGitHubUrl(row.url) : null
+      if (!parsed) {
+        await supabase.from('mcp_servers').update({
+          runtime_status: 'no_source',
+          runtime_updated_at: new Date().toISOString(),
+        }).eq('id', row.id)
+        continue
+      }
+      try {
+        const analysis = await analyzeRepoStatic(parsed.owner, parsed.repo, limiter)
+        if (analysis.status === 'error_transient' || analysis.status === 'error_permanent') {
+          await supabase.from('mcp_servers').update({
+            runtime_status: analysis.status,
+            runtime_updated_at: new Date().toISOString(),
+          }).eq('id', row.id)
+          errors++
+          continue
+        }
+        const injection = await scanToolDescriptions(analysis.toolDescriptions, anthropic)
+        const { score, components } = computeRuntimeScore({
+          toolCount: analysis.toolDescriptions.length || null,
+          toolNames: analysis.toolNames,
+          capabilityFlags: analysis.capabilityFlags,
+          toolInjectionMax: injection.maxScore,
+          hasHostedEndpoint: analysis.hostedEndpointHint !== null,
+          probeStatus: null, probeLatencyMs: null,
+          probeDriftFromStatic: null, schemaErrors: null,
+        })
+        const update: Record<string, unknown> = {
+          runtime_score: score,
+          runtime_components: components,
+          runtime_status: analysis.status === 'no_source' ? 'no_source' : 'static_only',
+          runtime_updated_at: new Date().toISOString(),
+          capability_flags: analysis.capabilityFlags,
+          tool_count: analysis.toolDescriptions.length || null,
+          tool_names: analysis.toolNames.length > 0 ? analysis.toolNames : null,
+          tool_injection_max: injection.maxScore || null,
+          hosted_endpoint: analysis.hostedEndpointHint,
+          endpoint_source: analysis.endpointSource,
+          npm_package: analysis.npmPackage,
+          pypi_package: analysis.pypiPackage,
+        }
+        if (injection.injectionDetected) {
+          update.is_quarantined = true
+          update.injection_risk_score = Math.max(injection.maxScore, row.injection_risk_score ?? 0)
+          update.injection_scanned_at = new Date().toISOString()
+          quarantined++
+        }
+        await supabase.from('mcp_servers').update(update).eq('id', row.id)
+        scored++
+      } catch {
+        await supabase.from('mcp_servers').update({
+          runtime_status: 'error_transient',
+          runtime_updated_at: new Date().toISOString(),
+        }).eq('id', row.id)
+        errors++
+      }
+    }
+
+    if (scored > 0) console.log(`${G}    runtime-scored  ${RESET}${scored} servers`)
+    if (quarantined > 0) console.log(`${RED}    quarantined     ${quarantined} (tool-description injection)${RESET}`)
+    if (errors > 0) console.log(`${YELLOW}    errors          ${errors}${RESET}`)
+
+    const { count: stillUnscored } = await supabase
+      .from('mcp_servers')
+      .select('*', { count: 'exact', head: true })
+      .is('runtime_updated_at', null)
+    if ((stillUnscored ?? 0) > 0) {
+      console.log(`${YELLOW}    unscored  ${stillUnscored} servers (run: npx tsx scripts/score-mcp-runtime.ts)${RESET}`)
+    }
+  } catch (err) {
+    console.log(`${RED}  ✗ mcp-runtime FAILED: ${String(err)}${RESET}`)
   }
 
   // ── Summary table ──────────────────────────────────────────────
