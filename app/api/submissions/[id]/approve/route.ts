@@ -1,5 +1,6 @@
 import { type NextRequest } from 'next/server'
 import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server'
+import { scanForInjection } from '@/lib/injection-scanner'
 
 export async function POST(
   _req: NextRequest,
@@ -24,6 +25,17 @@ export async function POST(
   if (!submission) return Response.json({ error: 'Not found' }, { status: 404 })
   if (submission.status !== 'flagged') {
     return Response.json({ error: 'Submission is not flagged' }, { status: 400 })
+  }
+
+  // M-4: re-scan before publishing. Flagged submissions were queued for human
+  // review (not injection-detected), but the approve path previously inserted
+  // without any injection check.
+  const l1 = scanForInjection(`${submission.title} ${submission.body}`)
+  if (l1.score >= 6) {
+    return Response.json(
+      { error: 'Injection scan blocked approval — quarantine threshold exceeded' },
+      { status: 400 },
+    )
   }
 
   const { data: contentItem } = await serviceClient

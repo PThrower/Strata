@@ -3,6 +3,58 @@ import type Stripe from 'stripe'
 import { stripe } from '@/lib/stripe'
 import { createServiceRoleClient } from '@/lib/supabase-server'
 
+type SupabaseClient = ReturnType<typeof createServiceRoleClient>
+
+// Extracted handler so it can throw — lets the POST function roll back the
+// dedup row and return 503 if processing fails, allowing Stripe to retry.
+async function processEvent(event: Stripe.Event, supabase: SupabaseClient): Promise<void> {
+  switch (event.type) {
+    case 'checkout.session.completed': {
+      const session = event.data.object
+      const profileId = session.client_reference_id
+      const customerId =
+        typeof session.customer === 'string'
+          ? session.customer
+          : session.customer?.id ?? null
+      const subscriptionId =
+        typeof session.subscription === 'string'
+          ? session.subscription
+          : session.subscription?.id ?? null
+
+      if (profileId) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            tier: 'pro',
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subscriptionId,
+          })
+          .eq('id', profileId)
+        if (error) throw new Error(`checkout upgrade failed: ${error.message}`)
+      }
+      break
+    }
+
+    case 'customer.subscription.deleted': {
+      const subscription = event.data.object
+      const customerId =
+        typeof subscription.customer === 'string'
+          ? subscription.customer
+          : subscription.customer.id
+
+      // Match on subscription_id too: a stale delete event for an old
+      // subscription must not downgrade a re-subscribed customer.
+      const { error } = await supabase
+        .from('profiles')
+        .update({ tier: 'free', stripe_subscription_id: null })
+        .eq('stripe_customer_id', customerId)
+        .eq('stripe_subscription_id', subscription.id)
+      if (error) throw new Error(`subscription delete failed: ${error.message}`)
+      break
+    }
+  }
+}
+
 export async function POST(request: NextRequest) {
   const sig = request.headers.get('stripe-signature')
   if (!sig) {
@@ -29,8 +81,8 @@ export async function POST(request: NextRequest) {
 
   const supabase = createServiceRoleClient()
 
-  // Idempotency: insert the event id first. A unique-violation means we have
-  // already processed this event — return 200 so Stripe stops retrying.
+  // Atomic dedup: INSERT to claim the event before processing.
+  // A 23505 unique-violation means this event was already processed.
   const { error: dedupErr } = await supabase
     .from('stripe_events')
     .insert({ event_id: event.id, event_type: event.type })
@@ -43,55 +95,15 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'Service error' }, { status: 503 })
   }
 
-  switch (event.type) {
-    case 'checkout.session.completed': {
-      const session = event.data.object
-      const profileId = session.client_reference_id
-      const customerId =
-        typeof session.customer === 'string'
-          ? session.customer
-          : session.customer?.id ?? null
-      const subscriptionId =
-        typeof session.subscription === 'string'
-          ? session.subscription
-          : session.subscription?.id ?? null
-
-      if (profileId) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            tier: 'pro',
-            stripe_customer_id: customerId,
-            stripe_subscription_id: subscriptionId,
-          })
-          .eq('id', profileId)
-        if (error) {
-          console.error('[stripe webhook] checkout upgrade failed:', error.message)
-          return Response.json({ error: 'Service error' }, { status: 503 })
-        }
-      }
-      break
-    }
-    case 'customer.subscription.deleted': {
-      const subscription = event.data.object
-      const customerId =
-        typeof subscription.customer === 'string'
-          ? subscription.customer
-          : subscription.customer.id
-
-      // Match on subscription_id too: a stale delete event for an old
-      // subscription must not downgrade a re-subscribed customer.
-      const { error } = await supabase
-        .from('profiles')
-        .update({ tier: 'free', stripe_subscription_id: null })
-        .eq('stripe_customer_id', customerId)
-        .eq('stripe_subscription_id', subscription.id)
-      if (error) {
-        console.error('[stripe webhook] subscription delete failed:', error.message)
-        return Response.json({ error: 'Service error' }, { status: 503 })
-      }
-      break
-    }
+  // M-2: if the handler fails, remove the dedup row so Stripe can retry.
+  // Previously the event was permanently lost because the dedup row remained
+  // after a 503 response, causing Stripe's retry to receive 200 "duplicate".
+  try {
+    await processEvent(event, supabase)
+  } catch (err) {
+    console.error('[stripe webhook] handler failed:', err)
+    await supabase.from('stripe_events').delete().eq('event_id', event.id)
+    return Response.json({ error: 'Service error' }, { status: 503 })
   }
 
   return Response.json({ received: true })

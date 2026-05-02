@@ -14,7 +14,7 @@ async function voyageEmbed(inputs: string[]): Promise<number[][]> {
     },
     body: JSON.stringify({ input: inputs, model: VOYAGE_MODEL }),
   })
-  if (!res.ok) throw new Error(`Voyage embed failed: ${res.status} ${await res.text()}`)
+  if (!res.ok) throw new Error(`Voyage embed failed: ${res.status}`)
   const json: VoyageResponse = await res.json()
   return json.data.sort((a, b) => a.index - b.index).map((d) => d.embedding)
 }

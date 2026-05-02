@@ -316,7 +316,7 @@ export async function handleToolCall(
   }
 
   if (name === 'search_ecosystem') {
-    const query = args.query as string
+    const query = (args.query as string).slice(0, 2000)
     const ecosystem = args.ecosystem as string | undefined
     const logEcosystem = ecosystem ?? 'all'
 
@@ -375,7 +375,7 @@ export async function handleToolCall(
   }
 
   if (name === 'find_mcp_servers') {
-    const query = args.query as string
+    const query = (args.query as string).slice(0, 2000)
     const category = args.category as string | undefined
     const rawLimit = typeof args.limit === 'number' ? args.limit : 5
     const limit = Math.min(Math.max(1, rawLimit), 20)

@@ -43,7 +43,9 @@ export async function signupAction(
 
   if (error) {
     if (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('already been registered')) {
-      return { error: 'An account with this email already exists. Sign in instead?' }
+      // M-3: don't disclose account existence. Redirect identically to a
+      // successful signup — the proxy bounces unauthenticated sessions to login.
+      redirect('/dashboard')
     }
     return { error: error.message }
   }
@@ -67,11 +69,11 @@ export async function forgotPasswordAction(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
   const supabase = await createUserClient()
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  // L-3: ignore the error — always return success to prevent email-existence
+  // disclosure. Supabase silently skips unregistered addresses.
+  await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${appUrl}/reset-password`,
   })
-
-  if (error) return { error: error.message }
   return { success: true }
 }
 

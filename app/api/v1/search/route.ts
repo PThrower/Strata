@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   const { profile, supabase } = auth
   const params = request.nextUrl.searchParams
-  const query = params.get('query')
+  const query = params.get('query')?.slice(0, 2000) ?? null
   const ecosystem = params.get('ecosystem')
 
   if (!query) {

@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
   const { profile, supabase } = auth
   const params = request.nextUrl.searchParams
   const ecosystem = params.get('ecosystem')
-  const useCase = params.get('use_case')
+  const useCase = params.get('use_case')?.slice(0, 2000) ?? null
 
   if (!ecosystem) {
     return Response.json({ error: 'ecosystem query param is required' }, { status: 400 })

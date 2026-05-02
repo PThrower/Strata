@@ -98,7 +98,7 @@ async function embedBatch(texts: string[]): Promise<number[][]> {
     clearTimeout(timer)
   }
 
-  if (!res.ok) throw new Error(`Voyage embed failed: ${res.status} ${await res.text()}`)
+  if (!res.ok) throw new Error(`Voyage embed failed: ${res.status}`)
   const json: VoyageResponse = await res.json()
   return json.data.sort((a, b) => a.index - b.index).map((d) => d.embedding)
 }

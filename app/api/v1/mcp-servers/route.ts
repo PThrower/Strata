@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
   const { profile, supabase } = auth
   const params = request.nextUrl.searchParams
-  const q = params.get('q')
+  const q = params.get('q')?.slice(0, 2000) ?? null
   const category = params.get('category')
   const rawLimit = parseInt(params.get('limit') ?? '5', 10)
   const limit = Math.min(Math.max(1, isNaN(rawLimit) ? 5 : rawLimit), 20)
