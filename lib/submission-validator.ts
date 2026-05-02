@@ -118,11 +118,19 @@ export async function validateSubmission(input: SubmissionInput): Promise<Valida
       injection_risk_score: riskScore,
     }
   } catch {
+    // Fail-closed (C-4):
+    //   L1 > 0 + L2 error → treat as injection (route quarantines + rejects).
+    //   L1 = 0 + L2 error → flag for manual review (medium = "retry by human"),
+    //                       since auto-rejecting would harm legitimate submissions
+    //                       on every Anthropic outage.
+    const failClosed = l1.score > 0
     return {
-      confidence: 'medium',
-      reasoning: 'Validation service unavailable — flagged for manual review.',
+      confidence: failClosed ? 'low' : 'medium',
+      reasoning: failClosed
+        ? 'Validation service unavailable and Layer-1 scanner flagged content — quarantined pending review.'
+        : 'Validation service unavailable — flagged for manual review.',
       approved: false,
-      injection_detected: false,
+      injection_detected: failClosed,
       injection_risk_score: l1.score,
     }
   }

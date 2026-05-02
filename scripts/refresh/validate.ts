@@ -125,8 +125,9 @@ async function checkInjectionWithThinking(title: string, body: string): Promise<
     const result = JSON.parse(cleaned) as { injection_detected: boolean };
     return result.injection_detected === true;
   } catch {
-    // On error, defer to Layer-1 score (caller decides based on context)
-    return false;
+    // Fail-closed (C-4): this function only runs when L1 score >= 4, so an
+    // L2 error on already-suspicious content must quarantine, not pass.
+    return true;
   }
 }
 
