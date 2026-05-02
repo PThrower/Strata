@@ -158,8 +158,8 @@ export async function validateBatch(
         `<content_to_validate index="${i}">\n` +
         `<title>${escapeXml(item.title)}</title>\n` +
         `<body>${escapeXml(item.body.slice(0, 600))}</body>\n` +
-        `<category>${item.category}</category>\n` +
-        `<source_type>${item.sourceType}</source_type>\n` +
+        `<category>${escapeXml(item.category)}</category>\n` +
+        `<source_type>${escapeXml(item.sourceType)}</source_type>\n` +
         `</content_to_validate>`
       )
       .join('\n\n');
@@ -189,10 +189,10 @@ export async function validateBatch(
       // Layer 2: extended-thinking injection check for items that scored high
       // on Layer 1 but weren't flagged by the main validator
       let l2Detected = false;
-      if (l1.score >= 4 && !r.injection_detected) {
+      if (l1.score >= 3 && !r.injection_detected) {
         l2Detected = await checkInjectionWithThinking(
           chunk[i].title,
-          chunk[i].body.slice(0, 600),
+          chunk[i].body.slice(0, 4000),
         );
       }
 
@@ -200,7 +200,7 @@ export async function validateBatch(
       const injectionDetected =
         r.injection_detected ||
         l2Detected ||
-        l1.score > 6;
+        l1.score >= 6;
 
       const riskScore = Math.max(
         typeof r.injection_risk_score === 'number' ? r.injection_risk_score : 0,
@@ -228,13 +228,37 @@ export async function validateBatch(
 
       if (!r.keep || r.confidence === 'low') continue;
 
+      // H-7: re-scan Claude's rewrite — the improved content might introduce
+      // injection text through hallucination or prompt-bleed from a poisoned
+      // adjacent chunk item.
+      const finalTitle = r.improvedTitle ?? chunk[i].title
+      const finalBody  = r.improvedBody ?? chunk[i].body
+      const postScan = scanForInjection(`${finalTitle} ${finalBody}`)
+
+      if (postScan.score >= 6) {
+        validated.push({
+          ...chunk[i],
+          title: finalTitle,
+          body: finalBody,
+          category: r.category ?? chunk[i].category,
+          confidence: 'low',
+          injection_risk_score: Math.max(riskScore, postScan.score),
+          is_quarantined: true,
+        })
+        console.warn(
+          `  [QUARANTINE] post-rewrite injection in "${finalTitle.slice(0, 60)}" ` +
+          `(score=${postScan.score})`
+        )
+        continue
+      }
+
       validated.push({
         ...chunk[i],
-        title: r.improvedTitle ?? chunk[i].title,
-        body: r.improvedBody ?? chunk[i].body,
+        title: finalTitle,
+        body: finalBody,
         category: r.category ?? chunk[i].category,
         confidence: r.confidence,
-        injection_risk_score: riskScore,
+        injection_risk_score: Math.max(riskScore, postScan.score),
         is_quarantined: false,
       });
     }

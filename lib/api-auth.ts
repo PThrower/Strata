@@ -1,4 +1,19 @@
-import { createHash } from 'crypto'
+import { createHmac } from 'crypto'
+
+// AUDIT_HASH_PEPPER must be set to a random secret in production. Without it,
+// ip/key hashes are HMAC-keyed with an empty key (still different from plain
+// SHA-256, but lacks per-installation entropy). Set in .env.local and Vercel
+// environment variables.
+const AUDIT_HASH_PEPPER = process.env.AUDIT_HASH_PEPPER ?? ''
+if (!AUDIT_HASH_PEPPER) {
+  console.warn('[api-auth] AUDIT_HASH_PEPPER not set — audit hashes lack per-installation pepper. Add to .env.local and Vercel env vars.')
+}
+
+function hashForAudit(value: string): string {
+  return createHmac('sha256', AUDIT_HASH_PEPPER).update(value).digest('hex')
+}
+
+const SLUG_RE = /^[a-z0-9][a-z0-9_-]{0,63}$/
 import type { NextRequest } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createServiceRoleClient } from './supabase-server'
@@ -95,11 +110,33 @@ export async function checkEcosystemAccess(
   ecosystemSlug: string,
   tier: Tier,
 ): Promise<{ ok: true; slug: string } | { ok: false; response: Response }> {
-  const { data: ecosystem } = await supabase
+  // H-5: validate slug format before touching the DB. The old .or() approach
+  // used string interpolation which allowed PostgREST filter-syntax injection.
+  if (!SLUG_RE.test(ecosystemSlug)) {
+    return {
+      ok: false,
+      response: Response.json({ error: 'Ecosystem not found' }, { status: 404 }),
+    }
+  }
+
+  // Two fully-parameterised queries instead of a single .or(`...${slug}...`).
+  type EcoRow = { slug: string; available_on_free: boolean }
+
+  const { data: bySlug } = await supabase
     .from('ecosystems')
     .select('slug, available_on_free')
-    .or(`slug.eq.${ecosystemSlug},aliases.cs.{${ecosystemSlug}}`)
-    .maybeSingle<{ slug: string; available_on_free: boolean }>()
+    .eq('slug', ecosystemSlug)
+    .maybeSingle<EcoRow>()
+
+  let ecosystem: EcoRow | null = bySlug
+  if (!ecosystem) {
+    const { data: byAlias } = await supabase
+      .from('ecosystems')
+      .select('slug, available_on_free')
+      .contains('aliases', [ecosystemSlug])
+      .maybeSingle<EcoRow>()
+    ecosystem = byAlias
+  }
 
   if (!ecosystem) {
     return {
@@ -150,14 +187,12 @@ export async function logQueryAudit(
   },
 ) {
   const { error } = await supabase.from('api_query_log').insert({
-    api_key_hash: createHash('sha256').update(args.apiKey).digest('hex'),
+    api_key_hash: hashForAudit(args.apiKey),
     tool_name: args.tool,
     query_params: args.queryParams ?? null,
     result_count: args.resultCount ?? null,
     result_ids: args.resultIds && args.resultIds.length > 0 ? args.resultIds : null,
-    client_ip_hash: args.clientIp
-      ? createHash('sha256').update(args.clientIp).digest('hex')
-      : null,
+    client_ip_hash: args.clientIp ? hashForAudit(args.clientIp) : null,
     status_code: args.statusCode,
     latency_ms: args.latencyMs ?? null,
   })

@@ -26,7 +26,7 @@ async function scanMcpEntry(
   const l1 = scanForInjection(text)
 
   // Short-circuit on clear Layer-1 hits
-  if (l1.score > 6) {
+  if (l1.score >= 6) {
     return { injection_risk_score: l1.score, is_quarantined: true }
   }
 
@@ -53,7 +53,7 @@ async function scanMcpEntry(
     ) as { injection_detected?: boolean; risk_score?: number }
 
     const riskScore = Math.max(l1.score, typeof raw.risk_score === 'number' ? raw.risk_score : 0)
-    const injectionDetected = raw.injection_detected === true || riskScore > 6
+    const injectionDetected = raw.injection_detected === true || riskScore >= 6
 
     return { injection_risk_score: riskScore, is_quarantined: injectionDetected }
   } catch {

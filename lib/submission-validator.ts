@@ -57,7 +57,7 @@ export async function validateSubmission(input: SubmissionInput): Promise<Valida
   const l1 = scanForInjection(`${input.title} ${input.body}`)
 
   // If Layer-1 score is extreme, short-circuit — no need to send to Claude
-  if (l1.score > 6) {
+  if (l1.score >= 6) {
     return {
       confidence: 'low',
       reasoning: 'Content flagged by automated injection scanner.',

@@ -103,7 +103,7 @@ async function main() {
     const l1 = scanForInjection(text)
 
     let finalScore = l1.score
-    let injectionDetected = l1.score > 6
+    let injectionDetected = l1.score >= 6
 
     // Layer 2: semantic check via Claude Haiku (30s timeout)
     process.stdout.write(`  L2 haiku...`)
@@ -113,7 +113,7 @@ async function main() {
     console.log(` done (score=${l2.risk_score} detected=${l2.injection_detected})`)
 
     // Escalate to extended thinking only for borderline cases (L1 suspicious but L2 clean)
-    if (l1.score >= 4 && !l2.injection_detected) {
+    if (l1.score >= 3 && !l2.injection_detected) {
       process.stdout.write(`  L3 sonnet-thinking (l1=${l1.score})...`)
       try {
         const abortCtrl = new AbortController()

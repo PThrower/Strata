@@ -1,6 +1,7 @@
 import { type NextRequest } from 'next/server'
 import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server'
 import { validateSubmission } from '@/lib/submission-validator'
+import { scanForInjection } from '@/lib/injection-scanner'
 
 function isValidUrl(s: string) {
   try { new URL(s); return true } catch { return false }
@@ -156,6 +157,35 @@ export async function POST(req: NextRequest) {
       result.improvedBody && result.improvedBody.length >= content.length * 0.5
         ? result.improvedBody
         : content
+
+    // H-7: re-scan the final (possibly Claude-rewritten) content before
+    // publishing. Catches injection introduced by hallucination or prompt-bleed.
+    const postScan = scanForInjection(`${finalTitle} ${finalBody}`)
+    if (postScan.score >= 6) {
+      await serviceClient.from('content_items').insert({
+        ecosystem_slug: ecosystem,
+        category,
+        title: finalTitle,
+        body: finalBody,
+        source_url: sourceUrl || null,
+        is_pro_only: false,
+        is_quarantined: true,
+        injection_risk_score: postScan.score,
+        last_verified_at: new Date().toISOString(),
+        confidence: 'low',
+      })
+      await serviceClient.from('submissions').update({
+        status: 'rejected',
+        claude_confidence: 'low',
+        claude_reasoning: 'Post-rewrite injection scan quarantined the content.',
+        reviewed_at: new Date().toISOString(),
+      }).eq('id', submission.id)
+      return Response.json({
+        submissionId: submission.id,
+        status: 'rejected',
+        message: 'Submission did not meet quality standards.',
+      })
+    }
 
     const { data: contentItem, error: contentErr } = await serviceClient
       .from('content_items')
