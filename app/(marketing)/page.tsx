@@ -257,7 +257,7 @@ export default function LandingPage() {
               margin: '0 0 32px', display: 'flex', alignItems: 'center', gap: 14,
             }}>
               <span aria-hidden="true" style={{ width: 32, height: 1, background: 'rgba(255,255,255,0.35)', display: 'inline-block', flexShrink: 0 }} />
-              ai ecosystem intelligence — api & mcp
+              mcp security · trust layer · 2,179 servers scored
             </p>
 
             {/* Headline */}
@@ -269,9 +269,9 @@ export default function LandingPage() {
                 letterSpacing: '-0.025em', margin: 0, color: 'var(--ink)',
               }}
             >
-              Verified knowledge,
+              The trust layer
               <span className="hero-l2" style={{ display: 'block', marginLeft: 100 }}>
-                built for{' '}
+                for{' '}
                 <em style={{
                   fontStyle: 'italic',
                   background: 'linear-gradient(180deg, #b6f0d3 0%, #5fb085 55%, #3d8a65 100%)',
@@ -280,7 +280,7 @@ export default function LandingPage() {
                   WebkitTextFillColor: 'transparent',
                   filter: 'drop-shadow(0 0 24px rgba(95,176,133,0.35))',
                 }}>
-                  agents.
+                  AI agents.
                 </em>
               </span>
             </h1>
@@ -295,9 +295,8 @@ export default function LandingPage() {
             {/* Body + buttons */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 32, alignItems: 'end' }} className="hero-foot">
               <p style={{ color: 'var(--ink-soft)', fontSize: 16.5, lineHeight: 1.6, maxWidth: 420, margin: 0 }}>
-                Strata is the API and MCP server for the moving parts of the AI ecosystem —{' '}
-                <strong style={{ color: 'var(--ink)', fontWeight: 500 }}>best practices, releases, integrations, and signal</strong>
-                {' '}— verified, dated, and shaped for the agents reading it.
+                Verified intelligence, security scoring, and behavioral analysis for every MCP server your agents use.{' '}
+                <strong style={{ color: 'var(--ink)', fontWeight: 500 }}>Know what you&rsquo;re connecting to before you connect.</strong>
               </p>
               <div style={{ display: 'flex', gap: 12 }}>
                 <Btn variant="emerald" href="/signup">get api key</Btn>
@@ -320,9 +319,60 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ══ How It Works ══ */}
+      <section style={{ padding: '72px 0', borderTop: '1px solid var(--hair)' }} id="how-it-works">
+        <SectionHeading title="How it works" meta="three steps · no configuration required" />
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16,
+          marginTop: 8,
+        }} className="hiw-steps-grid">
+          {[
+            {
+              step: '01',
+              title: 'Connect',
+              body: 'Add Strata to your agent in one command. Native MCP server or REST API — zero configuration, instant access.',
+              accent: false,
+            },
+            {
+              step: '02',
+              title: 'Score',
+              body: 'Every MCP server gets two trust signals: security_score (repo health) and runtime_score (behavioral analysis). Capability flags expose what tools can actually do.',
+              accent: true,
+            },
+            {
+              step: '03',
+              title: 'Ship safely',
+              body: 'Block dangerous servers before your agent connects. shell_exec, dynamic_eval, arbitrary_sql — flagged automatically.',
+              accent: false,
+            },
+          ].map(({ step, title, body, accent }) => (
+            <Glass key={step} style={{ padding: '32px 28px 28px' }}>
+              <p style={{
+                fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 600,
+                letterSpacing: '0.18em', textTransform: 'uppercase',
+                color: accent ? '#00c472' : 'var(--ink-faint)',
+                margin: '0 0 20px',
+              }}>
+                {step}
+              </p>
+              <h3 style={{
+                fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 400,
+                letterSpacing: '-0.015em', color: 'var(--ink)',
+                margin: '0 0 14px', lineHeight: 1.2,
+              }}>
+                {title}
+              </h3>
+              <p style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.65, margin: 0 }}>
+                {body}
+              </p>
+            </Glass>
+          ))}
+        </div>
+      </section>
+
       {/* ══ Ecosystems ══ */}
       <section style={{ padding: '72px 0' }} id="ecosystems">
-        <SectionHeading title="Ecosystems we track" meta="22 indexed · refreshed continuously" />
+        <SectionHeading title="Ecosystems we track" meta="22 AI ecosystems · 2,179 MCP servers scored · continuously updated" />
         <div className="eco-grid">
           {ecosystems.map((eco) => (
             <Glass key={eco.name} shimmer className="eco-card" style={{ padding: '28px 20px 22px', textAlign: 'center' }}>
@@ -345,6 +395,112 @@ export default function LandingPage() {
       }}>
         <EcosystemCarousel />
       </div>
+
+      {/* ══ Developer Tools ══ */}
+      <section style={{ padding: '72px 0', borderTop: '1px solid var(--hair)' }} id="developer-tools">
+        <SectionHeading title="Developer tools" meta="sdk · github action · mcp server" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }} className="dev-tools-grid">
+
+          {/* SDK */}
+          <Glass style={{ padding: '28px' }}>
+            <p style={{
+              fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 600,
+              letterSpacing: '0.18em', textTransform: 'uppercase',
+              color: 'var(--emerald-glow)', margin: '0 0 14px',
+            }}>
+              TypeScript SDK
+            </p>
+            <h3 style={{
+              fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400,
+              color: 'var(--ink)', margin: '0 0 10px', lineHeight: 1.2,
+            }}>
+              @strata-ai/sdk
+            </h3>
+            <p style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.6, margin: '0 0 18px' }}>
+              Zero-dependency. Works in Node, browser, Bun, and Cloudflare Workers.
+            </p>
+            <code style={{
+              display: 'block',
+              fontFamily: 'var(--font-mono)', fontSize: 12.5,
+              background: 'rgba(0,0,0,0.35)', borderRadius: 8, padding: '10px 14px',
+              color: 'var(--emerald-light)', margin: '0 0 16px',
+              border: '1px solid rgba(255,255,255,0.07)',
+            }}>
+              npm install @strata-ai/sdk
+            </code>
+            <a href="/docs/sdk" style={{ fontSize: 13, color: 'var(--emerald-glow)', textDecoration: 'none', fontWeight: 500 }}>
+              SDK docs →
+            </a>
+          </Glass>
+
+          {/* GitHub Action */}
+          <Glass style={{ padding: '28px' }}>
+            <p style={{
+              fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 600,
+              letterSpacing: '0.18em', textTransform: 'uppercase',
+              color: 'var(--emerald-glow)', margin: '0 0 14px',
+            }}>
+              GitHub Action
+            </p>
+            <h3 style={{
+              fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400,
+              color: 'var(--ink)', margin: '0 0 10px', lineHeight: 1.2,
+            }}>
+              Gate every PR
+            </h3>
+            <p style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.6, margin: '0 0 18px' }}>
+              Scans MCP configs, posts a trust report comment, fails on critical risk.
+            </p>
+            <code style={{
+              display: 'block',
+              fontFamily: 'var(--font-mono)', fontSize: 11,
+              background: 'rgba(0,0,0,0.35)', borderRadius: 8, padding: '10px 14px',
+              color: 'var(--emerald-light)', margin: '0 0 16px',
+              border: '1px solid rgba(255,255,255,0.07)',
+              whiteSpace: 'pre',
+            }}>
+              {`uses: PThrower/strata-mcp-check@v1`}
+            </code>
+            <a href="https://github.com/marketplace/actions/strata-mcp-security-check" rel="noreferrer" style={{ fontSize: 13, color: 'var(--emerald-glow)', textDecoration: 'none', fontWeight: 500 }}>
+              Marketplace →
+            </a>
+          </Glass>
+
+          {/* MCP Server */}
+          <Glass style={{ padding: '28px' }}>
+            <p style={{
+              fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 600,
+              letterSpacing: '0.18em', textTransform: 'uppercase',
+              color: 'var(--emerald-glow)', margin: '0 0 14px',
+            }}>
+              Native MCP Server
+            </p>
+            <h3 style={{
+              fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400,
+              color: 'var(--ink)', margin: '0 0 10px', lineHeight: 1.2,
+            }}>
+              Connect once
+            </h3>
+            <p style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.6, margin: '0 0 18px' }}>
+              Add to Claude Desktop, Cursor, or any MCP client — all tools available instantly.
+            </p>
+            <code style={{
+              display: 'block',
+              fontFamily: 'var(--font-mono)', fontSize: 11,
+              background: 'rgba(0,0,0,0.35)', borderRadius: 8, padding: '10px 14px',
+              color: 'var(--emerald-light)', margin: '0 0 16px',
+              border: '1px solid rgba(255,255,255,0.07)',
+              whiteSpace: 'pre',
+            }}>
+              {`"url": "https://www.usestrata.dev/mcp"`}
+            </code>
+            <a href="/docs#mcp-server" style={{ fontSize: 13, color: 'var(--emerald-glow)', textDecoration: 'none', fontWeight: 500 }}>
+              MCP docs →
+            </a>
+          </Glass>
+
+        </div>
+      </section>
 
       {/* ══ API Methods ══ */}
       <section style={{ padding: '72px 0' }} id="methods">
@@ -416,15 +572,15 @@ export default function LandingPage() {
               letterSpacing: '-0.025em', lineHeight: 1.08,
               color: 'var(--ink)', margin: '0 0 22px',
             }}>
-              Intelligence that grows<br />with every developer.
+              Trust signals that get<br />sharper every day.
             </h2>
 
             <p style={{
               fontSize: 16, color: 'var(--ink-soft)', lineHeight: 1.65,
               maxWidth: 420, margin: '0 auto 52px',
             }}>
-              Every integration, tip, and breakthrough discovered by the community
-              finds its way into Strata. The more developers use it, the sharper it gets.
+              Every MCP server is continuously re-scored as repos evolve, runtime behavior
+              changes, and new capability flags are detected. The directory never goes stale.
             </p>
 
             {/* Hairline divider */}
@@ -436,8 +592,8 @@ export default function LandingPage() {
             <div style={{ display: 'flex', justifyContent: 'center', gap: 64, marginBottom: 52 }}>
               {[
                 { value: '22',    label: 'ecosystems tracked' },
-                { value: '4',     label: 'api tools' },
-                { value: 'Daily', label: 'content updates' },
+                { value: '2,179', label: 'mcp servers scored' },
+                { value: 'Daily', label: 'index updates' },
               ].map(({ value, label }) => (
                 <div key={label}>
                   <p style={{
