@@ -584,8 +584,7 @@ export default function LandingPage() {
               <p style={{ fontSize: 14.5, color: 'var(--ink-muted)', margin: '0 0 28px', lineHeight: 1.55 }}>
                 Lock in everything Strata becomes. Forever.
               </p>
-              {/* TODO: Replace href with Stripe lifetime product checkout URL */}
-              <Btn variant="emerald" href="#" arrow={false}>Claim Founder Access →</Btn>
+              <Btn variant="emerald" href="https://buy.stripe.com/6oU4gBboLcfx20V6mlg3600" arrow={false}>Claim Founder Access →</Btn>
               <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-faint)', margin: '16px 0 0', letterSpacing: '0.06em' }}>
                 49 of 50 spots remaining
               </p>
