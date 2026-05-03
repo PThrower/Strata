@@ -250,3 +250,111 @@ function invalidKey(): AuthFailure {
     response: Response.json({ error: 'Invalid API key' }, { status: 401 }),
   }
 }
+
+// ── Anonymous tier (SDK + Action friction-reducer) ──────────────────────────
+// Headerless callers get a 10-req/hour rolling window per IP. Best-effort
+// (per-instance) rather than strict — abuse-resistant enough for a free tier
+// that exists primarily to let developers try the SDK without signing up.
+const ANON_WINDOW_MS = 60 * 60 * 1000
+const ANON_MAX_REQS = 10
+const anonWindows = new Map<string, { n: number; reset: number }>()
+
+function consumeAnonQuota(ip: string): { allowed: boolean; remaining: number; resetAt: Date } {
+  const now = Date.now()
+  if (anonWindows.size > 10_000) {
+    for (const [k, v] of anonWindows) {
+      if (v.reset <= now) anonWindows.delete(k)
+    }
+  }
+  const w = anonWindows.get(ip)
+  if (!w || w.reset <= now) {
+    anonWindows.set(ip, { n: 1, reset: now + ANON_WINDOW_MS })
+    return { allowed: true, remaining: ANON_MAX_REQS - 1, resetAt: new Date(now + ANON_WINDOW_MS) }
+  }
+  if (w.n >= ANON_MAX_REQS) {
+    return { allowed: false, remaining: 0, resetAt: new Date(w.reset) }
+  }
+  w.n++
+  return { allowed: true, remaining: ANON_MAX_REQS - w.n, resetAt: new Date(w.reset) }
+}
+
+export type AnonAuth = {
+  ok: true
+  mode: 'anon'
+  ip: string
+  remaining: number
+  resetAt: Date
+}
+
+export type ProfileAuth = {
+  ok: true
+  mode: 'auth'
+  profile: Profile
+  supabase: ServiceClient
+}
+
+export type AuthOrAnon = AnonAuth | ProfileAuth | { ok: false; response: Response }
+
+// Accepts either `Authorization: Bearer <key>` or `X-API-Key: <key>` —
+// missing both → anon path. Routes branch on result.mode to skip per-key
+// logging in anon mode.
+export async function authenticateOrAnon(req: NextRequest): Promise<AuthOrAnon> {
+  const headerKey = req.headers.get('x-api-key')
+  const bearer = req.headers.get('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1]
+  const apiKey = headerKey ?? bearer ?? null
+
+  if (apiKey) {
+    // Reuse the existing IP token bucket + key consumption flow.
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? ''
+    if (ip && !allowIp(ip)) {
+      return {
+        ok: false,
+        response: Response.json({ error: 'Too many requests' }, { status: 429 }),
+      }
+    }
+    const result = await consumeApiCall(apiKey)
+    if (!result.ok) return { ok: false, response: result.response }
+    return { ok: true, mode: 'auth', profile: result.profile, supabase: result.supabase }
+  }
+
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '0.0.0.0'
+  const quota = consumeAnonQuota(ip)
+  if (!quota.allowed) {
+    return {
+      ok: false,
+      response: Response.json(
+        {
+          error: 'rate_limited',
+          message: 'Anonymous limit is 10 req/hour. Add Authorization header for higher limits.',
+          reset_at: quota.resetAt.toISOString(),
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': String(ANON_MAX_REQS),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': quota.resetAt.toISOString(),
+          },
+        },
+      ),
+    }
+  }
+  return { ok: true, mode: 'anon', ip, remaining: quota.remaining, resetAt: quota.resetAt }
+}
+
+export function rateLimitHeaders(auth: AnonAuth | ProfileAuth): Record<string, string> {
+  if (auth.mode === 'anon') {
+    return {
+      'X-RateLimit-Limit': String(ANON_MAX_REQS),
+      'X-RateLimit-Remaining': String(auth.remaining),
+      'X-RateLimit-Reset': auth.resetAt.toISOString(),
+    }
+  }
+  const limit = auth.profile.tier === 'pro' ? PRO_LIMIT : FREE_LIMIT
+  const headers: Record<string, string> = {
+    'X-RateLimit-Limit': String(limit),
+    'X-RateLimit-Remaining': String(Math.max(0, limit - auth.profile.calls_used)),
+  }
+  if (auth.profile.calls_reset_at) headers['X-RateLimit-Reset'] = auth.profile.calls_reset_at
+  return headers
+}
