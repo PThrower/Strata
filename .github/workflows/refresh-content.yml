@@ -2,7 +2,7 @@
 #   ANTHROPIC_API_KEY        - Anthropic API key for Claude validation
 #   SUPABASE_URL             - same value as NEXT_PUBLIC_SUPABASE_URL
 #   SUPABASE_SERVICE_ROLE_KEY - Supabase service role key (bypasses RLS)
-# GITHUB_TOKEN is auto-provided by Actions — no manual setup needed.
+#   GH_TOKEN                 - GitHub PAT with repo read access (for GitHub API scoring)
 
 name: Content Refresh
 
@@ -37,4 +37,4 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

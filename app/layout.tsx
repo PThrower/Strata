@@ -22,9 +22,30 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Strata — AI Ecosystem Intelligence API",
+  title: "Strata — AI Ecosystem Intelligence",
   description:
-    "Structured, injection-safe AI ecosystem intelligence. Best practices, integrations, and live news for agent pipelines.",
+    "Verified best practices, news, and integrations across 22 AI ecosystems. MCP server + REST API.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "Strata — AI Ecosystem Intelligence",
+    description:
+      "Verified best practices, news, and integrations across 22 AI ecosystems. MCP server + REST API.",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Strata — AI Ecosystem Intelligence",
+    description:
+      "Verified best practices, news, and integrations across 22 AI ecosystems. MCP server + REST API.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
