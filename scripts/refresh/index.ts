@@ -78,18 +78,17 @@ async function main() {
 
       const stale = await bestPracticesAreStale(supabase, eco.slug);
       if (stale) {
-        if (summary.fetched === 0) {
-          console.log(`${DIM}    ↷ bp regen skipped (no new sources)${RESET}`)
-        } else {
-          const useHaiku = summary.written === 0;
-          const bp = useHaiku
-            ? await generateBestPracticesHaiku(eco)
-            : await generateBestPractices(eco);
-          await replaceBestPractices(supabase, eco.slug, bp);
-          summary.bestPracticesRegen = true;
-          const model = useHaiku ? 'haiku' : 'sonnet';
-          console.log(`${G}    ↻ best practices regenerated (${model})${RESET}`)
-        }
+        // BP regen runs from a static prompt and does not depend on news/integration
+        // sources. Ecosystems with quiet feeds (e.g. cursor, exa, manus) used to
+        // never regenerate because the gate required summary.fetched > 0.
+        const useHaiku = summary.written === 0;
+        const bp = useHaiku
+          ? await generateBestPracticesHaiku(eco)
+          : await generateBestPractices(eco);
+        await replaceBestPractices(supabase, eco.slug, bp);
+        summary.bestPracticesRegen = true;
+        const model = useHaiku ? 'haiku' : 'sonnet';
+        console.log(`${G}    ↻ best practices regenerated (${model})${RESET}`)
       }
     } catch (err) {
       summary.errors.push(String(err));

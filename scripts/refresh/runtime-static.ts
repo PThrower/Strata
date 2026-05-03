@@ -116,6 +116,10 @@ const TOOL_PATTERNS: RegExp[] = [
   /@(?:mcp|app|server)\.tool\s*\([^)]*\)\s*(?:async\s+)?def\s+(\w{1,80})\s*\([^)]*\)[^:]*:\s*(?:r|b|rb|br)?["']{3}([\s\S]{1,500}?)["']{3}/g,
   // Python: Tool(name='...', description='...')
   /Tool\s*\(\s*name\s*=\s*['"]([^'"\\]{1,80})['"]\s*,\s*description\s*=\s*['"]([\s\S]{1,500}?[^\\])['"]/g,
+  // JS/TS object literal — { name: 'x', description: 'y', ... }
+  // Canonical for setRequestHandler(ListToolsRequestSchema, ...) returning { tools: [...] }
+  // and for `const tools = [{ name, description, inputSchema }, ...]`.
+  /\{\s*name\s*:\s*['"]([^'"\\]{1,80})['"]\s*,\s*description\s*:\s*['"]([\s\S]{1,500}?[^\\])['"]/g,
 ]
 
 // Hosted-endpoint patterns. Anchor to URL boundaries so we capture clean URLs.
@@ -171,7 +175,7 @@ export function extractEndpointHints(readme: string): string | null {
 function scoreSourceCandidate(path: string): number {
   if (/(?:^|\/)(?:test|tests|__tests__|spec|specs|fixtures|examples?)(?:\/|$)/i.test(path)) return -100
   if (/\.d\.ts$/.test(path)) return -50
-  if (!/\.(?:ts|tsx|js|mjs|cjs|py)$/.test(path)) return -100
+  if (!/\.(?:tsx|ts|mjs|cjs|js|py|go|rs)$/.test(path)) return -100
 
   let score = 0
   if (/(?:^|\/)(?:tool|mcp)/i.test(path))        score += 10
