@@ -49,7 +49,11 @@ export function normalizeGitHubUrl(input: string): string[] {
   url.hash = ''
   const segments = url.pathname.split('/').filter(Boolean)
   if (segments.length < 2) return [input]
-  const ownerRepo = segments.slice(0, 2).join('/').replace(/\.git$/i, '')
+  // GitHub URLs are case-insensitive in browser navigation but the canonical
+  // owner/repo case is preserved by GitHub. We store URLs as-ingested from
+  // awesome-mcp-servers (lowercase by convention). Lowercase the candidate
+  // so a user passing `Microsoft/Playwright-MCP` still finds the row.
+  const ownerRepo = segments.slice(0, 2).join('/').replace(/\.git$/i, '').toLowerCase()
   const canonical = `https://github.com/${ownerRepo}`
   return [canonical, `${canonical}.git`]
 }

@@ -89,21 +89,23 @@ export async function GET(request: NextRequest) {
 
   const body = buildVerifyResult(row)
 
-  if (auth.mode === 'auth') {
-    await logApiRequest(supabase, {
-      apiKey: auth.profile.api_key, tool: TOOL, ecosystem: 'mcp', statusCode: 200,
-    })
-    void logQueryAudit(supabase, {
-      apiKey: auth.profile.api_key,
-      tool: TOOL,
-      queryParams: id as unknown as Record<string, unknown>,
-      resultIds: row ? [row.id] : [],
-      resultCount: row ? 1 : 0,
-      statusCode: 200,
-      clientIp,
-      latencyMs: Date.now() - t0,
-    })
-  }
+  // Log every call, including anon, so /verify usage shows up in dashboards.
+  // Anon traffic is bucketed under a sentinel "anon" key so per-user
+  // analytics still work for authenticated callers.
+  const auditKey = auth.mode === 'auth' ? auth.profile.api_key : 'anon'
+  await logApiRequest(supabase, {
+    apiKey: auditKey, tool: TOOL, ecosystem: 'mcp', statusCode: 200,
+  })
+  void logQueryAudit(supabase, {
+    apiKey: auditKey,
+    tool: TOOL,
+    queryParams: id as unknown as Record<string, unknown>,
+    resultIds: row ? [row.id] : [],
+    resultCount: row ? 1 : 0,
+    statusCode: 200,
+    clientIp,
+    latencyMs: Date.now() - t0,
+  })
 
   return Response.json(body, { headers: rateLimitHeaders(auth) })
 }
