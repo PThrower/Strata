@@ -44,7 +44,8 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             </Link>
 
             <div className="flex items-center gap-7">
-              <Link href="/docs/sdk"        className="mkt-nav-link hidden sm:block">docs</Link>
+              <Link href="/docs"           className="mkt-nav-link hidden sm:block">docs</Link>
+              <Link href="/docs/sdk"       className="mkt-nav-link hidden sm:block">sdk</Link>
               <Link href="/how-it-works"  className="mkt-nav-link hidden sm:block">how it works</Link>
               <Link href="/submit-mcp"    className="mkt-nav-link hidden sm:block">submit mcp</Link>
               <Link href="/#pricing"      className="mkt-nav-link hidden sm:block">pricing</Link>
@@ -83,7 +84,8 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
                 { label: '© 2026 Strata™', href: null },
                 { label: 'Terms',          href: '/terms' },
                 { label: 'Privacy',        href: '/privacy' },
-                { label: 'docs',           href: '/docs/sdk' },
+                { label: 'docs',           href: '/docs' },
+                { label: 'sdk',            href: '/docs/sdk' },
                 { label: 'support@strata.dev', href: 'mailto:support@strata.dev' },
               ].map(({ label, href }, i) => (
                 <span key={label} className="flex items-center">
