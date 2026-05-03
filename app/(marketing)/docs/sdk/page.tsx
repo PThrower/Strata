@@ -114,19 +114,22 @@ console.log(brief.best_practices)  // 5 most recent best practices
 console.log(brief.news)            // 10 most recent items
 console.log(brief.integrations)    // 10 top integrations`
 
-const CLI_VERIFY = `$ strata verify @modelcontextprotocol/server-filesystem
+const CLI_VERIFY = `# via npx — use @strata-ai/sdk (the bare "strata" name is taken on npm)
+$ npx @strata-ai/sdk verify @modelcontextprotocol/server-filesystem
 ✓ @modelcontextprotocol/server-filesystem
   Risk: 🟢 low (security 85, runtime 72)
   Flags: fs_write, net_egress
   → https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
 
-$ strata verify github.com/owner/sketchy-mcp
+$ npx @strata-ai/sdk verify github.com/owner/sketchy-mcp
 ✗ owner/sketchy-mcp
   Risk: 🔴 critical (security 12, runtime 8)
   Flags: shell_exec, dynamic_eval
-  Reasons: exposes shell_exec; security_score 12 below 20`
+  Reasons: exposes shell_exec; security_score 12 below 20
 
-const CLI_SCAN = `$ strata scan
+# or: npm install -g @strata-ai/sdk  →  strata verify …`
+
+const CLI_SCAN = `$ npx @strata-ai/sdk scan
 Strata MCP Security Scan
 ~/Library/Application Support/Claude/claude_desktop_config.json
 
@@ -148,7 +151,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: PThrower/strata-sdk/packages/action@v1
+      - uses: PThrower/strata-mcp-check@v1
         with:
           strata_api_key: \${{ secrets.STRATA_API_KEY }}
           fail_on: critical`
@@ -329,7 +332,7 @@ export default function SdkDocsPage() {
           <code>critical</code> | <code>high</code> | <code>medium</code>.
           Re-runs UPDATE the same comment instead of stacking.
           {' '}
-          <a href="https://github.com/PThrower/strata-sdk/tree/main/packages/action" rel="noreferrer" style={{ color: 'var(--emerald-glow)' }}>
+          <a href="https://github.com/PThrower/strata-mcp-check" rel="noreferrer" style={{ color: 'var(--emerald-glow)' }}>
             Full action README →
           </a>
         </p>
