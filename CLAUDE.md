@@ -17,6 +17,7 @@ npm run mcp      # start stdio MCP transport (requires .env.local)
 One-time / maintenance scripts (require `.env.local` exported):
 ```bash
 npx tsx scripts/score-mcp-security.ts    # backfill GitHub security scores (~82 min for 2179 repos)
+npx tsx scripts/score-mcp-runtime.ts     # backfill runtime scoring (probe each MCP server endpoint)
 npx tsx scripts/scan-mcp-injection.ts    # backfill injection scan on mcp_servers (~25 min)
 npx tsx scripts/check-feeds.ts           # health-check all configured RSS feeds
 npx tsx scripts/debug-validation.ts [slug]  # debug validation pipeline for one ecosystem
@@ -45,15 +46,53 @@ The session guard lives in `proxy.ts` (exported as `proxy`) and is **not** named
 
 ### Public API pipeline (`lib/api-auth.ts`)
 
-Every `/api/v1/*` route calls `authenticateRequest(req)` which:
-1. Reads `X-API-Key` header
-2. Looks up the profile (service-role client)
-3. Resets the monthly usage window if elapsed
-4. Enforces per-tier limits (`FREE_LIMIT = 100`, `PRO_LIMIT = 10_000`)
-5. Increments `calls_used`
-6. Returns `{ ok: true, profile, supabase }` or `{ ok: false, response }`
+Two auth flows coexist. Use the right one per route:
 
-After auth, routes call `checkEcosystemAccess()` to gate pro-only ecosystems, then `logApiRequest()` to write to `api_requests`, then `logQueryAudit()` to write a full query audit record (params, result IDs, latency, client IP) to `api_query_log`. MCP tool calls go through the same helpers in `lib/mcp-tools.ts`.
+**`authenticateRequest(req)`** — authenticated-only routes (`POST /verify-bulk`, etc.):
+1. Reads `X-API-Key` or `Authorization: Bearer sk_...` header
+2. Calls `consume_api_call` RPC (atomic: validates key, rolls monthly window, enforces limits, increments counter)
+3. Returns `{ ok: true, profile, supabase }` or `{ ok: false, response }`
+
+**`authenticateOrAnon(req)`** — routes that accept both authenticated and anonymous callers (`GET /mcp/verify`, `GET /mcp-servers`):
+- Header present → same auth flow as above, returns `{ ok: true, mode: 'auth', profile, supabase }`
+- Header absent → in-memory IP token bucket (10 req/hr per IP, per-process), returns `{ ok: true, mode: 'anon', ip, remaining, resetAt }`
+- Returns `{ ok: false, response }` on rate limit or invalid key
+
+Use `rateLimitHeaders(auth)` to get the `X-RateLimit-*` headers to attach to every response from anon-capable routes.
+
+After auth, routes call `checkEcosystemAccess()` to gate pro-only ecosystems, then `logApiRequest()` to write to `api_requests`, then `logQueryAudit()` to write a full query audit record (params, result IDs, latency, client IP) to `api_query_log`. Anonymous callers are logged under sentinel key `'anon'` — the column is plain text with no FK, so this is schema-safe. MCP tool calls go through the same helpers in `lib/mcp-tools.ts`.
+
+### Public API routes (`app/api/v1/`)
+
+| Route | Auth | Description |
+|---|---|---|
+| `GET /mcp/verify` | anon or key | Single MCP server lookup by `?url=`, `?npm=`, or `?endpoint=`. **Bypasses quarantine filter** — this is the only endpoint that surfaces `is_quarantined=true` rows, because the entire point is to warn callers about dangerous servers. |
+| `POST /mcp/verify-bulk` | key required | Batch lookup, up to 50 identifiers. Body: `{ identifiers: [{url?} | {npm?} | {endpoint?}][] }`. Charges `ceil(N/10)` API calls; reports via `X-Strata-Calls-Charged` header. Uses 3 parallel `IN` queries (one per identifier type) for ≤3 DB round trips regardless of N. |
+| `GET /mcp-servers` | anon or key | Semantic search over MCP directory. Returns `runtime_score`, `capability_flags`, `hosted_endpoint`, `tool_count`, `runtime_freshness`. Accepts `min_runtime_score`, `exclude_capability_flags` (comma-separated), `require_hosted` filters. |
+| `GET /ecosystems/[slug]/brief` | key required | Composite: best practices + news + integrations in one round trip. Three parallel Supabase queries. |
+| `GET /best-practices` | key required | Best practices for an ecosystem. |
+| `GET /news` | key required | News items for an ecosystem. |
+| `GET /integrations` | key required | Integration items for an ecosystem. |
+| `GET /search` | key required | Full-text search over content items. |
+
+### Risk computation (`lib/risk.ts`)
+
+Pure `computeRiskLevel(row: RiskInput)` that returns `{ level: RiskLevel, reasons: string[], trusted: boolean }`. Hierarchy (conservative — stops at first match):
+
+1. `is_quarantined = true` OR `security_score < 20` → **critical**, `trusted: false`
+2. `capability_flags` includes `shell_exec` or `dynamic_eval` → **high**, `trusted: false`
+3. `capability_flags` includes `fs_write` or `arbitrary_sql` → **medium**, `trusted: false`
+4. Otherwise → **low**, `trusted: true`
+
+This is the **server-authoritative** risk signal. The `@strata-ai/sdk` ships an identical copy at `packages/sdk/src/risk.ts` so server and client never disagree. Do not change one without updating the other.
+
+### Verify shared helpers (`lib/mcp-verify-shared.ts`)
+
+Shared between `/mcp/verify` and `/mcp/verify-bulk`:
+- `McpRow` interface + `VERIFY_SELECT_COLUMNS` constant — single source of truth for which columns to pull
+- `normalizeGitHubUrl(input)` — returns `[canonical, canonical.git]` candidates for `.in('url', ...)` lookups. Lowercases owner/repo path segments (GitHub is case-insensitive; our DB stores lowercase).
+- `freshnessBucket(iso)` — maps `runtime_updated_at` to `'fresh' | 'aging' | 'stale' | 'unknown'`
+- `buildVerifyResult(row | null)` — constructs the full `VerifyResult` JSON shape, including risk assessment
 
 ### MCP server (`app/mcp/route.ts`)
 
@@ -73,9 +112,18 @@ Key tables in `supabase/migrations/`:
 - **`profiles`** — one row per auth user; holds `api_key` (`sk_` + 32 hex chars), `tier`, `calls_used`, `calls_reset_at`, Stripe IDs. Auto-created by `handle_new_user()` trigger.
 - **`ecosystems`** — catalog of supported ecosystems; `available_on_free` gates free-tier access.
 - **`content_items`** — content records (`best_practices`, `news`, `integrations`) keyed by `ecosystem_slug`. Has `is_quarantined` and `injection_risk_score` safety columns.
-- **`api_requests`** — append-only usage log; no RLS, service role only.
-- **`api_query_log`** — full query audit records (params, result IDs, latency, client IP); service role only.
-- **`mcp_servers`** — MCP directory sourced from `awesome-mcp-servers`. Has `embedding vector(1024)` (Voyage AI), `security_score` (0–100 from GitHub signals), `is_quarantined`, `injection_risk_score`, and GitHub metadata columns (`stars`, `archived`, `license_spdx`, etc.). Searched via `search_mcp_servers(query_embedding, filter_category, match_count, min_security_score)` RPC which uses multiplicative ranking: `similarity * (0.5 + 0.5 * security_score/100)`.
+- **`api_requests`** — append-only usage log; no RLS, service role only. `api_key` is plain text (no FK) — anonymous traffic is logged under sentinel `'anon'`.
+- **`api_query_log`** — full query audit records (params, result IDs, latency, client IP hashed via HMAC); service role only.
+- **`mcp_servers`** — MCP directory sourced from `awesome-mcp-servers`. Key columns:
+  - `embedding vector(1024)` — Voyage AI semantic search
+  - `security_score` (0–100) — from GitHub signals
+  - `runtime_score` (0–100) — from live probe results
+  - `capability_flags text[]` — e.g. `['shell_exec', 'fs_write', 'net_egress']`
+  - `hosted_endpoint`, `tool_count`, `runtime_updated_at`, `runtime_status`
+  - `is_quarantined`, `injection_risk_score`
+  - `npm_package` — for npm-based lookup
+  - Searched via `search_mcp_servers_v4(...)` RPC: `similarity * (0.5 + 0.5 * security_score/100)`
+- **`mcp_runtime_probes`** — per-probe log for runtime scoring backfill (toolCount, latency, error, etc.)
 
 RLS is on for `profiles`, `ecosystems`, `content_items`. Sensitive `profiles` columns (`tier`, `calls_used`, `api_key`, Stripe IDs) have `REVOKE UPDATE` from `authenticated` — all writes to these must go through service-role routes or webhooks.
 
@@ -99,25 +147,41 @@ After ecosystem processing, `refreshMcpDirectory()` runs:
 2. Embeds new entries via Voyage AI (batch 20, 500ms delay between batches)
 3. Runs two-layer injection scan on each new entry: Layer 1 regex (`lib/injection-scanner.ts`) + Layer 2 Claude Haiku semantic check
 4. Upserts with `is_quarantined` flag
-5. Scores up to 200 newly-inserted rows via `scripts/refresh/github-security.ts` (3 GitHub API calls per repo, rate-limited to ~80 req/min)
+5. Scores up to 200 newly-inserted rows via `scripts/refresh/security-score.ts` (3 GitHub API calls per repo, rate-limited to ~80 req/min)
 
 `writer.ts` creates its own Supabase client directly (cannot import `lib/supabase-server.ts` which pulls in `next/headers`).
 
 ### MCP directory & security scoring
 
-`mcp_servers` is populated from `awesome-mcp-servers` and scored with a trust signal (0–100):
-- **Scoring signals**: stars (log-scale, max +25), last commit age (±15), release discipline (+10), license permissiveness (±10), archived/fork penalties (-25/-10)
-- **Backfill**: `npx tsx scripts/score-mcp-security.ts` — resumable, checkpoints per-row via `score_updated_at`; re-run for `error_rate_limited`/`error_transient` rows
-- **Injection scan backfill**: `npx tsx scripts/scan-mcp-injection.ts` — Layer 1 regex + Layer 2 Haiku + Layer 3 Sonnet extended-thinking (only for borderline cases). All Claude calls have 30s timeout.
-- **`GITHUB_TOKEN`** is optional but required for authenticated rate limit (5,000/hr vs 60/hr)
+`mcp_servers` is populated from `awesome-mcp-servers` and scored with two independent signals:
+
+**Security score (0–100)** — from GitHub static signals:
+- Stars (log-scale, max +25), last commit age (±15), release discipline (+10), license permissiveness (±10), archived/fork penalties (-25/-10)
+- Backfill: `npx tsx scripts/score-mcp-security.ts` — resumable via `score_updated_at`; re-run for `error_rate_limited` rows. `error_transient` rows are **not** retried (dead repos — treat as permanent).
+
+**Runtime score (0–100)** — from live tool-call probes:
+- Backfill: `npx tsx scripts/score-mcp-runtime.ts` — probes each `hosted_endpoint`, records tool count / latency / errors to `mcp_runtime_probes`, sets `runtime_status`. Status `error_permanent` (formerly `error_transient`) is skipped on subsequent runs.
+- `RUNTIME_LIMIT=20` env var caps the run for testing.
+
+**Injection scan backfill**: `npx tsx scripts/scan-mcp-injection.ts` — Layer 1 regex + Layer 2 Haiku + Layer 3 Sonnet extended-thinking (only for borderline cases). All Claude calls have 30s timeout.
+
+**`GITHUB_TOKEN`** is optional but required for authenticated rate limit (5,000/hr vs 60/hr).
 
 ### Agent safety layer
 
 - **`lib/injection-scanner.ts`** — fast regex Layer-1 scanner for prompt injection patterns; returns `{ score: 0–10, hits: string[] }`
 - **`lib/freshness.ts`** — wraps query results with `content_age_hours` and `data_freshness` (`fresh` / `recent` / `stale`) based on `published_at`
 - **`lib/embeddings.ts`** — `embed(text)` and `embedBatch(texts[])` via Voyage AI HTTP API; never import the `voyageai` npm package (its ESM build is broken in Turbopack)
-- Quarantined items (`is_quarantined = true`) are written to the DB but **never returned** by any API route or MCP tool
+- Quarantined items (`is_quarantined = true`) are written to the DB but **never returned** by any API route or MCP tool — except `GET /mcp/verify`, which intentionally surfaces them so callers know a server is dangerous
 - All API routes emit a `logQueryAudit()` record with full params, result IDs, latency, and client IP to `api_query_log`
+
+### SDK and GitHub Action (external repos)
+
+The public SDK lives in **`github.com/PThrower/strata-sdk`** (npm: `@strata-ai/sdk@0.1.2`). The GitHub Action Marketplace listing lives in **`github.com/PThrower/strata-mcp-check`** (`uses: PThrower/strata-mcp-check@v1`).
+
+**Important naming quirk:** the `strata` package name on npm is taken by an unrelated web framework. The CLI must be invoked as `npx @strata-ai/sdk scan` or `npx @strata-ai/sdk verify`. After `npm install -g @strata-ai/sdk` the bare `strata` binary works.
+
+The SDK ships an identical copy of `lib/risk.ts` at `packages/sdk/src/risk.ts`. If you change the risk-level computation logic here, update the SDK's copy in the same PR. The two files must stay byte-for-byte equivalent in their logic.
 
 ### Stripe integration
 
@@ -128,6 +192,11 @@ After ecosystem processing, `refreshMcpDirectory()` runs:
 ### Auth pages (`app/(auth)/`)
 
 Login, signup, forgot-password, and reset-password pages all use the `useActionState` hook with Server Actions in `app/actions/auth.ts`. Password strength is enforced both client-side (live `PasswordHint` component) and server-side (`PASSWORD_REGEX`). The reset flow uses Supabase `resetPasswordForEmail()` with `redirectTo: ${NEXT_PUBLIC_APP_URL}/reset-password`; the reset page calls `updateUser({ password })` which works because Supabase sets the session automatically from the email link.
+
+### Docs pages (`app/(marketing)/docs/`)
+
+- **`/docs/sdk`** — SDK reference page (`app/(marketing)/docs/sdk/page.tsx`). Uses `<CodeBlock>` from `_components/CodeBlock.tsx` (client component with clipboard copy). Matches the existing Glass/space-backdrop design system. Action YAML in this page should reference `PThrower/strata-mcp-check@v1`.
+- No `/docs` index page — the nav link at `app/(marketing)/layout.tsx:47` currently points directly to `/docs/sdk`.
 
 ### Environment variables required
 
@@ -143,6 +212,7 @@ ANTHROPIC_API_KEY        # refresh pipeline + injection scanning
 VOYAGE_API_KEY           # mcp-directory embeddings (voyage-3, direct HTTP fetch)
 GITHUB_TOKEN             # optional but needed for 5000/hr GitHub rate limit (scoring backfill)
 ADMIN_EMAIL              # email address that gets admin dashboard access
+AUDIT_HASH_PEPPER        # HMAC pepper for api_query_log IP/key hashing (warn-only if missing)
 ```
 
 ## Brand & design system
