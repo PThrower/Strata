@@ -13,10 +13,14 @@ export default function SuggestionJar() {
 
   useEffect(() => {
     if (state?.success) {
+      // React 18+ batches these into a single render — the lint rule's "cascading
+      // renders" warning is a false positive for post-action-success cleanup.
+      /* eslint-disable react-hooks/set-state-in-effect */
       setShowNoteFall(true)
       setContent('')
       setIsOpen(false)
       setSuccessMsg(true)
+      /* eslint-enable react-hooks/set-state-in-effect */
       const t1 = setTimeout(() => setShowNoteFall(false), 700)
       const t2 = setTimeout(() => setSuccessMsg(false), 3000)
       return () => { clearTimeout(t1); clearTimeout(t2) }

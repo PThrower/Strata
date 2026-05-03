@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Glass } from '@/components/ui/glass'
 import { Btn } from '@/components/ui/button'
 import { LiveBadge } from '@/components/ui/live-badge'
@@ -305,11 +306,11 @@ export default function LandingPage() {
             </div>
 
             {/* Founder Access banner */}
-            <a href="/#pricing" className="founder-hero-link" style={{ marginTop: 24 }}>
+            <Link href="/#pricing" className="founder-hero-link" style={{ marginTop: 24 }}>
               <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: '#00c472', flexShrink: 0 }} />
               50 lifetime spots at $100 — 49 remaining
               <span aria-hidden="true" style={{ opacity: 0.65, marginLeft: 2 }}>→</span>
-            </a>
+            </Link>
           </div>
 
           {/* ── Right: aggregation graphic ── */}

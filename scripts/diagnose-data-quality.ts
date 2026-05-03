@@ -30,12 +30,17 @@ async function countRows(table: string, filters: Record<string, unknown> = {}, i
   return count ?? 0
 }
 
-async function fetchAllPaginated<T>(table: string, columns: string, filterFn?: (q: ReturnType<typeof sb.from>) => unknown): Promise<T[]> {
+async function fetchAllPaginated<T>(
+  table: string,
+  columns: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  filterFn?: (q: any) => any,
+): Promise<T[]> {
   const PAGE = 1000
   const out: T[] = []
   for (let off = 0; ; off += PAGE) {
     let q = sb.from(table).select(columns).range(off, off + PAGE - 1)
-    if (filterFn) q = filterFn(q) as typeof q
+    if (filterFn) q = filterFn(q)
     const { data, error } = await q
     if (error) throw new Error(`${table} fetch failed: ${error.message}`)
     if (!data || data.length === 0) break
