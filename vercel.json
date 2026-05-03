@@ -1,6 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "_comment_security": "Defense-in-depth security headers applied at Vercel's CDN. These layer on top of the same headers set in proxy.ts so that any response (including static assets and 4xx/5xx errors) carries the protections. Scanner-path blocking lives in proxy.ts because vercel.json does not support arbitrary edge blocking on the Hobby/Pro tier — proxy.ts runs at the edge for matched paths, so the practical outcome is equivalent.",
   "headers": [
     {
       "source": "/(.*)",
