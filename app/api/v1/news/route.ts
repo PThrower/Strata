@@ -6,6 +6,7 @@ import {
   logQueryAudit,
 } from '@/lib/api-auth'
 import { freshnessEnvelope } from '@/lib/freshness'
+import { serverTiming } from '@/lib/server-timing'
 
 const TOOL = 'news'
 const DEFAULT_LIMIT = 5
@@ -85,7 +86,10 @@ export async function GET(request: NextRequest) {
     statusCode: 200, clientIp, latencyMs: Date.now() - t0,
   })
 
-  return Response.json({ ecosystem, tier: profile.tier, items })
+  return Response.json(
+    { ecosystem, tier: profile.tier, items },
+    { headers: { 'Server-Timing': serverTiming(t0) } },
+  )
 }
 
 function parseLimit(raw: string | null): number {

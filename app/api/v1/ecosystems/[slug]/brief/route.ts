@@ -6,6 +6,7 @@ import {
   logQueryAudit,
 } from '@/lib/api-auth'
 import { freshnessEnvelope } from '@/lib/freshness'
+import { serverTiming } from '@/lib/server-timing'
 
 const TOOL = 'ecosystem-brief'
 const NEWS_DEFAULT_LIMIT = 10
@@ -169,11 +170,14 @@ export async function GET(
     statusCode: 200, clientIp, latencyMs: Date.now() - t0,
   })
 
-  return Response.json({
-    ecosystem: resolvedSlug,
-    tier: profile.tier,
-    best_practices: bestPractices,
-    news,
-    integrations,
-  })
+  return Response.json(
+    {
+      ecosystem: resolvedSlug,
+      tier: profile.tier,
+      best_practices: bestPractices,
+      news,
+      integrations,
+    },
+    { headers: { 'Server-Timing': serverTiming(t0) } },
+  )
 }

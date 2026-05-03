@@ -8,6 +8,7 @@ import {
 import { createServiceRoleClient } from '@/lib/supabase-server'
 import { embed } from '@/lib/embeddings'
 import { freshnessBucket } from '@/lib/mcp-verify-shared'
+import { serverTiming } from '@/lib/server-timing'
 
 const TOOL = 'mcp-servers'
 
@@ -142,6 +143,6 @@ export async function GET(request: NextRequest) {
 
   return Response.json(
     { query: q, results },
-    { headers: rateLimitHeaders(auth) },
+    { headers: { ...rateLimitHeaders(auth), 'Server-Timing': serverTiming(t0) } },
   )
 }

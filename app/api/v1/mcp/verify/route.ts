@@ -12,6 +12,7 @@ import {
   normalizeGitHubUrl,
   buildVerifyResult,
 } from '@/lib/mcp-verify-shared'
+import { serverTiming } from '@/lib/server-timing'
 
 const TOOL = 'mcp-verify'
 
@@ -107,5 +108,7 @@ export async function GET(request: NextRequest) {
     latencyMs: Date.now() - t0,
   })
 
-  return Response.json(body, { headers: rateLimitHeaders(auth) })
+  return Response.json(body, {
+    headers: { ...rateLimitHeaders(auth), 'Server-Timing': serverTiming(t0) },
+  })
 }

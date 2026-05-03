@@ -40,9 +40,29 @@ This is a SaaS API platform built on **Next.js 16**, **Supabase** (auth + Postgr
 
 The dashboard page uses **both** clients intentionally: `createUserClient()` to verify the session, then `createServiceRoleClient()` for profile and `api_requests` reads (RLS would block `api_requests` for non-owners).
 
-### Route guard — `proxy.ts` not `middleware.ts`
+### Edge security gateway — `proxy.ts`
 
-The session guard lives in `proxy.ts` (exported as `proxy`) and is **not** named `middleware.ts`. This is intentional: `@supabase/ssr` causes a Turbopack deadlock when imported from middleware. `proxy.ts` uses plain cookie inspection (`sb-<projectRef>-auth-token`) instead of the SSR client to stay deadlock-free. It only guards `/dashboard` routes.
+`proxy.ts` (exported as `proxy`) is the single edge gateway for the entire app. It is **not** named `middleware.ts` — Next.js 16 deprecated the `middleware` convention; only one `proxy.ts` is supported per project, and adding `middleware.ts` is silently ignored. The file also avoids importing `@supabase/ssr` to stay clear of a Turbopack deadlock.
+
+Responsibilities (in order):
+
+1. **Scanner-path block** — returns 404 for `/.env`, `/wp-admin`, `/.git/config`, `/phpinfo.php`, `/admin.php`, etc. Looks like a normal miss to attackers.
+2. **Path-traversal block** — rejects `..`, `%2e%2e`, `%252e` in pathname with 400.
+3. **For `/api/*` and `/mcp`:**
+   - Rejects empty / over-long User-Agent (400)
+   - Blocks mass-scanner UAs (`nuclei`, `sqlmap`, `nikto`, `masscan`, `zgrab`, `acunetix`, `nessus`, `gobuster`, `dirb`, `wpscan`, `wfuzz`, `metasploit`, `qualys`, `openvas`, `libwww-perl`, `burpcollab`) with 403
+   - **Per-IP sliding-window rate limit**: 100/min for `/api/*`, 30/min for `/mcp`. Buckets keyed `<ip>|<family>` so an MCP burst doesn't starve API.
+   - Content-Length pre-check: 413 for >100 KB (api) / >50 KB (mcp) before the route runs
+4. **Dashboard session guard** — redirect to `/login` if no Supabase auth cookie. Optimistic check (cookie presence, not signature); routes inside `/dashboard` re-verify with `createUserClient()`.
+5. **Security headers** — applied to every response: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
+
+**Rate-limiter scope**: in-memory `Map<key, timestamps[]>` per Lambda instance. Vercel's Fluid Compute may run several instances, so a per-IP limit can drift proportionally to instance count. Vercel's edge DDoS protection handles the volumetric layer. Migrate to Upstash Redis for strict global enforcement.
+
+`vercel.json` adds the same security headers + HSTS at the CDN level for defense-in-depth, plus `Cache-Control: no-store` on `/api/*` and `/mcp(.*)`.
+
+`lib/security.ts` exposes `readBoundedJson<T>(request, maxBytes)` for chunked-encoding protection — used by `POST /verify-bulk` to catch requests without a `Content-Length` header.
+
+`lib/server-timing.ts` exposes `serverTiming(t0)` — every `/api/v1/*` route attaches `Server-Timing: total;dur=Nms` to its response for latency monitoring.
 
 ### Public API pipeline (`lib/api-auth.ts`)
 

@@ -5,6 +5,7 @@ import {
   logApiRequest,
   logQueryAudit,
 } from '@/lib/api-auth'
+import { serverTiming } from '@/lib/server-timing'
 
 const TOOL = 'search'
 
@@ -76,5 +77,8 @@ export async function GET(request: NextRequest) {
     statusCode: 200, clientIp, latencyMs: Date.now() - t0,
   })
 
-  return Response.json({ query, results })
+  return Response.json(
+    { query, results },
+    { headers: { 'Server-Timing': serverTiming(t0) } },
+  )
 }

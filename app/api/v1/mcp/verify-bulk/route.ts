@@ -13,9 +13,14 @@ import {
   normalizeGitHubUrl,
   buildVerifyResult,
 } from '@/lib/mcp-verify-shared'
+import { serverTiming } from '@/lib/server-timing'
+import { readBoundedJson } from '@/lib/security'
 
 const TOOL = 'mcp-verify-bulk'
 const MAX_IDENTIFIERS = 50
+// Defense-in-depth body cap. proxy.ts already pre-checks Content-Length;
+// this catches chunked-encoding requests that arrive without a CL header.
+const MAX_BODY_BYTES = 100_000
 
 type Identifier = { url: string } | { npm: string } | { endpoint: string }
 
@@ -42,12 +47,11 @@ export async function POST(request: NextRequest) {
   if (!auth.ok) return auth.response
   const { profile, supabase } = auth
 
-  let body: unknown
-  try {
-    body = await request.json()
-  } catch {
-    return Response.json({ error: 'invalid JSON body' }, { status: 400 })
+  const parsed = await readBoundedJson<unknown>(request, MAX_BODY_BYTES)
+  if (!parsed.ok) {
+    return Response.json({ error: parsed.error }, { status: parsed.status })
   }
+  const body = parsed.data
 
   if (!body || typeof body !== 'object' || !Array.isArray((body as { identifiers?: unknown }).identifiers)) {
     return Response.json(
@@ -194,6 +198,11 @@ export async function POST(request: NextRequest) {
 
   return Response.json(
     { results },
-    { headers: { 'X-Strata-Calls-Charged': String(totalCalls) } },
+    {
+      headers: {
+        'X-Strata-Calls-Charged': String(totalCalls),
+        'Server-Timing': serverTiming(t0),
+      },
+    },
   )
 }

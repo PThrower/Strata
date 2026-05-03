@@ -6,6 +6,7 @@ import {
   logQueryAudit,
 } from '@/lib/api-auth'
 import { freshnessEnvelope } from '@/lib/freshness'
+import { serverTiming } from '@/lib/server-timing'
 
 const TOOL = 'best-practices'
 
@@ -79,5 +80,8 @@ export async function GET(request: NextRequest) {
     statusCode: 200, clientIp, latencyMs: Date.now() - t0,
   })
 
-  return Response.json({ ecosystem, category, items })
+  return Response.json(
+    { ecosystem, category, items },
+    { headers: { 'Server-Timing': serverTiming(t0) } },
+  )
 }
