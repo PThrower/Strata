@@ -14,13 +14,27 @@ npm run refresh  # run content refresh pipeline (requires .env.local)
 npm run mcp      # start stdio MCP transport (requires .env.local)
 ```
 
-One-time / maintenance scripts (require `.env.local` exported):
+All scripts require `.env.local` — pass with `--env-file=.env.local`:
+
 ```bash
-npx tsx scripts/score-mcp-security.ts    # backfill GitHub security scores (~82 min for 2179 repos)
-npx tsx scripts/score-mcp-runtime.ts     # backfill runtime scoring (probe each MCP server endpoint)
-npx tsx scripts/scan-mcp-injection.ts    # backfill injection scan on mcp_servers (~25 min)
-npx tsx scripts/check-feeds.ts           # health-check all configured RSS feeds
-npx tsx scripts/debug-validation.ts [slug]  # debug validation pipeline for one ecosystem
+# Single-ecosystem refresh (faster than full pipeline for testing)
+SLUG=cursor npx tsx --env-file=.env.local scripts/refresh-one.ts
+
+# Backfill scripts (long-running, safe to interrupt and resume)
+npx tsx --env-file=.env.local scripts/score-mcp-security.ts    # GitHub security scores (~82 min, 2179 repos)
+npx tsx --env-file=.env.local scripts/score-mcp-runtime.ts     # runtime scoring (RUNTIME_LIMIT=N to cap)
+npx tsx --env-file=.env.local scripts/scan-mcp-injection.ts    # injection scan backfill (~25 min)
+
+# Maintenance / one-shot scripts
+npx tsx --env-file=.env.local scripts/regen-stale-bp.ts              # regenerate stale best_practices for all ecosystems
+npx tsx --env-file=.env.local scripts/reset-unparseable-runtime.ts   # requeue score=45 default rows for re-scoring
+npx tsx --env-file=.env.local scripts/rescore-runtime-sample.ts      # test runtime scoring on 20 rows
+npx tsx --env-file=.env.local scripts/cleanup-seed-integrations.ts   # delete null-URL seed integrations (already run)
+npx tsx --env-file=.env.local scripts/diagnose-data-quality.ts       # 5-issue DB diagnostic
+
+# Diagnostics
+npx tsx --env-file=.env.local scripts/check-feeds.ts              # health-check all configured RSS feeds
+npx tsx --env-file=.env.local scripts/debug-validation.ts [slug]  # debug validation pipeline for one ecosystem
 ```
 
 There are no tests at this time.
@@ -82,6 +96,8 @@ Use `rateLimitHeaders(auth)` to get the `X-RateLimit-*` headers to attach to eve
 
 After auth, routes call `checkEcosystemAccess()` to gate pro-only ecosystems, then `logApiRequest()` to write to `api_requests`, then `logQueryAudit()` to write a full query audit record (params, result IDs, latency, client IP) to `api_query_log`. Anonymous callers are logged under sentinel key `'anon'` — the column is plain text with no FK, so this is schema-safe. MCP tool calls go through the same helpers in `lib/mcp-tools.ts`.
 
+`checkEcosystemAccess()` resolves **aliases**: e.g. `claude-code` → `claudecode`, `together-ai` → `togetherai`. Aliases are stored in the `aliases text[]` column on the `ecosystems` table. Always return `access.slug` (the canonical slug) for subsequent DB queries — not the caller-supplied slug.
+
 ### Public API routes (`app/api/v1/`)
 
 | Route | Auth | Description |
@@ -130,19 +146,19 @@ All tool results include an epistemic notice and freshness envelope (`content_ag
 
 Key tables in `supabase/migrations/`:
 - **`profiles`** — one row per auth user; holds `api_key` (`sk_` + 32 hex chars), `tier`, `calls_used`, `calls_reset_at`, Stripe IDs. Auto-created by `handle_new_user()` trigger.
-- **`ecosystems`** — catalog of supported ecosystems; `available_on_free` gates free-tier access.
-- **`content_items`** — content records (`best_practices`, `news`, `integrations`) keyed by `ecosystem_slug`. Has `is_quarantined` and `injection_risk_score` safety columns.
+- **`ecosystems`** — catalog of supported ecosystems; `available_on_free` gates free-tier access; `aliases text[]` enables slug resolution (e.g. `claude-code` → `claudecode`).
+- **`content_items`** — content records (`best_practices`, `news`, `integrations`) keyed by `ecosystem_slug`. Has `is_quarantined` and `injection_risk_score` safety columns. Source integrations always have a non-null `source_url`; best_practices have `source_url = null` by design (AI-generated).
 - **`api_requests`** — append-only usage log; no RLS, service role only. `api_key` is plain text (no FK) — anonymous traffic is logged under sentinel `'anon'`.
 - **`api_query_log`** — full query audit records (params, result IDs, latency, client IP hashed via HMAC); service role only.
 - **`mcp_servers`** — MCP directory sourced from `awesome-mcp-servers`. Key columns:
   - `embedding vector(1024)` — Voyage AI semantic search
   - `security_score` (0–100) — from GitHub signals
-  - `runtime_score` (0–100) — from live probe results
+  - `runtime_score` (0–100) — from static analysis + optional live probes
   - `capability_flags text[]` — e.g. `['shell_exec', 'fs_write', 'net_egress']`
-  - `hosted_endpoint`, `tool_count`, `runtime_updated_at`, `runtime_status`
+  - `hosted_endpoint`, `tool_count`, `tool_names`, `runtime_updated_at`, `runtime_status`
   - `is_quarantined`, `injection_risk_score`
-  - `npm_package` — for npm-based lookup
-  - Searched via `search_mcp_servers_v4(...)` RPC: `similarity * (0.5 + 0.5 * security_score/100)`
+  - `npm_package`, `pypi_package` — for package-based lookup
+  - Searched via `search_mcp_servers_v4(...)` RPC: `similarity * (0.6 + 0.4 * (0.55*security + 0.45*runtime))`
 - **`mcp_runtime_probes`** — per-probe log for runtime scoring backfill (toolCount, latency, error, etc.)
 
 RLS is on for `profiles`, `ecosystems`, `content_items`. Sensitive `profiles` columns (`tier`, `calls_used`, `api_key`, Stripe IDs) have `REVOKE UPDATE` from `authenticated` — all writes to these must go through service-role routes or webhooks.
@@ -155,12 +171,14 @@ Embeddings use **Voyage AI** (`voyage-3`, 1024 dimensions) via direct HTTP fetch
 
 `npm run refresh` runs `scripts/refresh/index.ts` — a Node script (not a Next.js route) that populates `content_items`. For each ecosystem in `ecosystems.ts`:
 
-1. `fetchAllSources()` — scrapes RSS feeds, GitHub repos, subreddits → raw items
+1. `fetchAllSources()` — scrapes RSS feeds, GitHub repos, subreddits, and `integrationsRepo` (if set) → raw items
 2. `urlDedup()` — filters items whose `source_url` already exists in the DB
 3. `validateBatch()` — calls Claude (`claude-sonnet-4-6`) in batches of 20 to score relevance, fix titles/bodies, reclassify categories, and **detect injection content**; low-confidence and quarantined items are separated
 4. `dedupeNearDuplicates()` — a second Claude pass to remove near-duplicate stories within the batch
 5. `writeContent()` — inserts validated items in chunks of 50; sets `is_quarantined` flag on flagged items
-6. `bestPracticesAreStale()` — checks if any `best_practices` rows exist newer than 3 days; if none, calls `generateBestPractices()` which prompts Claude for 3 new items and replaces all existing best practices for that ecosystem via `replaceBestPractices()`
+6. `bestPracticesAreStale()` — checks if any `best_practices` rows exist newer than 3 days. If stale, always regenerates — BP generation uses a static prompt and is **independent of source fetch results**. Uses Haiku when no new content was written (off-peak), Sonnet otherwise.
+
+The BP regen runs unconditionally when stale. The old pattern of gating it on `fetched > 0` was removed — ecosystems with quiet feeds (no RSS, low-activity GitHub) would never regenerate otherwise.
 
 After ecosystem processing, `refreshMcpDirectory()` runs:
 1. Fetches `awesome-mcp-servers` README, parses entries
@@ -171,19 +189,31 @@ After ecosystem processing, `refreshMcpDirectory()` runs:
 
 `writer.ts` creates its own Supabase client directly (cannot import `lib/supabase-server.ts` which pulls in `next/headers`).
 
+**Ecosystem configuration (`scripts/refresh/ecosystems.ts`)**: Each ecosystem has:
+- `rssFeeds: string[]` — RSS feed URLs
+- `subreddits: string[]` — subreddit names (fetched via Reddit JSON API, filtered to score ≥ 10)
+- `githubRepos: string[]` — `owner/repo` strings for GitHub release fetching
+- `integrationsRepo?: string` — optional GitHub repo whose README is scraped for integration content. The `fetchIntegrations()` function splits the README on `## ` headings and keeps sections whose body includes the ecosystem slug. `claude` uses `punkpeye/awesome-mcp-servers`; `cursor` uses `PatrickJS/awesome-cursorrules`.
+- `bestPracticesPrompt: string` — static prompt for Claude-generated BP items
+
+**`scripts/refresh-one.ts`** — single-ecosystem refresh for testing. Run as `SLUG=cursor npx tsx --env-file=.env.local scripts/refresh-one.ts`. Useful for testing ecosystem-specific pipeline changes without the full 21-ecosystem run.
+
 ### MCP directory & security scoring
 
 `mcp_servers` is populated from `awesome-mcp-servers` and scored with two independent signals:
 
 **Security score (0–100)** — from GitHub static signals:
 - Stars (log-scale, max +25), last commit age (±15), release discipline (+10), license permissiveness (±10), archived/fork penalties (-25/-10)
-- Backfill: `npx tsx scripts/score-mcp-security.ts` — resumable via `score_updated_at`; re-run for `error_rate_limited` rows. `error_transient` rows are **not** retried (dead repos — treat as permanent).
+- Backfill: `npx tsx --env-file=.env.local scripts/score-mcp-security.ts` — resumable via `score_updated_at`; re-run for `error_rate_limited` rows. `error_transient` rows are **not** retried (dead repos — treat as permanent).
 
-**Runtime score (0–100)** — from live tool-call probes:
-- Backfill: `npx tsx scripts/score-mcp-runtime.ts` — probes each `hosted_endpoint`, records tool count / latency / errors to `mcp_runtime_probes`, sets `runtime_status`. Status `error_permanent` (formerly `error_transient`) is skipped on subsequent runs.
-- `RUNTIME_LIMIT=20` env var caps the run for testing.
+**Runtime score (0–100)** — from static source analysis + optional live probes:
+- Base score 50. Adjustments: `toolPoints` (-5 to +8 by tool count/diversity), `capabilityPenalty` (up to -71 for shell_exec, dynamic_eval, etc.), `injectionPenalty` (0 to -40), `probeBonus` (0 to +20 for live probe success), `hostedBonus` (+4 if hosted endpoint known).
+- `tool_count = null` (couldn't parse source) → -5 "unparsed" penalty. Servers stuck at score 45 = base 50 - 5 unparsed + no other signals.
+- Static analyzer (`scripts/refresh/runtime-static.ts`) fetches README + manifests + up to 8 ranked source files. Picks `.ts`, `.tsx`, `.js`, `.mjs`, `.cjs`, `.py`, `.go`, `.rs` files. Tool extraction patterns: JS/TS `server.tool(name, {description})`, Python `@mcp.tool()` decorator with docstring, Python `Tool(name=, description=)`, and JS/TS `{ name: '...', description: '...' }` object literals (the canonical `setRequestHandler(ListToolsRequestSchema, ...)` shape).
+- Backfill: `npx tsx --env-file=.env.local scripts/score-mcp-runtime.ts` — set `RUNTIME_LIMIT=N` to cap. Rows with `runtime_status = null` are scored first; `error_permanent` rows are skipped.
+- Use `scripts/reset-unparseable-runtime.ts` to clear `runtime_updated_at` for stuck-at-45 rows so the daily refresh re-scores them with the current parser.
 
-**Injection scan backfill**: `npx tsx scripts/scan-mcp-injection.ts` — Layer 1 regex + Layer 2 Haiku + Layer 3 Sonnet extended-thinking (only for borderline cases). All Claude calls have 30s timeout.
+**Injection scan backfill**: `npx tsx --env-file=.env.local scripts/scan-mcp-injection.ts` — Layer 1 regex + Layer 2 Haiku + Layer 3 Sonnet extended-thinking (only for borderline cases). All Claude calls have 30s timeout.
 
 **`GITHUB_TOKEN`** is optional but required for authenticated rate limit (5,000/hr vs 60/hr).
 
@@ -213,10 +243,20 @@ The SDK ships an identical copy of `lib/risk.ts` at `packages/sdk/src/risk.ts`. 
 
 Login, signup, forgot-password, and reset-password pages all use the `useActionState` hook with Server Actions in `app/actions/auth.ts`. Password strength is enforced both client-side (live `PasswordHint` component) and server-side (`PASSWORD_REGEX`). The reset flow uses Supabase `resetPasswordForEmail()` with `redirectTo: ${NEXT_PUBLIC_APP_URL}/reset-password`; the reset page calls `updateUser({ password })` which works because Supabase sets the session automatically from the email link.
 
-### Docs pages (`app/(marketing)/docs/`)
+### Docs pages
 
-- **`/docs/sdk`** — SDK reference page (`app/(marketing)/docs/sdk/page.tsx`). Uses `<CodeBlock>` from `_components/CodeBlock.tsx` (client component with clipboard copy). Matches the existing Glass/space-backdrop design system. Action YAML in this page should reference `PThrower/strata-mcp-check@v1`.
-- No `/docs` index page — the nav link at `app/(marketing)/layout.tsx:47` currently points directly to `/docs/sdk`.
+Two separate docs surfaces:
+
+- **`/docs`** — Full API & MCP reference (`app/docs/page.tsx`). A standalone `'use client'` page with its own sidebar nav, right code panel (syntax-highlighted, language-switching), and MCP client tab switcher. Does **not** use the marketing layout. Covers authentication, all REST endpoints with parameter/response tables, error codes, code examples (curl / Python / JS), and MCP server connection guides.
+- **`/docs/sdk`** — SDK reference (`app/(marketing)/docs/sdk/page.tsx`). Uses the marketing layout + Glass/space-backdrop design system. Covers `@strata-ai/sdk`, CLI, GitHub Action, trust signals, capability flags, and error handling. Uses `<CodeBlock>` from `_components/CodeBlock.tsx`. Action YAML references `PThrower/strata-mcp-check@v1`.
+
+**Nav links** in `app/(marketing)/layout.tsx`:
+- `docs` → `/docs` (API/MCP reference)
+- `sdk` → `/docs/sdk` (SDK reference)
+
+Both links appear in the header nav and in the footer chip row.
+
+**Important**: `app/(marketing)/docs/` and `app/docs/` are separate directories. Route groups like `(marketing)` are transparent — do not create a `page.tsx` inside `app/(marketing)/docs/` as it would conflict with `app/docs/page.tsx`.
 
 ### Environment variables required
 
