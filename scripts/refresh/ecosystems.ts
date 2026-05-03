@@ -68,6 +68,7 @@ export const ECOSYSTEMS: EcosystemConfig[] = [
     rssFeeds: [],
     subreddits: ['cursor', 'cursorAI'],
     githubRepos: ['getcursor/cursor'],
+    integrationsRepo: 'PatrickJS/awesome-cursorrules',
     bestPracticesPrompt:
       'Generate 3 current best practices for developers using Cursor AI editor. ' +
       'Focus on: effective prompting in the editor, codebase context management, ' +
