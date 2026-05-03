@@ -91,6 +91,12 @@ const tools = [
   },
 ]
 
+const founderFeatures = [
+  'Everything in Pro, forever',
+  'All future features included',
+  'Founding member badge',
+  'Direct access to the builder',
+]
 const freeFeatures = ['100 calls / month', '2 ecosystems', '24-hour news lag', 'Weekly index refresh']
 const proFeatures  = ['10,000 calls / month', 'All ecosystems', 'News updated every 12 hours', 'Daily index refresh']
 
@@ -298,6 +304,13 @@ export default function LandingPage() {
                 <Btn variant="ghost" href="/docs" arrow={false}>read the docs</Btn>
               </div>
             </div>
+
+            {/* Founder Access banner */}
+            <a href="/#pricing" className="founder-hero-link" style={{ marginTop: 24 }}>
+              <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: '#00c472', flexShrink: 0 }} />
+              50 lifetime spots at $100 — 49 remaining
+              <span aria-hidden="true" style={{ opacity: 0.65, marginLeft: 2 }}>→</span>
+            </a>
           </div>
 
           {/* ── Right: aggregation graphic ── */}
@@ -549,6 +562,49 @@ export default function LandingPage() {
       {/* ══ Pricing ══ */}
       <section style={{ padding: '72px 0' }} id="pricing">
         <SectionHeading title="Pricing" meta="no card · cancel anytime" />
+
+        {/* Founder Access card */}
+        <Glass shimmer className="price-card founder-card" style={{ padding: '38px 40px 36px', borderRadius: 26, marginBottom: 18 }}>
+          <div className="founder-inner">
+            {/* Left: price + CTA */}
+            <div>
+              <span className="founder-badge">
+                <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: '#00c472', flexShrink: 0 }} />
+                Limited · 49 spots left
+              </span>
+              <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 56, letterSpacing: '-0.02em', lineHeight: 1, margin: '24px 0 6px', color: 'var(--ink)' }}>
+                $100
+                <em style={{ fontFamily: 'var(--font-sans)', fontSize: 15, color: 'var(--ink-muted)', letterSpacing: '-0.005em', marginLeft: 8, fontStyle: 'normal' }}>
+                  one-time
+                </em>
+              </div>
+              <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 26, fontWeight: 400, letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 10px', lineHeight: 1.2 }}>
+                Lifetime Pro Access
+              </h3>
+              <p style={{ fontSize: 14.5, color: 'var(--ink-muted)', margin: '0 0 28px', lineHeight: 1.55 }}>
+                Lock in everything Strata becomes. Forever.
+              </p>
+              {/* TODO: Replace href with Stripe lifetime product checkout URL */}
+              <Btn variant="emerald" href="#" arrow={false}>Claim Founder Access →</Btn>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-faint)', margin: '16px 0 0', letterSpacing: '0.06em' }}>
+                49 of 50 spots remaining
+              </p>
+            </div>
+
+            {/* Right: features */}
+            <div>
+              <ul className="feat-list" role="list" style={{ marginBottom: 0 }}>
+                {founderFeatures.map((f, i) => (
+                  <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 14.5, color: 'var(--ink)', padding: '13px 0', borderTop: `1px solid ${i === 0 ? 'rgba(0,196,114,0.20)' : 'rgba(255,255,255,0.08)'}` }}>
+                    <Check className="text-[#00c472]" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </Glass>
+
         <div className="pricing-grid">
           {/* Free card */}
           <Glass shimmer className="price-card" style={{ padding: '38px 36px 32px', borderRadius: 26 }}>
