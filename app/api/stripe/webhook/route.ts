@@ -12,16 +12,39 @@ async function processEvent(event: Stripe.Event, supabase: SupabaseClient): Prom
     case 'checkout.session.completed': {
       const session = event.data.object
       const profileId = session.client_reference_id
-      const customerId =
-        typeof session.customer === 'string'
-          ? session.customer
-          : session.customer?.id ?? null
-      const subscriptionId =
-        typeof session.subscription === 'string'
-          ? session.subscription
-          : session.subscription?.id ?? null
+      if (!profileId) break
 
-      if (profileId) {
+      // Founder Access uses a one-time Payment Link (mode='payment'), regular
+      // Pro uses a recurring subscription (mode='subscription'). Differentiate
+      // here so founders get lifetime_pro=true and never get downgraded by
+      // customer.subscription.deleted later.
+      const isLifetimeFounder = session.mode === 'payment'
+
+      if (isLifetimeFounder) {
+        // Customer object is still useful for portal access; keep it.
+        const customerId =
+          typeof session.customer === 'string'
+            ? session.customer
+            : session.customer?.id ?? null
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            tier: 'pro',
+            lifetime_pro: true,
+            stripe_customer_id: customerId,
+          })
+          .eq('id', profileId)
+        if (error) throw new Error(`founder upgrade failed: ${error.message}`)
+      } else {
+        const customerId =
+          typeof session.customer === 'string'
+            ? session.customer
+            : session.customer?.id ?? null
+        const subscriptionId =
+          typeof session.subscription === 'string'
+            ? session.subscription
+            : session.subscription?.id ?? null
+
         const { error } = await supabase
           .from('profiles')
           .update({
@@ -42,13 +65,19 @@ async function processEvent(event: Stripe.Event, supabase: SupabaseClient): Prom
           ? subscription.customer
           : subscription.customer.id
 
-      // Match on subscription_id too: a stale delete event for an old
-      // subscription must not downgrade a re-subscribed customer.
+      // Three predicates ensure we only downgrade the right account:
+      //   - matching customer_id     (right user)
+      //   - matching subscription_id (right subscription — stale events
+      //                               for an old, replaced subscription
+      //                               must not affect the new one)
+      //   - lifetime_pro is false    (founders keep Pro forever even if
+      //                               they later subscribe-and-cancel)
       const { error } = await supabase
         .from('profiles')
         .update({ tier: 'free', stripe_subscription_id: null })
         .eq('stripe_customer_id', customerId)
         .eq('stripe_subscription_id', subscription.id)
+        .eq('lifetime_pro', false)
       if (error) throw new Error(`subscription delete failed: ${error.message}`)
       break
     }

@@ -95,7 +95,7 @@ export default async function DashboardPage() {
                 : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'
             }`}
           >
-            {profile.tier}
+            {profile.tier === 'pro' ? 'Pro' : 'Free'}
           </span>
         </div>
       </div>

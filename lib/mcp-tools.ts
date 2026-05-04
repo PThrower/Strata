@@ -190,7 +190,7 @@ export async function handleToolCall(
     const access = await checkEcosystemAccess(supabase, ecosystem, profile.tier)
     if (!access.ok) {
       await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'best-practices', ecosystem, statusCode: access.response.status })
-      return err('Error: Ecosystem not available on free tier. Upgrade at strata.dev/dashboard/billing', access.response.status)
+      return err('Error: Ecosystem not available on free tier. Upgrade at usestrata.dev/dashboard/billing', access.response.status)
     }
 
     let query = supabase
@@ -234,7 +234,7 @@ export async function handleToolCall(
     const access = await checkEcosystemAccess(supabase, ecosystem, profile.tier)
     if (!access.ok) {
       await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'news', ecosystem, statusCode: access.response.status })
-      return err('Error: Ecosystem not available on free tier. Upgrade at strata.dev/dashboard/billing', access.response.status)
+      return err('Error: Ecosystem not available on free tier. Upgrade at usestrata.dev/dashboard/billing', access.response.status)
     }
 
     let query = supabase
@@ -281,7 +281,7 @@ export async function handleToolCall(
     const access = await checkEcosystemAccess(supabase, ecosystem, profile.tier)
     if (!access.ok) {
       await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'integrations', ecosystem, statusCode: access.response.status })
-      return err('Error: Ecosystem not available on free tier. Upgrade at strata.dev/dashboard/billing', access.response.status)
+      return err('Error: Ecosystem not available on free tier. Upgrade at usestrata.dev/dashboard/billing', access.response.status)
     }
 
     if (useCase) {
@@ -342,7 +342,7 @@ export async function handleToolCall(
       const access = await checkEcosystemAccess(supabase, ecosystem, profile.tier)
       if (!access.ok) {
         await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'search', ecosystem: logEcosystem, statusCode: access.response.status })
-        return err('Error: Ecosystem not available on free tier. Upgrade at strata.dev/dashboard/billing', access.response.status)
+        return err('Error: Ecosystem not available on free tier. Upgrade at usestrata.dev/dashboard/billing', access.response.status)
       }
       resolvedEcosystem = access.slug
     }

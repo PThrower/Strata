@@ -4,6 +4,13 @@ import { Btn } from '@/components/ui/button'
 import { LiveBadge } from '@/components/ui/live-badge'
 import { SectionHeading } from '@/components/ui/section-heading'
 import { EcosystemCarousel } from './EcosystemCarousel'
+import { createServiceRoleClient } from '@/lib/supabase-server'
+
+// Re-render at most once an hour so the live counts don't drift more than that
+// from reality, while keeping landing-page TTFB fast (Vercel cache HIT).
+export const revalidate = 3600
+
+const FOUNDER_TOTAL_SPOTS = 50
 
 /* ─── Data ─── */
 const ecosystems = [
@@ -98,7 +105,7 @@ const founderFeatures = [
   'Founding member badge',
   'Direct access to the builder',
 ]
-const freeFeatures = ['100 calls / month', '2 ecosystems', '24-hour news lag', 'Weekly index refresh']
+const freeFeatures = ['100 calls / month', '5 core ecosystems', '24-hour news lag', 'Weekly index refresh']
 const proFeatures  = ['10,000 calls / month', 'All ecosystems', 'News updated every 12 hours', 'Daily index refresh']
 
 function Check({ className }: { className?: string }) {
@@ -243,7 +250,43 @@ function AggregationGraphic() {
   )
 }
 
-export default function LandingPage() {
+// If Supabase is unreachable or the lifetime_pro column hasn't been deployed
+// yet, render these defaults rather than 500-ing the marketing page.
+const FALLBACK_SERVER_COUNT = 2179
+const FALLBACK_FOUNDER_REMAINING = FOUNDER_TOTAL_SPOTS
+
+async function loadCounts(): Promise<{ serverCount: number; founderRemaining: number }> {
+  try {
+    const supabase = createServiceRoleClient()
+    const [serverRes, founderRes] = await Promise.all([
+      supabase
+        .from('mcp_servers')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_quarantined', false),
+      supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('lifetime_pro', true),
+    ])
+    const serverCount =
+      !serverRes.error && typeof serverRes.count === 'number'
+        ? serverRes.count
+        : FALLBACK_SERVER_COUNT
+    const founderRemaining =
+      !founderRes.error && typeof founderRes.count === 'number'
+        ? Math.max(0, FOUNDER_TOTAL_SPOTS - founderRes.count)
+        : FALLBACK_FOUNDER_REMAINING
+    return { serverCount, founderRemaining }
+  } catch {
+    return { serverCount: FALLBACK_SERVER_COUNT, founderRemaining: FALLBACK_FOUNDER_REMAINING }
+  }
+}
+
+export default async function LandingPage() {
+  const { serverCount, founderRemaining } = await loadCounts()
+  const serverCountFormatted = serverCount.toLocaleString()
+  const founderSoldOut = founderRemaining === 0
+
   return (
     <>
       {/* ══ Hero ══ */}
@@ -258,7 +301,7 @@ export default function LandingPage() {
               margin: '0 0 32px', display: 'flex', alignItems: 'center', gap: 14,
             }}>
               <span aria-hidden="true" style={{ width: 32, height: 1, background: 'rgba(255,255,255,0.35)', display: 'inline-block', flexShrink: 0 }} />
-              mcp security · trust layer · 2,179 servers scored
+              mcp security · trust layer · {serverCountFormatted} servers scored
             </p>
 
             {/* Headline */}
@@ -306,11 +349,13 @@ export default function LandingPage() {
             </div>
 
             {/* Founder Access banner */}
-            <Link href="/#pricing" className="founder-hero-link" style={{ marginTop: 24 }}>
-              <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: '#00c472', flexShrink: 0 }} />
-              50 lifetime spots at $100 — 49 remaining
-              <span aria-hidden="true" style={{ opacity: 0.65, marginLeft: 2 }}>→</span>
-            </Link>
+            {!founderSoldOut && (
+              <Link href="/#pricing" className="founder-hero-link" style={{ marginTop: 24 }}>
+                <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: '#00c472', flexShrink: 0 }} />
+                {FOUNDER_TOTAL_SPOTS} lifetime spots at $100 — {founderRemaining} remaining
+                <span aria-hidden="true" style={{ opacity: 0.65, marginLeft: 2 }}>→</span>
+              </Link>
+            )}
           </div>
 
           {/* ── Right: aggregation graphic ── */}
@@ -373,7 +418,7 @@ export default function LandingPage() {
 
       {/* ══ Ecosystems ══ */}
       <section style={{ padding: '72px 0' }} id="ecosystems">
-        <SectionHeading title="Ecosystems we track" meta="22 AI ecosystems · 2,179 MCP servers scored · continuously updated" />
+        <SectionHeading title="Ecosystems we track" meta={`22 AI ecosystems · ${serverCountFormatted} MCP servers scored · continuously updated`} />
         <div className="eco-grid">
           {ecosystems.map((eco) => (
             <Glass key={eco.name} shimmer className="eco-card" style={{ padding: '28px 20px 22px', textAlign: 'center' }}>
@@ -462,7 +507,7 @@ export default function LandingPage() {
             }}>
               {`uses: PThrower/strata-mcp-check@v1`}
             </code>
-            <a href="https://github.com/marketplace/actions/strata-mcp-security-check" rel="noreferrer" style={{ fontSize: 13, color: 'var(--emerald-glow)', textDecoration: 'none', fontWeight: 500 }}>
+            <a href="https://github.com/marketplace/actions/strata-mcp-security-check" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--emerald-glow)', textDecoration: 'none', fontWeight: 500 }}>
               Marketplace →
             </a>
           </Glass>
@@ -592,9 +637,9 @@ export default function LandingPage() {
 
             <div style={{ display: 'flex', justifyContent: 'center', gap: 64, marginBottom: 52 }}>
               {[
-                { value: '22',    label: 'ecosystems tracked' },
-                { value: '2,179', label: 'mcp servers scored' },
-                { value: 'Daily', label: 'index updates' },
+                { value: '22',                  label: 'ecosystems tracked' },
+                { value: serverCountFormatted,  label: 'mcp servers scored' },
+                { value: 'Daily',               label: 'index updates' },
               ].map(({ value, label }) => (
                 <div key={label}>
                   <p style={{
@@ -726,8 +771,8 @@ export default function LandingPage() {
             {/* Left: price + CTA */}
             <div>
               <span className="founder-badge">
-                <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: '#00c472', flexShrink: 0 }} />
-                Limited · 49 spots left
+                <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: founderSoldOut ? 'rgba(255,255,255,0.30)' : '#00c472', flexShrink: 0 }} />
+                {founderSoldOut ? `Sold out · ${FOUNDER_TOTAL_SPOTS} of ${FOUNDER_TOTAL_SPOTS} claimed` : `Limited · ${founderRemaining} ${founderRemaining === 1 ? 'spot' : 'spots'} left`}
               </span>
               <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 56, letterSpacing: '-0.02em', lineHeight: 1, margin: '24px 0 6px', color: 'var(--ink)' }}>
                 $100
@@ -741,10 +786,18 @@ export default function LandingPage() {
               <p style={{ fontSize: 14.5, color: 'var(--ink-muted)', margin: '0 0 28px', lineHeight: 1.55 }}>
                 Lock in everything Strata becomes. Forever.
               </p>
-              <Btn variant="emerald" href="https://buy.stripe.com/6oU4gBboLcfx20V6mlg3600" arrow={false}>Claim Founder Access →</Btn>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-faint)', margin: '16px 0 0', letterSpacing: '0.06em' }}>
-                49 of 50 spots remaining
-              </p>
+              {founderSoldOut ? (
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-muted)', margin: 0 }}>
+                  All {FOUNDER_TOTAL_SPOTS} founder spots are claimed. <Link href="/signup" style={{ color: 'var(--emerald-glow)' }}>Start with Pro instead →</Link>
+                </p>
+              ) : (
+                <>
+                  <Btn variant="emerald" href="/founder" arrow={false}>Claim Founder Access →</Btn>
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-faint)', margin: '16px 0 0', letterSpacing: '0.06em' }}>
+                    {founderRemaining} of {FOUNDER_TOTAL_SPOTS} spots remaining
+                  </p>
+                </>
+              )}
             </div>
 
             {/* Right: features */}

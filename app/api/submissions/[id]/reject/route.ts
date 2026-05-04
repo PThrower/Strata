@@ -17,6 +17,7 @@ export async function POST(
 
   await serviceClient.from('submissions').update({
     status: 'rejected',
+    claude_reasoning: 'Rejected by admin.',
     reviewed_at: new Date().toISOString(),
   }).eq('id', id)
 

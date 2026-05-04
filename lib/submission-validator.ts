@@ -3,6 +3,17 @@ import { scanForInjection } from './injection-scanner'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
+// Escape & before <, > so we don't double-encode entities the user actually
+// typed (e.g. "&lt;" in body would be mis-rendered as "&amp;lt;" if we did
+// the < pass first). Identical to scripts/refresh/validate.ts:escapeXml.
+function escapeXml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 // Injection-resistant system prompt. Content is wrapped in <submission> tags
 // by the caller — anything inside those tags is untrusted user data, not instructions.
 const SYSTEM = `You are a content quality validator for Strata, an AI ecosystem intelligence platform used by developers.
@@ -77,9 +88,9 @@ export async function validateSubmission(input: SubmissionInput): Promise<Valida
         content:
           `Ecosystem: ${input.ecosystem}\nCategory: ${input.category}\n\n` +
           `<submission>\n` +
-          `<title>${input.title.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</title>\n` +
-          `<body>${input.body.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>` +
-          (input.sourceUrl ? `\n<source_url>${input.sourceUrl}</source_url>` : '') +
+          `<title>${escapeXml(input.title)}</title>\n` +
+          `<body>${escapeXml(input.body)}</body>` +
+          (input.sourceUrl ? `\n<source_url>${escapeXml(input.sourceUrl)}</source_url>` : '') +
           `\n</submission>`,
       }],
     })

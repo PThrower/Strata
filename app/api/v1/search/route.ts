@@ -4,6 +4,7 @@ import {
   checkEcosystemAccess,
   logApiRequest,
   logQueryAudit,
+  rateLimitHeaders,
 } from '@/lib/api-auth'
 import { serverTiming } from '@/lib/server-timing'
 
@@ -79,6 +80,11 @@ export async function GET(request: NextRequest) {
 
   return Response.json(
     { query, results },
-    { headers: { 'Server-Timing': serverTiming(t0) } },
+    {
+      headers: {
+        ...rateLimitHeaders({ ok: true, mode: 'auth', profile, supabase }),
+        'Server-Timing': serverTiming(t0),
+      },
+    },
   )
 }

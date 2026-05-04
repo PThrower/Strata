@@ -235,13 +235,13 @@ export default function SdkDocsPage() {
         fontFamily: 'var(--font-mono)', fontSize: 11.5, fontWeight: 500,
         letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)',
       }}>
-        <a href="https://www.npmjs.com/package/@strata-ai/sdk" rel="noreferrer" style={{ color: 'var(--emerald-glow)' }}>
+        <a href="https://www.npmjs.com/package/@strata-ai/sdk" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--emerald-glow)' }}>
           npm →
         </a>
-        <a href="https://github.com/PThrower/strata-sdk" rel="noreferrer" style={{ color: 'var(--emerald-glow)' }}>
+        <a href="https://github.com/PThrower/strata-sdk" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--emerald-glow)' }}>
           github →
         </a>
-        <a href="https://github.com/marketplace/actions/strata-mcp-security-check" rel="noreferrer" style={{ color: 'var(--emerald-glow)' }}>
+        <a href="https://github.com/marketplace/actions/strata-mcp-security-check" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--emerald-glow)' }}>
           marketplace →
         </a>
       </div>
@@ -435,7 +435,7 @@ export default function SdkDocsPage() {
           <code>critical</code> | <code>high</code> | <code>medium</code>.
           Re-runs UPDATE the same comment instead of stacking.
           {' '}
-          <a href="https://github.com/PThrower/strata-mcp-check" rel="noreferrer" style={{ color: 'var(--emerald-glow)' }}>
+          <a href="https://github.com/PThrower/strata-mcp-check" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--emerald-glow)' }}>
             Full action README →
           </a>
         </p>
@@ -463,9 +463,9 @@ export default function SdkDocsPage() {
           links
         </p>
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', fontSize: 14 }}>
-          <a href="https://www.npmjs.com/package/@strata-ai/sdk" rel="noreferrer" style={{ color: 'var(--ink-soft)' }}>npm</a>
-          <a href="https://github.com/PThrower/strata-sdk" rel="noreferrer" style={{ color: 'var(--ink-soft)' }}>GitHub</a>
-          <a href="https://github.com/marketplace/actions/strata-mcp-security-check" rel="noreferrer" style={{ color: 'var(--ink-soft)' }}>Marketplace</a>
+          <a href="https://www.npmjs.com/package/@strata-ai/sdk" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--ink-soft)' }}>npm</a>
+          <a href="https://github.com/PThrower/strata-sdk" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--ink-soft)' }}>GitHub</a>
+          <a href="https://github.com/marketplace/actions/strata-mcp-security-check" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--ink-soft)' }}>Marketplace</a>
           <Link href="/docs" style={{ color: 'var(--ink-soft)' }}>All docs</Link>
           <Link href="/signup" style={{ color: 'var(--ink-soft)' }}>Get an API key</Link>
         </div>

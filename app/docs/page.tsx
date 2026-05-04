@@ -155,7 +155,7 @@ function CB({ code, lang }: { code: string; lang: Lang | 'json' }) {
 
 // ─── Code examples ───────────────────────────────────────────────────────────
 
-const qsCurl = `curl -s "https://api.strata.dev/v1/best-practices?ecosystem=claude" \\
+const qsCurl = `curl -s "https://usestrata.dev/api/v1/best-practices?ecosystem=claude" \\
   -H "X-API-Key: sk_your_api_key_here"`
 
 const qsJson = `{
@@ -163,27 +163,27 @@ const qsJson = `{
   "category": "best_practices",
   "items": [
     {
-      "id": "bp_01jz4x9m2k",
+      "id": "49c750bf-78dc-4036-afbe-dbbb07c38f5d",
       "title": "Use system prompts to define behavior",
       "body": "Define Claude's role in the system prompt rather than the first human turn for consistent behavior across conversations.",
-      "updated_at": "2026-04-28T06:00:00Z"
+      "updated_at": "2026-05-02T19:00:07.712697+00:00"
     },
     {
-      "id": "bp_02jz4x9m3n",
+      "id": "7a33f832-e29c-4a5d-9faf-e1a49fb7624e",
       "title": "Prefer structured outputs for downstream parsing",
       "body": "Request JSON or XML output when the response will be consumed programmatically. Claude reliably follows format instructions specified upfront.",
-      "updated_at": "2026-04-28T06:00:00Z"
+      "updated_at": "2026-05-02T19:00:07.712697+00:00"
     }
   ]
 }`
 
-const authCurl = `curl -s "https://api.strata.dev/v1/best-practices?ecosystem=claude" \\
+const authCurl = `curl -s "https://usestrata.dev/api/v1/best-practices?ecosystem=claude" \\
   -H "X-API-Key: sk_your_api_key_here"`
 
 const authPy = `import httpx
 
 client = httpx.Client(
-    base_url="https://api.strata.dev/v1",
+    base_url="https://usestrata.dev/api/v1",
     headers={"X-API-Key": "sk_your_api_key_here"},
 )
 
@@ -195,7 +195,7 @@ data = resp.json()
 print(data["items"])`
 
 const authJs = `const resp = await fetch(
-  "https://api.strata.dev/v1/best-practices?ecosystem=claude",
+  "https://usestrata.dev/api/v1/best-practices?ecosystem=claude",
   {
     headers: {
       "X-API-Key": "sk_your_api_key_here",
@@ -206,14 +206,11 @@ const data = await resp.json();
 console.log(data.items);`
 
 const rl429 = `{
-  "error": "Monthly call limit reached",
-  "tier": "free",
-  "limit": 100,
-  "used": 100,
-  "resets_at": "2026-05-01T00:00:00Z"
+  "error": "Monthly limit reached",
+  "tier": "free"
 }`
 
-const bpCurl = `curl -s "https://api.strata.dev/v1/best-practices?ecosystem=claude" \\
+const bpCurl = `curl -s "https://usestrata.dev/api/v1/best-practices?ecosystem=claude" \\
   -H "X-API-Key: sk_your_api_key_here"`
 
 const bpJson = `{
@@ -221,21 +218,21 @@ const bpJson = `{
   "category": "best_practices",
   "items": [
     {
-      "id": "bp_01jz4x9m2k",
+      "id": "49c750bf-78dc-4036-afbe-dbbb07c38f5d",
       "title": "Use system prompts to define behavior",
       "body": "Define Claude's role in the system prompt for consistent behavior.",
-      "updated_at": "2026-04-28T06:00:00Z"
+      "updated_at": "2026-05-02T19:00:07.712697+00:00"
     },
     {
-      "id": "bp_02jz4x9m3n",
+      "id": "7a33f832-e29c-4a5d-9faf-e1a49fb7624e",
       "title": "Prefer structured outputs for parsing",
       "body": "Request JSON output when the response is consumed programmatically.",
-      "updated_at": "2026-04-28T06:00:00Z"
+      "updated_at": "2026-05-02T19:00:07.712697+00:00"
     }
   ]
 }`
 
-const newsCurl = `curl -s "https://api.strata.dev/v1/news?ecosystem=claude&limit=3" \\
+const newsCurl = `curl -s "https://usestrata.dev/api/v1/news?ecosystem=claude&limit=3" \\
   -H "X-API-Key: sk_your_api_key_here"`
 
 const newsJson = `{
@@ -243,42 +240,42 @@ const newsJson = `{
   "tier": "free",
   "items": [
     {
-      "id": "ni_01jz4x8a1b",
-      "title": "Claude 3.7 Sonnet adds extended thinking",
-      "body": "Anthropic released Claude 3.7 Sonnet with a new extended thinking mode for complex reasoning tasks.",
-      "source_url": "https://www.anthropic.com/news/claude-3-7-sonnet",
-      "published_at": "2026-04-27T08:00:00Z"
+      "id": "529d0099-547c-48af-96fa-a2d87afaa181",
+      "title": "Anthropic TypeScript SDK v0.92.0 Released",
+      "body": "TypeScript SDK v0.92.0 adds improved Managed Agents APIs and support for setting headers via environment variables.",
+      "source_url": "https://github.com/anthropics/anthropic-sdk-typescript/releases/tag/sdk-v0.92.0",
+      "published_at": "2026-04-30T19:40:53+00:00"
     }
   ]
 }`
 
-const intCurl = `curl -s "https://api.strata.dev/v1/integrations?ecosystem=claude" \\
+const intCurl = `curl -s "https://usestrata.dev/api/v1/integrations?ecosystem=claude" \\
   -H "X-API-Key: sk_your_api_key_here"`
 
 const intJson = `{
   "ecosystem": "claude",
   "items": [
     {
-      "id": "int_01jz5a3k2p",
+      "id": "1b63edf6-af59-4d70-8fcf-d06eccb17600",
       "title": "LangChain — Claude integration",
       "body": "Use Claude as an LLM provider in LangChain chains and agents via langchain-anthropic."
     },
     {
-      "id": "int_02jz5a3k3q",
+      "id": "5f2540ee-4eae-4857-90bd-3163bd8d6cf0",
       "title": "Vercel AI SDK",
       "body": "First-class Claude support for streaming and structured outputs in Next.js."
     }
   ]
 }`
 
-const srchCurl = `curl -s "https://api.strata.dev/v1/search?query=streaming+tool+use" \\
+const srchCurl = `curl -s "https://usestrata.dev/api/v1/search?query=streaming+tool+use" \\
   -H "X-API-Key: sk_your_api_key_here"`
 
 const srchJson = `{
   "query": "streaming tool use",
   "results": [
     {
-      "id": "bp_01jz4x9m2k",
+      "id": "1d487ca4-0bc3-4314-a4c7-fbcce14fccec",
       "title": "Streaming tool use in Claude",
       "body": "Use the streaming API with tool_use to surface intermediate results while the model thinks.",
       "category": "best_practices",
@@ -290,15 +287,15 @@ const srchJson = `{
 
 const ecosystemsCurl = `# Core ecosystem — works on free + pro
 curl -H "X-API-Key: sk_your_key" \\
-  "https://api.strata.dev/v1/news?ecosystem=claude"
+  "https://usestrata.dev/api/v1/news?ecosystem=claude"
 
 # Pro-only ecosystem
 curl -H "X-API-Key: sk_pro_key" \\
-  "https://api.strata.dev/v1/news?ecosystem=groq"`
+  "https://usestrata.dev/api/v1/news?ecosystem=groq"`
 
 const ecosystemsErr = `{
-  "error": "Ecosystem not available on free tier",
-  "upgrade": "https://usestrata.dev/dashboard/billing"
+  "error": "Ecosystem not available",
+  "upgrade_url": "/dashboard"
 }`
 
 const err401 = `{
@@ -306,20 +303,18 @@ const err401 = `{
 }`
 
 const err429 = `{
-  "error": "Monthly call limit reached",
-  "tier": "free",
-  "limit": 100,
-  "resets_at": "2026-05-01T00:00:00Z"
+  "error": "Monthly limit reached",
+  "tier": "free"
 }`
 
 const ex1: Record<Lang, string> = {
   curl: `# Get Claude best practices
-curl -s "https://api.strata.dev/v1/best-practices?ecosystem=claude" \\
+curl -s "https://usestrata.dev/api/v1/best-practices?ecosystem=claude" \\
   -H "X-API-Key: sk_your_api_key_here"`,
   python: `import httpx
 
 client = httpx.Client(
-    base_url="https://api.strata.dev/v1",
+    base_url="https://usestrata.dev/api/v1",
     headers={"X-API-Key": "sk_your_api_key_here"},
 )
 
@@ -329,7 +324,7 @@ resp = client.get(
 )
 for p in resp.json()["items"]:
     print(f"• {p['title']}")`,
-  js: `const BASE = "https://api.strata.dev/v1";
+  js: `const BASE = "https://usestrata.dev/api/v1";
 const KEY  = "sk_your_api_key_here";
 
 const resp = await fetch(
@@ -342,12 +337,12 @@ items.forEach(p => console.log(\`• \${p.title}\`));`,
 
 const ex2: Record<Lang, string> = {
   curl: `# Search across all ecosystems
-curl -s "https://api.strata.dev/v1/search?query=function+calling" \\
+curl -s "https://usestrata.dev/api/v1/search?query=function+calling" \\
   -H "X-API-Key: sk_your_api_key_here"`,
   python: `import httpx
 
 client = httpx.Client(
-    base_url="https://api.strata.dev/v1",
+    base_url="https://usestrata.dev/api/v1",
     headers={"X-API-Key": "sk_your_api_key_here"},
 )
 
@@ -355,7 +350,7 @@ resp = client.get("/search", params={"query": "function calling"})
 for r in resp.json()["results"]:
     print(f"[{r['ecosystem_slug']}] {r['title']}")`,
   js: `const resp = await fetch(
-  "https://api.strata.dev/v1/search?query=function+calling",
+  "https://usestrata.dev/api/v1/search?query=function+calling",
   { headers: { "X-API-Key": "sk_your_api_key_here" } }
 );
 const { results } = await resp.json();
@@ -366,16 +361,16 @@ results.forEach(r =>
 
 const ex3: Record<Lang, string> = {
   curl: `# Poll for latest news (page 1)
-curl -s "https://api.strata.dev/v1/news?ecosystem=openai&limit=5" \\
+curl -s "https://usestrata.dev/api/v1/news?ecosystem=openai&limit=5" \\
   -H "X-API-Key: sk_your_api_key_here"
 
 # Page 2 (offset-based)
-curl -s "https://api.strata.dev/v1/news?ecosystem=openai&limit=5&offset=5" \\
+curl -s "https://usestrata.dev/api/v1/news?ecosystem=openai&limit=5&offset=5" \\
   -H "X-API-Key: sk_your_api_key_here"`,
   python: `import httpx, time
 
 client = httpx.Client(
-    base_url="https://api.strata.dev/v1",
+    base_url="https://usestrata.dev/api/v1",
     headers={"X-API-Key": "sk_your_api_key_here"},
 )
 
@@ -393,7 +388,7 @@ def poll_news(ecosystem: str, interval: int = 60):
         time.sleep(interval)
 
 poll_news("openai")`,
-  js: `const BASE = "https://api.strata.dev/v1";
+  js: `const BASE = "https://usestrata.dev/api/v1";
 const KEY  = "sk_your_api_key_here";
 
 async function pollNews(ecosystem, intervalMs = 60_000) {
@@ -953,8 +948,8 @@ export default function DocsPage() {
 
           <Step n={1} title="Get your API key">
             Sign up at{' '}
-            <a href="https://strata.dev/signup" className="underline underline-offset-2 hover:opacity-80 transition-opacity" style={{ color: ACCENT }}>
-              strata.dev/signup
+            <a href="https://usestrata.dev/signup" className="underline underline-offset-2 hover:opacity-80 transition-opacity" style={{ color: ACCENT }}>
+              usestrata.dev/signup
             </a>
             {' '}then open the dashboard. Your key appears under{' '}
             <span className="font-mono text-[16px] bg-[--border] px-1 py-0.5 rounded">Overview → Your API Key</span>.
@@ -1161,7 +1156,7 @@ export default function DocsPage() {
           {/* ── API Reference ── */}
           <SectionH id="api-reference" label="API Reference" />
           <p className="text-[17px] text-[--muted-foreground] mb-2">
-            Base URL: <code className="font-mono text-[16px] text-[--foreground] bg-[--border] px-1 py-0.5 rounded">https://api.strata.dev/v1</code>
+            Base URL: <code className="font-mono text-[16px] text-[--foreground] bg-[--border] px-1 py-0.5 rounded">https://usestrata.dev/api/v1</code>
           </p>
           <p className="text-[16px] text-[--muted-foreground] mb-8">
             In local dev: <code className="font-mono text-[17px] bg-[--border] px-1 py-0.5 rounded">http://localhost:3000/api/v1</code>

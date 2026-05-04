@@ -86,7 +86,7 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
                 { label: 'Privacy',        href: '/privacy' },
                 { label: 'docs',           href: '/docs' },
                 { label: 'sdk',            href: '/docs/sdk' },
-                { label: 'support@strata.dev', href: 'mailto:support@strata.dev' },
+                { label: 'support@usestrata.dev', href: 'mailto:support@usestrata.dev' },
               ].map(({ label, href }, i) => (
                 <span key={label} className="flex items-center">
                   {i > 0 && <span style={{ color: 'rgba(255,255,255,0.20)', margin: '0 7px' }}>·</span>}

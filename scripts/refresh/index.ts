@@ -123,6 +123,21 @@ async function main() {
     console.log(`${RED}  ✗ mcp-directory FAILED: ${String(err)}${RESET}`)
   }
 
+  // ── Audit log retention (30-day) ──────────────────────────────
+  // Calls the delete_old_query_logs() RPC defined in
+  // supabase/migrations/20260501000005_api_query_log.sql so api_query_log
+  // doesn't grow unbounded. Cheap (single DELETE … WHERE indexed); fine to
+  // run every refresh tick.
+  try {
+    const supabase = getServiceClient()
+    const { data: deletedCount } = await supabase.rpc('delete_old_query_logs')
+    if (typeof deletedCount === 'number' && deletedCount > 0) {
+      console.log(`${DIM}    audit-log GC pruned ${deletedCount} rows older than 30 days${RESET}`)
+    }
+  } catch (err) {
+    console.log(`${YELLOW}    audit-log GC failed: ${String(err)}${RESET}`)
+  }
+
   // ── MCP Runtime Behavioral Scoring ────────────────────────────
   console.log(`\n${CYAN}  ◆ mcp-runtime${RESET}`)
   try {

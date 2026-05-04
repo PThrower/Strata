@@ -58,7 +58,7 @@ async function fetchReddit(
   const resp = await fetch(
     `https://www.reddit.com/r/${subreddit}/new.json?limit=10`,
     {
-      headers: { 'User-Agent': 'Strata-Bot/1.0 (+https://strata.dev)' },
+      headers: { 'User-Agent': 'Strata-Bot/1.0 (+https://usestrata.dev)' },
       signal: AbortSignal.timeout(10_000),
     },
   );

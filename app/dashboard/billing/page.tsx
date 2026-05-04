@@ -29,7 +29,7 @@ const PRO_FEATURES = [
 const FREE_FEATURES = [
   '100 API calls / month',
   'News with 24 h delay',
-  'Claude ecosystem only',
+  '5 core ecosystems',
   'Weekly content refreshes',
 ]
 

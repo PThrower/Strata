@@ -31,8 +31,6 @@ export default function SignupPage() {
   const [state, action, pending] = useActionState(signupAction, undefined)
   const [password, setPassword] = useState('')
 
-  const isAlreadyExists = state?.error?.includes('already exists')
-
   return (
     <>
       <Link href="/" className="font-serif text-2xl font-semibold mb-1 brand-gradient-text no-underline hover:opacity-80 transition-opacity" style={{ textDecoration: 'none', display: 'block' }}>Strata</Link>
@@ -54,14 +52,9 @@ export default function SignupPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between">
-            <label htmlFor="password" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Password
-            </label>
-            <Link href="/forgot-password" className="text-xs text-[#1D9E75] hover:underline">
-              Already have an account? Reset password
-            </Link>
-          </div>
+          <label htmlFor="password" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            Password
+          </label>
           <input
             id="password"
             name="password"
@@ -76,18 +69,7 @@ export default function SignupPage() {
         </div>
 
         {state?.error && (
-          <p className="text-sm text-red-500">
-            {isAlreadyExists ? (
-              <>
-                An account with this email already exists.{' '}
-                <Link href="/login" className="text-[#1D9E75] font-medium hover:underline">
-                  Sign in instead?
-                </Link>
-              </>
-            ) : (
-              state.error
-            )}
-          </p>
+          <p className="text-sm text-red-500">{state.error}</p>
         )}
 
         <button

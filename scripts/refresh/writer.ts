@@ -103,13 +103,13 @@ export async function bestPracticesAreStale(
   supabase: SupabaseClient,
   ecosystem: string,
 ): Promise<boolean> {
-  const sevenDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
   const { count, error } = await supabase
     .from('content_items')
     .select('id', { count: 'exact', head: true })
     .eq('ecosystem_slug', ecosystem)
     .eq('category', 'best_practices')
-    .gte('published_at', sevenDaysAgo);
+    .gte('published_at', threeDaysAgo);
 
   if (error) throw new Error(`BP staleness check failed: ${error.message}`);
   return (count ?? 0) === 0;

@@ -74,8 +74,8 @@ const sections: { title: string; content: React.ReactNode }[] = [
     content: (
       <p>
         You may request deletion of your account and associated data by emailing{' '}
-        <a href="mailto:support@strata.dev" className="footer-link" style={{ color: 'var(--ink-soft)' }}>
-          support@strata.dev
+        <a href="mailto:support@usestrata.dev" className="footer-link" style={{ color: 'var(--ink-soft)' }}>
+          support@usestrata.dev
         </a>
         . We will process requests within 30 days.
       </p>
@@ -86,8 +86,8 @@ const sections: { title: string; content: React.ReactNode }[] = [
     content: (
       <p>
         Privacy questions:{' '}
-        <a href="mailto:support@strata.dev" className="footer-link" style={{ color: 'var(--ink-soft)' }}>
-          support@strata.dev
+        <a href="mailto:support@usestrata.dev" className="footer-link" style={{ color: 'var(--ink-soft)' }}>
+          support@usestrata.dev
         </a>
       </p>
     ),
