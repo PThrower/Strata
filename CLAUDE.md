@@ -227,7 +227,7 @@ After ecosystem processing, `refreshMcpDirectory()` runs:
 
 ### SDK and GitHub Action (external repos)
 
-The public SDK lives in **`github.com/PThrower/strata-sdk`** (npm: `@strata-ai/sdk@0.1.3`). The GitHub Action Marketplace listing lives in **`github.com/PThrower/strata-mcp-check`** (`uses: PThrower/strata-mcp-check@v1`).
+The public SDK lives in **`github.com/PThrower/strata-sdk`** (npm: `@strata-ai/sdk@0.1.2`). The GitHub Action Marketplace listing lives in **`github.com/PThrower/strata-mcp-check`** (`uses: PThrower/strata-mcp-check@v1`).
 
 **Important naming quirk:** the `strata` package name on npm is taken by an unrelated web framework. The CLI must be invoked as `npx @strata-ai/sdk scan` or `npx @strata-ai/sdk verify`. After `npm install -g @strata-ai/sdk` the bare `strata` binary works.
 
