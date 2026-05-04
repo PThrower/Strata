@@ -145,8 +145,8 @@ All tool results include an epistemic notice and freshness envelope (`content_ag
 ### Database schema (Supabase Postgres)
 
 Key tables in `supabase/migrations/`:
-- **`profiles`** — one row per auth user; holds `api_key` (`sk_` + 32 hex chars), `tier`, `calls_used`, `calls_reset_at`, Stripe IDs. Auto-created by `handle_new_user()` trigger.
-- **`ecosystems`** — catalog of supported ecosystems; `available_on_free` gates free-tier access; `aliases text[]` enables slug resolution (e.g. `claude-code` → `claudecode`).
+- **`profiles`** — one row per auth user; holds `api_key` (`sk_` + 32 hex chars), `tier`, `calls_used`, `calls_reset_at`, Stripe IDs, `lifetime_pro boolean`. Auto-created by `handle_new_user()` trigger. `lifetime_pro = true` marks founder accounts (one-time $100 purchase); the webhook uses this to skip downgrade on `customer.subscription.deleted`. `REVOKE UPDATE (lifetime_pro)` from `authenticated` — only the webhook (service role) may set it.
+- **`ecosystems`** — catalog of supported ecosystems; `available_on_free` gates free-tier access (5 core ecosystems: `claude`, `openai`, `gemini`, `langchain`, `ollama`); `aliases text[]` enables slug resolution (e.g. `claude-code` → `claudecode`).
 - **`content_items`** — content records (`best_practices`, `news`, `integrations`) keyed by `ecosystem_slug`. Has `is_quarantined` and `injection_risk_score` safety columns. Source integrations always have a non-null `source_url`; best_practices have `source_url = null` by design (AI-generated).
 - **`api_requests`** — append-only usage log; no RLS, service role only. `api_key` is plain text (no FK) — anonymous traffic is logged under sentinel `'anon'`.
 - **`api_query_log`** — full query audit records (params, result IDs, latency, client IP hashed via HMAC); service role only.
@@ -158,7 +158,7 @@ Key tables in `supabase/migrations/`:
   - `hosted_endpoint`, `tool_count`, `tool_names`, `runtime_updated_at`, `runtime_status`
   - `is_quarantined`, `injection_risk_score`
   - `npm_package`, `pypi_package` — for package-based lookup
-  - Searched via `search_mcp_servers_v4(...)` RPC: `similarity * (0.6 + 0.4 * (0.55*security + 0.45*runtime))`
+  - Searched via `search_mcp_servers(...)` RPC (v5): `similarity * (0.6 + 0.4 * (0.55*security + 0.45*runtime))` with a hard 0.15 similarity floor — results below this threshold are excluded before ranking to prevent high-scoring but semantically unrelated servers from surfacing.
 - **`mcp_runtime_probes`** — per-probe log for runtime scoring backfill (toolCount, latency, error, etc.)
 
 RLS is on for `profiles`, `ecosystems`, `content_items`. Sensitive `profiles` columns (`tier`, `calls_used`, `api_key`, Stripe IDs) have `REVOKE UPDATE` from `authenticated` — all writes to these must go through service-role routes or webhooks.
@@ -227,7 +227,7 @@ After ecosystem processing, `refreshMcpDirectory()` runs:
 
 ### SDK and GitHub Action (external repos)
 
-The public SDK lives in **`github.com/PThrower/strata-sdk`** (npm: `@strata-ai/sdk@0.1.2`). The GitHub Action Marketplace listing lives in **`github.com/PThrower/strata-mcp-check`** (`uses: PThrower/strata-mcp-check@v1`).
+The public SDK lives in **`github.com/PThrower/strata-sdk`** (npm: `@strata-ai/sdk@0.1.3`). The GitHub Action Marketplace listing lives in **`github.com/PThrower/strata-mcp-check`** (`uses: PThrower/strata-mcp-check@v1`).
 
 **Important naming quirk:** the `strata` package name on npm is taken by an unrelated web framework. The CLI must be invoked as `npx @strata-ai/sdk scan` or `npx @strata-ai/sdk verify`. After `npm install -g @strata-ai/sdk` the bare `strata` binary works.
 
@@ -236,12 +236,15 @@ The SDK ships an identical copy of `lib/risk.ts` at `packages/sdk/src/risk.ts`. 
 ### Stripe integration
 
 - `POST /api/stripe/checkout` — creates a Checkout session; sets `client_reference_id` to the user's profile ID so the webhook can match it.
-- `POST /api/stripe/webhook` — handles `checkout.session.completed` (upgrades to `pro`) and `customer.subscription.deleted` (downgrades to `free`). Requires raw body bytes for signature verification — do not call `.json()` before `stripe.webhooks.constructEvent`.
+- `POST /api/stripe/webhook` — handles `checkout.session.completed` (upgrades to `pro`) and `customer.subscription.deleted` (downgrades to `free`). Detects founder purchases via `session.mode === 'payment'` — these set `lifetime_pro = true` and are never downgraded. Requires raw body bytes for signature verification — do not call `.json()` before `stripe.webhooks.constructEvent`.
 - `POST /api/stripe/portal` — creates a Billing Portal session for existing customers.
+- `GET /founder` (`app/founder/route.ts`) — founder checkout redirect. Requires the user to be signed in (redirects to `/signup` if not), then issues a 303 redirect to the Stripe Payment Link with `client_reference_id` and `prefilled_email` appended. Without this route, founder purchases via a bare Stripe link had no profile mapping and silently failed to upgrade the account.
 
 ### Auth pages (`app/(auth)/`)
 
 Login, signup, forgot-password, and reset-password pages all use the `useActionState` hook with Server Actions in `app/actions/auth.ts`. Password strength is enforced both client-side (live `PasswordHint` component) and server-side (`PASSWORD_REGEX`). The reset flow uses Supabase `resetPasswordForEmail()` with `redirectTo: ${NEXT_PUBLIC_APP_URL}/reset-password`; the reset page calls `updateUser({ password })` which works because Supabase sets the session automatically from the email link.
+
+`app/auth/callback/route.ts` — Supabase email-confirmation and OAuth callback handler. Exchanges the `code` query param for a session via `exchangeCodeForSession`. Without this route, email-confirmation links 404 and new users cannot verify their accounts.
 
 ### Docs pages
 
