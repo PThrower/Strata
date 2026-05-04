@@ -150,7 +150,8 @@ export default async function DashboardPage() {
             no api calls yet — check the docs to get started
           </p>
         ) : (
-          <table className="w-full text-sm">
+          <div className="dashboard-table-scroll">
+          <table className="w-full text-sm" style={{ minWidth: 420 }}>
             <thead>
               <tr className="text-xs text-muted-foreground border-b border-border">
                 <th className="text-left pb-2 font-medium">time</th>
@@ -182,6 +183,7 @@ export default async function DashboardPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

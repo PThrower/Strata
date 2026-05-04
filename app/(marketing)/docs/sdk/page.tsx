@@ -262,7 +262,7 @@ export default function SdkDocsPage() {
           Together they power the <code>risk_level</code> classification.
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+        <div className="sdk-trust-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
           <Glass style={{ padding: '24px 26px' }}>
             <p style={{
               fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 600,
@@ -305,6 +305,7 @@ export default function SdkDocsPage() {
           {CAPABILITY_FLAGS.map((row, i) => (
             <div
               key={row.flag}
+              className="cap-flag-row"
               style={{
                 display: 'grid', gridTemplateColumns: '160px 64px 1fr', gap: 16,
                 padding: '13px 18px', alignItems: 'center',
@@ -316,8 +317,16 @@ export default function SdkDocsPage() {
                 color: 'var(--ink)',
               }}>
                 {row.flag}
+                {/* shown only on mobile when column collapses */}
+                <span className="cap-flag-risk" style={{
+                  fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 600,
+                  letterSpacing: '0.08em', textTransform: 'uppercase',
+                  color: flagRiskColor[row.risk],
+                }}>
+                  {' '}· {row.risk}
+                </span>
               </code>
-              <span style={{
+              <span className="cap-flag-risk-col" style={{
                 fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 600,
                 letterSpacing: '0.08em', textTransform: 'uppercase',
                 color: flagRiskColor[row.risk],

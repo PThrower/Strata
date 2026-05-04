@@ -290,7 +290,7 @@ export default async function LandingPage() {
   return (
     <>
       {/* ══ Hero ══ */}
-      <section style={{ padding: '96px 0 64px' }}>
+      <section className="hero-section" style={{ padding: '96px 0 64px' }}>
         <div className="hero-grid">
           {/* ── Left: copy ── */}
           <div>
@@ -601,7 +601,7 @@ export default async function LandingPage() {
 
       {/* ══ Community ══ */}
       <section style={{ padding: '72px 0' }}>
-        <Glass shimmer style={{ padding: '72px 48px', textAlign: 'center' }}>
+        <Glass shimmer className="community-glass" style={{ padding: '72px 48px', textAlign: 'center' }}>
           <div style={{ maxWidth: 560, margin: '0 auto' }}>
             <p style={{
               fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500,
@@ -635,7 +635,7 @@ export default async function LandingPage() {
               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
             }} />
 
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 64, marginBottom: 52 }}>
+            <div className="community-stats" style={{ display: 'flex', justifyContent: 'center', gap: 64, marginBottom: 52 }}>
               {[
                 { value: '22',                  label: 'ecosystems tracked' },
                 { value: serverCountFormatted,  label: 'mcp servers scored' },

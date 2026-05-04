@@ -593,6 +593,31 @@ body {
 @media (max-width: 600px) {
   .hero-headline { font-size: 40px !important; }
   .hero-l2 { margin-left: 28px !important; }
+
+  /* Three-column grids → single column on small screens */
+  .hiw-steps-grid { grid-template-columns: 1fr !important; }
+  .dev-tools-grid  { grid-template-columns: 1fr !important; }
+
+  /* Community section: trim horizontal padding */
+  .community-glass { padding: 40px 20px !important; }
+  /* Community stats row: reduce gap and allow wrapping */
+  .community-stats { gap: 28px !important; flex-wrap: wrap !important; }
+
+  /* Hero section: less top-padding breathing room on small screens */
+  .hero-section { padding-top: 60px !important; padding-bottom: 40px !important; }
+
+  /* SDK docs: 2-col trust-signals grid → 1 col */
+  .sdk-trust-grid { grid-template-columns: 1fr !important; }
+
+  /* SDK docs: capability-flags rows — collapse 3-col grid to stacked */
+  .cap-flag-row {
+    grid-template-columns: 1fr !important;
+    gap: 4px !important;
+    padding: 12px 14px !important;
+  }
+  /* hide the standalone risk column; show the inline risk suffix instead */
+  .cap-flag-row .cap-flag-risk-col { display: none !important; }
+  .cap-flag-row .cap-flag-risk     { display: inline !important; }
 }
 
 /* ─── Glass variants ─── */
@@ -756,11 +781,29 @@ body {
   --border: #27272a;
 }
 
+/* ─── SDK docs: capability flags table ─── */
+/* The inline risk label is only visible when the row collapses to 1 col on mobile */
+.cap-flag-risk { display: none; }
+
 /* ─── Docs page — mobile table scrolling ─── */
 @media (max-width: 640px) {
   .docs-main table {
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ─── Dashboard — recent-requests table scroll on small screens ─── */
+.dashboard-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 640px) {
+  .dashboard-table-scroll {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 }

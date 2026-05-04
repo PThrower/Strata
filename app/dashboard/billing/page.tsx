@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server'
 import { stripe } from '@/lib/stripe'
@@ -6,6 +7,7 @@ import ManageSubscriptionButton from '../_components/manage-subscription-button'
 
 type BillingProfile = {
   tier: string
+  lifetime_pro: boolean
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
 }
@@ -83,7 +85,7 @@ export default async function BillingPage() {
   const serviceClient = createServiceRoleClient()
   const { data: profile } = await serviceClient
     .from('profiles')
-    .select('tier, stripe_customer_id, stripe_subscription_id')
+    .select('tier, lifetime_pro, stripe_customer_id, stripe_subscription_id')
     .eq('id', user.id)
     .maybeSingle<BillingProfile>()
   if (!profile) redirect('/login')
@@ -129,7 +131,83 @@ export default async function BillingPage() {
         </h1>
       </div>
 
-      {profile.tier === 'free' ? (
+      {profile.lifetime_pro ? (
+
+        /* ── Founder Access ── */
+        <div style={glowPanel}>
+          <div style={{
+            position: 'absolute', top: -60, right: -60,
+            width: 200, height: 200, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(0,196,114,0.14) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+
+          <div style={{ position: 'relative', marginBottom: 20 }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 600,
+              letterSpacing: '0.18em', textTransform: 'uppercase' as const,
+              color: '#00c472',
+              background: 'rgba(0,196,114,0.08)',
+              border: '1px solid rgba(0,196,114,0.28)',
+              borderRadius: 999, padding: '5px 12px',
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00c472', flexShrink: 0, display: 'inline-block' }} />
+              Lifetime Pro Access
+            </span>
+          </div>
+
+          <p style={{
+            fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 400,
+            color: 'var(--foreground)', margin: '0 0 12px', position: 'relative',
+          }}>
+            Founder Access
+          </p>
+
+          <p style={{
+            fontSize: 15, color: 'var(--muted-foreground)', lineHeight: 1.65,
+            margin: '0 0 24px', maxWidth: 420, position: 'relative',
+          }}>
+            You&rsquo;re a founding member. Everything Strata becomes is yours, forever.
+          </p>
+
+          <div style={{
+            borderTop: '1px solid rgba(0,196,114,0.18)',
+            paddingTop: 16, marginBottom: 24, position: 'relative',
+          }}>
+            {PRO_FEATURES.map(f => <FeatureRow key={f} text={f} />)}
+          </div>
+
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' as const, position: 'relative' }}>
+            <Link
+              href="/docs"
+              style={{
+                display: 'inline-flex', alignItems: 'center',
+                fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500,
+                letterSpacing: '0.06em', color: 'var(--emerald-glow)',
+                border: '1px solid rgba(95,176,133,0.30)', borderRadius: 8,
+                padding: '8px 18px', textDecoration: 'none',
+                background: 'rgba(95,176,133,0.06)',
+              }}
+            >
+              API docs →
+            </Link>
+            <Link
+              href="/submit-mcp"
+              style={{
+                display: 'inline-flex', alignItems: 'center',
+                fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500,
+                letterSpacing: '0.06em', color: 'var(--muted-foreground)',
+                border: '1px solid var(--border)', borderRadius: 8,
+                padding: '8px 18px', textDecoration: 'none',
+              }}
+            >
+              Submit an MCP server →
+            </Link>
+          </div>
+        </div>
+
+      ) : profile.tier === 'free' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Current plan */}

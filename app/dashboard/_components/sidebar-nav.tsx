@@ -11,6 +11,7 @@ const BASE_ITEMS = [
   { label: 'Submit MCP',  href: '/submit-mcp' },
   { label: 'Suggest',    href: '/dashboard/suggest' },
   { label: 'Docs',        href: '/docs' },
+  { label: 'SDK Docs',    href: '/docs/sdk' },
   { label: 'Billing',     href: '/dashboard/billing' },
 ]
 
@@ -34,7 +35,7 @@ export default function SidebarNav({ isAdmin }: { isAdmin?: boolean }) {
                 : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800'
             }`}
           >
-            {href === '/docs' ? (
+            {href === '/docs' || href === '/docs/sdk' ? (
               <span className="brand-gradient-text">{label}</span>
             ) : href === '/dashboard/suggest' && !isActive ? (
               <span style={{ color: '#9be0bd' }}>{label}</span>
