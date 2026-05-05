@@ -17,7 +17,7 @@ export interface RuntimeSignals {
   toolInjectionMax: number | null
   hasHostedEndpoint: boolean
   // Probe (Phase 3) — null in Phase 1
-  probeStatus: 'ok' | 'timeout' | 'opted_out' | 'error_transport' | 'error_protocol' | 'error_auth_required' | null
+  probeStatus: 'ok' | 'timeout' | 'opted_out' | 'error_transport' | 'error_protocol' | 'error_auth_required' | 'error_invalid_url' | null
   probeLatencyMs: number | null
   probeDriftFromStatic: boolean | null
   schemaErrors: number | null
@@ -68,6 +68,7 @@ function injectionPenalty(toolInjectionMax: number | null): number {
 }
 
 function probeBonus(s: RuntimeSignals): number {
+  if (s.probeStatus === 'error_auth_required') return 2              // endpoint exists and is gating — better than silent transport failure
   if (s.probeStatus !== 'ok') return 0
   let b = 10                                                          // it actually responded
   if (s.probeLatencyMs !== null && s.probeLatencyMs < 1000) b += 3

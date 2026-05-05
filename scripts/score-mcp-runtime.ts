@@ -33,6 +33,15 @@ interface McpRow {
   injection_risk_score: number | null
 }
 
+interface ProbeRow {
+  server_id:         string
+  status:            string
+  latency_ms:        number | null
+  drift_from_static: boolean | null
+  schema_errors:     number | null
+  probed_at:         string
+}
+
 async function main() {
   const supabase = getServiceClient()
   const limiter = new RateLimiter()
@@ -65,6 +74,26 @@ async function main() {
 
   const total = (rows ?? []).length
   console.log(`\n${BOLD}Runtime-scoring ${total} MCP servers${RESET}  ${DIM}(stale_days=${STALE_DAYS}${LIMIT ? `, limit=${LIMIT}` : ''})${RESET}\n`)
+
+  // Batch-load latest probes (within STALE_DAYS) for all candidate servers.
+  // Capped at 5,000 IDs to keep the query size reasonable; beyond that we fall back to null probe signals.
+  const probeMap = new Map<string, ProbeRow>()
+  const candidateIds = (rows ?? []).map(r => (r as McpRow).id)
+  if (candidateIds.length > 0 && candidateIds.length <= 5_000) {
+    const probeCutoff = new Date(Date.now() - STALE_DAYS * 86_400_000).toISOString()
+    const { data: probes } = await supabase
+      .from('mcp_runtime_probes')
+      .select('server_id, status, latency_ms, drift_from_static, schema_errors, probed_at')
+      .in('server_id', candidateIds)
+      .gte('probed_at', probeCutoff)
+      .order('probed_at', { ascending: false })
+    for (const p of (probes ?? []) as ProbeRow[]) {
+      if (!probeMap.has(p.server_id)) probeMap.set(p.server_id, p)
+    }
+    if (probeMap.size > 0) {
+      console.log(`${DIM}Loaded ${probeMap.size} recent probe(s) for score integration.${RESET}\n`)
+    }
+  }
 
   const counts = { scored: 0, no_source: 0, not_github: 0, error: 0, quarantined: 0 }
 
@@ -99,21 +128,23 @@ async function main() {
       // Tool-description injection scan (only if we extracted any)
       const injection = await scanToolDescriptions(analysis.toolDescriptions, anthropic)
 
+      const probe = probeMap.get(row.id) ?? null
       const signals: RuntimeSignals = {
         toolCount: analysis.toolDescriptions.length > 0 ? analysis.toolDescriptions.length : null,
         toolNames: analysis.toolNames,
         capabilityFlags: analysis.capabilityFlags,
         toolInjectionMax: injection.maxScore,
         hasHostedEndpoint: analysis.hostedEndpointHint !== null,
-        // Probe (Phase 3) — null in Phase 1
-        probeStatus: null,
-        probeLatencyMs: null,
-        probeDriftFromStatic: null,
-        schemaErrors: null,
+        probeStatus:          probe ? (probe.status as RuntimeSignals['probeStatus']) : null,
+        probeLatencyMs:       probe?.latency_ms        ?? null,
+        probeDriftFromStatic: probe?.drift_from_static ?? null,
+        schemaErrors:         probe?.schema_errors     ?? null,
       }
       const { score, components } = computeRuntimeScore(signals)
 
-      const runtimeStatus = analysis.status === 'no_source' ? 'no_source' : 'static_only'
+      const runtimeStatus =
+        analysis.status === 'no_source' ? 'no_source' :
+        probe                           ? 'probed'    : 'static_only'
       const updatePayload: Record<string, unknown> = {
         runtime_score:        score,
         runtime_components:   components,
