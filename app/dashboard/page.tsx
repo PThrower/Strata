@@ -11,6 +11,7 @@ type DashboardProfile = {
   tier: string
   calls_used: number
   calls_reset_at: string | null
+  lifetime_pro: boolean
 }
 
 type ApiRequest = {
@@ -53,7 +54,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await serviceClient
     .from('profiles')
-    .select('id, api_key, tier, calls_used, calls_reset_at')
+    .select('id, api_key, tier, calls_used, calls_reset_at, lifetime_pro')
     .eq('id', user.id)
     .maybeSingle<DashboardProfile>()
 
@@ -88,15 +89,22 @@ export default async function DashboardPage() {
         </div>
         <div className={card}>
           <p className="text-xs text-muted-foreground mb-1">current tier</p>
-          <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              profile.tier === 'pro'
-                ? 'bg-[#1D9E75]/10 text-[#1D9E75]'
-                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'
-            }`}
-          >
-            {profile.tier === 'pro' ? 'Pro' : 'Free'}
-          </span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                profile.tier === 'pro'
+                  ? 'bg-[#1D9E75]/10 text-[#1D9E75]'
+                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'
+              }`}
+            >
+              {profile.tier === 'pro' ? 'Pro' : 'Free'}
+            </span>
+            {profile.lifetime_pro && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#00c472]/10 text-[#00c472]">
+                Founding Member
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
