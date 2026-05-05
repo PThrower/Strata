@@ -2,6 +2,9 @@
   "name": "strata",
   "version": "0.1.0",
   "private": true,
+  "bin": {
+    "strata": "./bin/strata.js"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

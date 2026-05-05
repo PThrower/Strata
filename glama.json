@@ -1,3 +1,16 @@
 {
-  "$schema": "https://glama.ai/mcp/servers/schema.json"
+  "$schema": "https://glama.ai/mcp/servers/schema.json",
+  "name": "strata",
+  "displayName": "Strata — AI Ecosystem Intelligence",
+  "description": "Best practices, latest news, top integrations, and MCP server trust scores across 22+ AI ecosystems. Powered by usestrata.dev.",
+  "run": {
+    "command": "node",
+    "args": ["./bin/strata"],
+    "env": {
+      "STRATA_API_KEY": {
+        "description": "Strata API key (sk_…). Get one at https://usestrata.dev/dashboard — optional, falls through to anon tier.",
+        "required": false
+      }
+    }
+  }
 }
