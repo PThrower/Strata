@@ -64,7 +64,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: 'get_top_integrations',
     description:
-      'Get integrations and MCP servers for an AI ecosystem. Without use_case: returns all integrations ordered by recency. With use_case: returns results ranked by full-text relevance. Each result includes: title, body, source_urls[]; when use_case is provided, also includes rank (relevance position). Quarantined items are never returned. Example: get_top_integrations(ecosystem="claude", use_case="code review") finds tools Claude users use for code review. ' +
+      'Get integrations and MCP servers for an AI ecosystem. Without use_case: returns all integrations ordered by recency. With use_case: returns results ranked by full-text relevance. Each result includes: title, body, source_urls[]; when use_case is provided, also includes rank (relevance position). Quarantined items are never returned. Example: get_top_integrations(ecosystem="claude", use_case="code review") finds tools Claude users use for code review. Returns curated documentation and integration guides — not MCP servers. Use find_mcp_servers to discover connectable MCP protocol servers. ' +
       EPISTEMIC_NOTICE,
     inputSchema: {
       type: 'object',
