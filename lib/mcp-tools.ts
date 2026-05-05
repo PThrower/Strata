@@ -27,8 +27,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: 'get_best_practices',
     description:
-      'Get AI-verified best practices for a given AI ecosystem and category. Returns current, production-ready guidance for developers. ' +
-      'Each item includes content_age_hours and data_freshness — check these before acting on time-sensitive information. ' +
+      'Get AI-verified best practices for an AI ecosystem. Each result includes: title, body, source_urls[], confidence, content_age_hours, data_freshness. Results ordered by recency. Check data_freshness before acting on time-sensitive guidance. ' +
       EPISTEMIC_NOTICE,
     inputSchema: {
       type: 'object',
@@ -48,8 +47,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: 'get_latest_news',
     description:
-      'Get the latest news and updates for an AI ecosystem. Pro tier receives real-time results. Free tier receives items older than 24 hours. ' +
-      'Each item includes content_age_hours and data_freshness — check these before acting on time-sensitive information. ' +
+      'Get the latest news for an AI ecosystem. Pro tier: real-time results. Free tier: items older than 24h. Each result includes: title, body, published_at, source_urls[], content_age_hours, data_freshness. ' +
       EPISTEMIC_NOTICE,
     inputSchema: {
       type: 'object',
@@ -66,7 +64,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: 'get_top_integrations',
     description:
-      'Get ranked integrations and MCP servers for an AI ecosystem. Optionally filter by use case. ' +
+      'Get integrations and MCP servers for an AI ecosystem. Without use_case: returns all integrations ordered by recency. With use_case: returns results ranked by full-text relevance. Each result includes: title, body, source_urls[]; when use_case is provided, also includes rank (relevance position). Quarantined items are never returned. Example: get_top_integrations(ecosystem="claude", use_case="code review") finds tools Claude users use for code review. ' +
       EPISTEMIC_NOTICE,
     inputSchema: {
       type: 'object',
@@ -83,7 +81,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: 'search_ecosystem',
     description:
-      'Search across all verified AI ecosystem content. Returns results ranked by relevance. Leave ecosystem blank to search across all ecosystems. ' +
+      'Full-text search across verified AI ecosystem content: best practices, news, and integrations. Each result includes: title, body, category, ecosystem_slug, source_urls[], ranked by relevance. Omit ecosystem to search all accessible ecosystems. Use this to search ecosystem guidance and news; use find_mcp_servers to search the MCP server directory by capability. ' +
       EPISTEMIC_NOTICE,
     inputSchema: {
       type: 'object',
@@ -101,7 +99,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: 'list_ecosystems',
     description:
-      'List all AI ecosystems available on your current tier. Call this first to discover valid ecosystem slugs before calling get_best_practices, get_latest_news, or get_top_integrations.',
+      'List all AI ecosystems available on your current tier. Returns your_tier and an ecosystems array with slug, name, and vendor per entry. Call this first to get valid slugs before using get_best_practices, get_latest_news, get_top_integrations, or search_ecosystem.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -111,7 +109,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: 'find_mcp_servers',
     description:
-      'Search for MCP servers by use case or keyword using semantic similarity. Returns matching servers with two trust signals: security_score (0–100, repo maintenance/popularity) and runtime_score (0–100, behavior surface — what the tools actually do). Each result includes capability_flags (e.g. shell_exec, fs_write, dynamic_eval, secret_read), hosted_endpoint if a live MCP URL is known, tool_count, and runtime_freshness (fresh / aging / stale / unknown). Use exclude_capability_flags to filter dangerous capabilities; use require_hosted to only return servers with verified live endpoints. Quarantined and archived servers are always excluded. ' +
+      'Search 2,100+ MCP servers by use case or keyword using semantic similarity weighted by trust scores. Each result includes: security_score (0–100, repo health), runtime_score (0–100, tool behavior analysis), capability_flags (e.g. "shell_exec", "fs_write", "dynamic_eval"), hosted_endpoint, tool_count, runtime_freshness (fresh/aging/stale/unknown). Use exclude_capability_flags to filter dangerous capabilities; use require_hosted for servers with live endpoints. Quarantined and archived servers are always excluded. ' +
       EPISTEMIC_NOTICE,
     inputSchema: {
       type: 'object',

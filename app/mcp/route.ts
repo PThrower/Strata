@@ -27,7 +27,10 @@ export async function POST(req: Request) {
     'get_best_practices',
     {
       description: TOOL_DEFINITIONS[0].description,
-      inputSchema: { ecosystem: z.string(), category: z.string().optional() },
+      inputSchema: {
+        ecosystem: z.string().describe('Required. Ecosystem slug — e.g. "claude", "openai", "langchain". Call list_ecosystems to see all valid slugs for your tier. Returns an error if the slug is invalid or not available on your tier.'),
+        category: z.string().optional().describe('Optional. Content category filter. Default: "best_practices". Leave unset to receive standard curated guidance.'),
+      },
     },
     (args) => handleToolCall('get_best_practices', args as Record<string, unknown>, req),
   )
@@ -36,7 +39,10 @@ export async function POST(req: Request) {
     'get_latest_news',
     {
       description: TOOL_DEFINITIONS[1].description,
-      inputSchema: { ecosystem: z.string(), limit: z.number().optional() },
+      inputSchema: {
+        ecosystem: z.string().describe('Required. Ecosystem slug — e.g. "claude", "openai", "cursor". Call list_ecosystems to see all valid slugs for your tier. Returns an error if the slug is invalid or not available on your tier.'),
+        limit: z.number().optional().describe('Optional. Number of items to return. Default: 5. Accepted range: 1–20. Values outside the range are clamped.'),
+      },
     },
     (args) => handleToolCall('get_latest_news', args as Record<string, unknown>, req),
   )
@@ -45,7 +51,10 @@ export async function POST(req: Request) {
     'get_top_integrations',
     {
       description: TOOL_DEFINITIONS[2].description,
-      inputSchema: { ecosystem: z.string(), use_case: z.string().optional() },
+      inputSchema: {
+        ecosystem: z.string().describe('Required. Ecosystem slug — e.g. "claude", "cursor", "langchain". Call list_ecosystems to see all valid slugs for your tier. Returns an error if the slug is invalid or not available on your tier.'),
+        use_case: z.string().optional().describe('Optional. Filter by use case via full-text search — e.g. "code review", "RAG pipeline", "data analysis". Omit to return all integrations for the ecosystem ordered by recency.'),
+      },
     },
     (args) => handleToolCall('get_top_integrations', args as Record<string, unknown>, req),
   )
@@ -54,7 +63,10 @@ export async function POST(req: Request) {
     'search_ecosystem',
     {
       description: TOOL_DEFINITIONS[3].description,
-      inputSchema: { query: z.string(), ecosystem: z.string().optional() },
+      inputSchema: {
+        query: z.string().describe('Required. Full-text search query across ecosystem content (best practices, news, integrations). Max 2000 characters. Example: "streaming tool calls". Use find_mcp_servers to search the MCP server directory instead.'),
+        ecosystem: z.string().optional().describe('Optional. Restrict results to one ecosystem slug — e.g. "openai". Omit to search all accessible ecosystems. Call list_ecosystems to see valid slugs for your tier.'),
+      },
     },
     (args) => handleToolCall('search_ecosystem', args as Record<string, unknown>, req),
   )
@@ -73,13 +85,13 @@ export async function POST(req: Request) {
     {
       description: TOOL_DEFINITIONS[5].description,
       inputSchema: {
-        query: z.string(),
-        category: z.string().optional(),
-        limit: z.number().optional(),
-        min_security_score: z.number().optional(),
-        min_runtime_score: z.number().optional(),
-        exclude_capability_flags: z.array(z.string()).optional(),
-        require_hosted: z.boolean().optional(),
+        query: z.string().describe('Required. Semantic search query describing the capability or use case — e.g. "browser automation", "database queries", "GitHub integration". Max 2000 characters.'),
+        category: z.string().optional().describe('Optional. Category filter — e.g. "Browser Automation", "Databases", "Developer Tools". Omit to search all categories.'),
+        limit: z.number().optional().describe('Optional. Number of results. Default: 5. Range: 1–20. Values outside the range are clamped.'),
+        min_security_score: z.number().optional().describe('Optional. Minimum security score (0–100) based on repo health signals. Default: 30. Pass 0 to include all servers including abandoned repos.'),
+        min_runtime_score: z.number().optional().describe('Optional. Minimum runtime score (0–100) based on tool behavior analysis. Default: 0. Pass 50 or higher to require behaviorally-trusted servers.'),
+        exclude_capability_flags: z.array(z.string()).optional().describe('Optional. Exclude servers exposing any of these capabilities. Valid values: "shell_exec", "dynamic_eval", "fs_write", "arbitrary_sql", "secret_read", "process_spawn", "net_egress". Example: ["shell_exec", "dynamic_eval"].'),
+        require_hosted: z.boolean().optional().describe('Optional. If true, only return servers with a discovered live hosted endpoint. Default: false.'),
       },
     },
     (args) => handleToolCall('find_mcp_servers', args as Record<string, unknown>, req),
