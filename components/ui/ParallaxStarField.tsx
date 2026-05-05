@@ -67,7 +67,7 @@ function Moon({ offsetX, offsetY }: MoonProps) {
   const BASE_RIGHT = 120
 
   return (
-    <div style={{
+    <div id="larry-moon" style={{
       position: 'fixed',
       top:  BASE_TOP  + offsetY,
       right: BASE_RIGHT - offsetX,

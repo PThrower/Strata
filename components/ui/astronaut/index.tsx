@@ -77,6 +77,7 @@ function AstronautPortal({ usagePercent, apiCallCount = 0, founderBadge = false 
     flamesActive,
     pos,
     bobY,
+    scale,
     idleAnimClass,
     flightAnimClass,
     nozzleLeft,
@@ -133,6 +134,8 @@ function AstronautPortal({ usagePercent, apiCallCount = 0, founderBadge = false 
             cursor: 'pointer',
             userSelect: 'none',
             position: 'relative',
+            transform: scale !== 1 ? `scale(${scale})` : undefined,
+            transformOrigin: 'center bottom',
           }}
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}

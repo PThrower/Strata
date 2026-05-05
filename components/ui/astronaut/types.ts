@@ -20,8 +20,10 @@ export interface Vec2 {
 
 export interface MovementTarget {
   id: string
-  x: number   // viewport center x
-  y: number   // viewport center y
+  x: number   // viewport position (left edge of larry)
+  y: number   // viewport position (top edge of larry)
+  kind?: 'element' | 'space' | 'moon'
+  scale?: number   // visual scale override (e.g. 0.8 for moon)
 }
 
 // ─── Particles ───────────────────────────────────────────────────────────────

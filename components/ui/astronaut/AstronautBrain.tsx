@@ -22,24 +22,101 @@ function getHomePos(): Vec2 {
   return { x: 65, y: window.innerHeight - 220 }
 }
 
+const LARRY_W = 90
+const LARRY_H = 117
+
+// ─── Target discovery ─────────────────────────────────────────────────────────
+// Queries the live DOM each call — no caching.
+// Root cause of "stuck on left": Glass component doesn't spread data-* props,
+// so data-astro-anchor on <Glass> cards never reaches the DOM. We query by
+// .glass class directly instead, plus headings, moon, and fixed space targets.
+
 function discoverTargets(): MovementTarget[] {
   if (typeof document === 'undefined') return []
-  const els = document.querySelectorAll<HTMLElement>('[data-astro-anchor]')
-  const targets: MovementTarget[] = []
-  els.forEach(el => {
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  const seen = new Set<string>()
+  const out:  MovementTarget[] = []
+
+  function add(t: MovementTarget) {
+    if (seen.has(t.id)) return
+    seen.add(t.id)
+    // Clamp so Larry never spawns off-screen
+    out.push({
+      ...t,
+      x: clamp(t.x, 10, vw - LARRY_W - 10),
+      y: clamp(t.y, 10, vh - LARRY_H - 10),
+    })
+  }
+
+  // 1. data-astro-anchor elements (sidebar nav links — these actually reach the DOM)
+  document.querySelectorAll<HTMLElement>('[data-astro-anchor]').forEach(el => {
     const r = el.getBoundingClientRect()
     if (r.width === 0 && r.height === 0) return
-    targets.push({
-      id:  el.dataset.astroAnchor ?? Math.random().toString(),
-      x:   r.left + r.width  / 2 - 45,
-      y:   r.top  + r.height / 2 - 58,
+    add({
+      id:   el.dataset.astroAnchor ?? `anc-${Math.random()}`,
+      x:    r.left + r.width  / 2 - LARRY_W / 2,
+      y:    r.top  - LARRY_H,
+      kind: 'element',
     })
   })
-  return targets
+
+  // 2. Glass cards (queried by class — bypasses the Glass component's missing ...rest spread)
+  document.querySelectorAll<HTMLElement>('.glass').forEach((el, i) => {
+    const r = el.getBoundingClientRect()
+    if (r.width < 150 || r.height < 60) return    // skip small inline glass
+    if (r.top < -100 || r.top > vh + 100) return  // skip off-screen
+    add({
+      id:   `glass-${i}-${Math.round(r.left)}-${Math.round(r.top)}`,
+      x:    r.left + r.width  / 2 - LARRY_W / 2,
+      y:    r.top  - LARRY_H,
+      kind: 'element',
+    })
+  })
+
+  // 3. Headings
+  document.querySelectorAll<HTMLElement>('h1, h2, h3').forEach((el, i) => {
+    const r = el.getBoundingClientRect()
+    if (r.width === 0 || r.height === 0) return
+    if (r.top < -100 || r.top > vh + 100) return
+    add({
+      id:   `h-${i}-${Math.round(r.top)}`,
+      x:    r.left + r.width  / 2 - LARRY_W / 2,
+      y:    r.top  - LARRY_H,
+      kind: 'element',
+    })
+  })
+
+  // 4. Moon (ParallaxStarField adds id="larry-moon" to the moon div)
+  const moon = document.getElementById('larry-moon')
+  if (moon) {
+    const r = moon.getBoundingClientRect()
+    add({
+      id:    'moon',
+      x:     r.left + r.width  / 2 - LARRY_W / 2,
+      y:     r.top  + r.height / 2 - LARRY_H / 2, // center on moon face
+      kind:  'moon',
+      scale: 0.8,
+    })
+  }
+
+  // 5. Fixed space targets — open sky positions in the main content area.
+  // mainLeft ≈ sidebar width + buffer so targets land in the content column.
+  const ml = 240
+  const spacePts: Array<[string, number, number]> = [
+    ['space-tl', ml + (vw - ml) * 0.10, vh * 0.08],
+    ['space-tr', ml + (vw - ml) * 0.75, vh * 0.07],
+    ['space-bc', ml + (vw - ml) * 0.45, vh * 0.70],
+    ['space-mc', ml + (vw - ml) * 0.55, vh * 0.36],
+  ]
+  for (const [id, x, y] of spacePts) {
+    add({ id, x, y, kind: 'space' })
+  }
+
+  return out
 }
 
 // ─── Idle animation roster ────────────────────────────────────────────────────
-// 'base' = let index.tsx use the mood-float class
 const IDLE_ROSTER = [
   { cls: 'astro-idle-wave',    duration: 1600 },
   { cls: 'astro-idle-thumbs',  duration: 2400 },
@@ -60,8 +137,9 @@ export interface BrainResult {
   flamesActive: boolean
   pos: Vec2
   bobY: number
-  idleAnimClass: string     // 'base' or a specific class name
-  flightAnimClass: string   // '' | 'astro-flight-launch' | 'astro-flight-glide' | 'astro-flight-land'
+  scale: number
+  idleAnimClass: string
+  flightAnimClass: string
   nozzleLeft: Vec2
   nozzleRight: Vec2
   onClickAstronaut: () => void
@@ -90,7 +168,7 @@ export function useAstronautBrain({
   const flightStateRef = useRef<FlightState>('idle')
 
   // ── Idle animation ──
-  const [idleAnimClass,   setIdleAnimClass]   = useState<string>('base')
+  const [idleAnimClass, setIdleAnimClass] = useState<string>('base')
   const idleAnimTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Head tracking ──
@@ -116,6 +194,10 @@ export function useAstronautBrain({
 
   // ── Flames ──
   const [flamesActive, setFlamesActive] = useState(false)
+
+  // ── Scale (moon = 0.8x) ──
+  const [renderScale,   setRenderScale]   = useState(1.0)
+  const targetScaleRef = useRef(1.0)
 
   // ── Particles ──
   const [showSparkBurst, setShowSparkBurst] = useState(false)
@@ -150,19 +232,21 @@ export function useAstronautBrain({
 
   // ── Wander + flight ──────────────────────────────────────────────────────
 
-  function scheduleWander() {
+  // delay: explicit ms, or omitted for the default 8-14s roaming interval
+  function scheduleWander(delay?: number) {
     if (wanderTimer.current) clearTimeout(wanderTimer.current)
+    const d = delay ?? (8000 + Math.random() * 6000)
     wanderTimer.current = setTimeout(() => {
       if (flightStateRef.current !== 'idle') { scheduleWander(); return }
       const targets = discoverTargets()
       if (targets.length === 0) { scheduleWander(); return }
       const cur  = posRef.current
-      const far  = targets.filter(t => dist(t, cur) > 80)
-      const pick = far.length > 0
-        ? far[Math.floor(Math.random() * far.length)]
-        : targets[Math.floor(Math.random() * targets.length)]
+      // Prefer targets more than 200px away so every flight is visually meaningful
+      const far  = targets.filter(t => dist(t, cur) > 200)
+      const pool = far.length > 0 ? far : targets
+      const pick = pool[Math.floor(Math.random() * pool.length)]
       flyTo(pick)
-    }, 8000 + Math.random() * 6000)
+    }, d)
   }
 
   function flyTo(target: MovementTarget) {
@@ -174,7 +258,9 @@ export function useAstronautBrain({
     }
     const duration = clamp(dist(p0, p2) * 1.8, 800, 2400)
 
-    // Play launch animation first (300ms), then start moving
+    // Capture the target scale so it can be applied on landing
+    targetScaleRef.current = target.scale ?? 1.0
+
     setFlightAnimClass('astro-flight-launch')
     setIdleAnimClass('base')
     if (idleAnimTimer.current) clearTimeout(idleAnimTimer.current)
@@ -248,6 +334,7 @@ export function useAstronautBrain({
             flightStateRef.current = 'idle'
             setFlightState('idle')
             setFlightAnimClass('')
+            setRenderScale(targetScaleRef.current)
             scheduleWander()
             scheduleIdleAnim()
           }, 500)
@@ -276,7 +363,8 @@ export function useAstronautBrain({
     }
 
     rafRef.current = requestAnimationFrame(tick)
-    scheduleWander()
+    // 800ms initial delay lets the page hydrate and render DOM targets before first query
+    scheduleWander(800)
     scheduleIdleAnim()
 
     return () => {
@@ -311,6 +399,7 @@ export function useAstronautBrain({
     flamesActive,
     pos: renderPos,
     bobY,
+    scale: renderScale,
     idleAnimClass,
     flightAnimClass,
     nozzleLeft:  { x: renderPos.x + 34, y: renderPos.y + 99 },
