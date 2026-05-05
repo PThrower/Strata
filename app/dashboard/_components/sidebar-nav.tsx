@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 const BASE_ITEMS = [
   { label: 'Overview',    href: '/dashboard' },
   { label: 'Analytics',   href: '/dashboard/analytics' },
+  { label: 'Ledger',      href: '/dashboard/ledger' },
   { label: 'Submit',      href: '/dashboard/submit' },
   { label: 'Submissions', href: '/dashboard/submissions' },
   { label: 'Submit MCP',  href: '/submit-mcp' },

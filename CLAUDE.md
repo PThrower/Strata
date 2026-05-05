@@ -276,6 +276,9 @@ VOYAGE_API_KEY           # mcp-directory embeddings (voyage-3, direct HTTP fetch
 GITHUB_TOKEN             # optional but needed for 5000/hr GitHub rate limit (scoring backfill)
 ADMIN_EMAIL              # email address that gets admin dashboard access
 AUDIT_HASH_PEPPER        # HMAC pepper for api_query_log IP/key hashing (warn-only if missing)
+LEDGER_SIGNING_KEY       # HMAC-SHA256 key for signing agent_activity_ledger rows.
+                         # Generate: openssl rand -hex 32
+                         # Warn-only if missing (rows insert with signature=null).
 ```
 
 ## Brand & design system

@@ -15,6 +15,7 @@ import {
 } from '@/lib/mcp-verify-shared'
 import { serverTiming } from '@/lib/server-timing'
 import { readBoundedJson } from '@/lib/security'
+import { writeLedgerEntry } from '@/lib/ledger'
 
 const TOOL = 'mcp-verify-bulk'
 const MAX_IDENTIFIERS = 50
@@ -194,6 +195,18 @@ export async function POST(request: NextRequest) {
     statusCode: 200,
     clientIp,
     latencyMs: Date.now() - t0,
+  })
+
+  void writeLedgerEntry({
+    profileId: profile.id,
+    agentId: request.headers.get('x-agent-id'),
+    toolCalled: TOOL,
+    parameters: { count: identifiers.length, calls_charged: totalCalls },
+    responseSummary: {
+      count: results.length,
+      found: results.filter((r) => r.found === true).length,
+    },
+    durationMs: Date.now() - t0,
   })
 
   return Response.json(

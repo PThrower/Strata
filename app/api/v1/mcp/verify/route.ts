@@ -13,6 +13,8 @@ import {
   buildVerifyResult,
 } from '@/lib/mcp-verify-shared'
 import { serverTiming } from '@/lib/server-timing'
+import { writeLedgerEntry } from '@/lib/ledger'
+import type { RiskLevel } from '@/lib/risk'
 
 const TOOL = 'mcp-verify'
 
@@ -106,6 +108,22 @@ export async function GET(request: NextRequest) {
     statusCode: 200,
     clientIp,
     latencyMs: Date.now() - t0,
+  })
+
+  void writeLedgerEntry({
+    profileId: auth.mode === 'auth' ? auth.profile.id : null,
+    agentId: request.headers.get('x-agent-id'),
+    toolCalled: TOOL,
+    serverUrl: row?.url ?? null,
+    parameters: id as unknown as Record<string, unknown>,
+    responseSummary: {
+      risk_level: body.risk_level,
+      trusted: body.trusted,
+      flags: body.capability_flags ?? [],
+    },
+    riskLevel: body.risk_level as RiskLevel,
+    capabilityFlags: row?.capability_flags ?? null,
+    durationMs: Date.now() - t0,
   })
 
   return Response.json(body, {
