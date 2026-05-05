@@ -167,6 +167,37 @@ Flags written by the verifier (in `lib/x402-verifier.ts`):
 - `known_fraud`       — domain on a known fraud list. v1 stub: never set.
 - `mismatched_capability` — reserved for a future cross-check between declared and observed capabilities. v1: never set.
 
+### Agent Identity & Credentialing
+
+Per-agent cryptographic identities issued by Strata. MCP servers and x402 endpoints verify the identity before honouring tool calls.
+
+- **Table** `agent_identities` — `agent_id` (`agt_` + 32 hex, unique), `name`, `description`, `capabilities text[]` (e.g. `['mcp:invoke','x402:pay']`), `metadata jsonb`, `expires_at` (default `created_at + 1 year`), `last_verified_at`, `revoked_at`, `revocation_reason`. RLS: owner read-only via `auth.uid() = profile_id`; all writes are service-role only.
+- **Library** `lib/agent-credentials.ts` — `signCredential(identity)` → JWT, `verifyCredential(jwt)` → claims or error, `getJwks()` → JWKS doc. Uses `jose` with EdDSA (Ed25519). Lazy key caching per process.
+- **Customer-facing routes** (Supabase session cookie auth):
+  - `POST /api/v1/agents` — create. Body: `{ name, capabilities?, expires_in_days?, description?, metadata? }`. Returns the JWT in `credential` field **once** — never stored, never re-derivable. Allowed capabilities: `mcp:invoke`, `x402:pay`.
+  - `GET /api/v1/agents` — list owner's identities (no JWTs).
+  - `GET /api/v1/agents/[id]` — single detail (no JWT).
+  - `POST /api/v1/agents/[id]/revoke` — idempotent. Sets `revoked_at` and `revocation_reason`.
+- **Public-facing routes** (no auth, IP-rate-limited):
+  - `GET /.well-known/jwks.json` — JWKS doc with Strata's EdDSA public key. 5-min cache. Lets MCP servers verify JWTs offline.
+  - `POST /api/v1/agents/verify` — body `{ credential }`. Verifies signature, then live revocation check by `jti -> agent_identities.id`. Returns `{ valid, agent_id, profile_id, name, capabilities, expires_at }` or `{ valid: false, error, message }`. Bumps `last_verified_at` fire-and-forget.
+- **MCP tool** `verify_agent_credential(credential)` — same scoring path as `/api/v1/agents/verify`, returns `{ valid, ... }` JSON. Lets MCP servers that already speak Strata MCP check identities without an extra HTTP integration.
+- **Dashboard** `/dashboard/agents` — list / create / revoke. One-time JWT reveal modal after creation (warning + copy button + select-all). Mirror of the Ledger page pattern with the Glass aesthetic on the reveal modal.
+
+JWT shape:
+- Header: `{ alg: 'EdDSA', typ: 'JWT', kid: 'strata-2026-01' }`
+- Claims: `iss=https://strata.dev`, `aud=mcp`, `sub=<agent_id>`, `jti=<agent_identities.id>`, `iat`, `exp`, `profile_id`, `name`, `capabilities[]`
+- Presented as `Authorization: Bearer <jwt>`. Optional `X-Strata-Agent-Id` convenience header mirrors `JWT.sub`.
+
+Verification flow for an MCP server:
+1. Decode header, fetch `/.well-known/jwks.json` (HTTP cached 5 min), pick key matching `kid`.
+2. Verify signature with EdDSA + that public key.
+3. Validate claims: `iss`, `aud`, `exp > now`, small `iat` skew.
+4. (Optional, for writes/payments) `POST /api/v1/agents/verify` for live revocation check; cache ~30s.
+5. Authorize by intersecting required scope with `capabilities[]` (e.g. require `x402:pay` before honouring a paid tool call).
+
+Note: `agent_activity_ledger.agent_id` is intentionally free-form text with no FK to `agent_identities.agent_id` so anonymous and pre-identity ledger rows still work. When an identity is in use, the same `agt_<hex>` value appears in both columns.
+
 ### Database schema (Supabase Postgres)
 
 Key tables in `supabase/migrations/`:
@@ -304,6 +335,20 @@ AUDIT_HASH_PEPPER        # HMAC pepper for api_query_log IP/key hashing (warn-on
 LEDGER_SIGNING_KEY       # HMAC-SHA256 key for signing agent_activity_ledger rows.
                          # Generate: openssl rand -hex 32
                          # Warn-only if missing (rows insert with signature=null).
+STRATA_AGENT_SIGNING_KEY # Ed25519 private key (PKCS#8 PEM) for signing agent identity JWTs.
+                         # Generate:
+                         #   openssl genpkey -algorithm Ed25519 -out strata-agent-private.pem
+                         #   cat strata-agent-private.pem   # → paste as STRATA_AGENT_SIGNING_KEY
+                         # Required. POST /api/v1/agents and the MCP verify_agent_credential
+                         # tool will return 503 if this is unset.
+STRATA_AGENT_PUBLIC_KEY  # Corresponding Ed25519 public key (SubjectPublicKeyInfo PEM).
+                         # Generate (from the private key above):
+                         #   openssl pkey -in strata-agent-private.pem -pubout -out strata-agent-public.pem
+                         #   cat strata-agent-public.pem    # → paste as STRATA_AGENT_PUBLIC_KEY
+                         # Required. GET /.well-known/jwks.json and POST /api/v1/agents/verify
+                         # return 503 if this is unset.
+                         # Key rotation: increment kid in lib/agent-credentials.ts (KEY_ID constant),
+                         # add the new JWK to the JWKS response, keep the old one for existing tokens.
 ```
 
 ## Brand & design system

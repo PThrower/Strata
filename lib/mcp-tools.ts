@@ -4,6 +4,7 @@ import { checkEcosystemAccess, logApiRequest, logQueryAudit } from './api-auth'
 import { embed } from './embeddings'
 import { freshnessEnvelope } from './freshness'
 import { verifyX402Endpoint } from './x402-verifier'
+import { verifyCredential, isCredentialError } from './agent-credentials'
 
 export type MCPToolResult = CallToolResult
 
@@ -168,6 +169,26 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         },
       },
       required: ['url'],
+    },
+  },
+  {
+    name: 'verify_agent_credential',
+    description:
+      'Verifies a Strata-issued agent credential (JWT). MCP servers and x402 ' +
+      'endpoints call this to confirm an agent is who it claims to be before ' +
+      'honouring its tool calls. Returns the agent ID, owning profile, declared ' +
+      'capabilities, expiration, and live revocation status. Use this for ' +
+      'high-trust calls (writes, payments) where instant revocation matters; ' +
+      'for low-stakes reads, prefer offline JWKS verification at /.well-known/jwks.json.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        credential: {
+          type: 'string',
+          description: 'The JWT presented by the agent in its Authorization: Bearer header.',
+        },
+      },
+      required: ['credential'],
     },
   },
 ]
@@ -500,6 +521,37 @@ export async function handleToolCall(
     const result = await verifyX402Endpoint(parsed.toString())
     await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'x402-verify', ecosystem: 'x402', statusCode: 200 })
     return ok(result)
+  }
+
+  if (name === 'verify_agent_credential') {
+    const rawCredential = typeof args.credential === 'string' ? args.credential.trim() : ''
+    if (!rawCredential) return err('Error: credential is required', 400)
+
+    const claims = await verifyCredential(rawCredential)
+    if (isCredentialError(claims)) {
+      await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'agent-verify', ecosystem: 'agents', statusCode: 200 })
+      return ok({ valid: false, error: claims.error, message: claims.message })
+    }
+
+    // Live revocation check — same logic as the HTTP endpoint.
+    const { data: identity } = await supabase
+      .from('agent_identities')
+      .select('id, revoked_at, revocation_reason')
+      .eq('id', claims.jti)
+      .maybeSingle<{ id: string; revoked_at: string | null; revocation_reason: string | null }>()
+
+    await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'agent-verify', ecosystem: 'agents', statusCode: 200 })
+
+    if (!identity) {
+      return ok({ valid: false, error: 'not_found', message: 'identity record not found' })
+    }
+    if (identity.revoked_at) {
+      return ok({ valid: false, error: 'revoked', message: identity.revocation_reason ?? 'credential has been revoked', revoked_at: identity.revoked_at })
+    }
+
+    void supabase.from('agent_identities').update({ last_verified_at: new Date().toISOString() }).eq('id', identity.id)
+
+    return ok({ valid: true, agent_id: claims.agentId, profile_id: claims.profileId, name: claims.name, capabilities: claims.capabilities, expires_at: claims.expiresAt })
   }
 
   return err(`Error: Unknown tool: ${name}`, 400)
