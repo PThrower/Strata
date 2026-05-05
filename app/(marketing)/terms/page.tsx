@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = { title: 'Terms of Service — Strata' }
+export const metadata: Metadata = {
+  title: 'Terms of Service — Strata',
+  description: 'Terms of service for Strata — the trust layer for AI agents.',
+}
 
 const sections: { title: string; content: React.ReactNode }[] = [
   {

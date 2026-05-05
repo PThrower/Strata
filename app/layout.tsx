@@ -22,9 +22,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Strata — AI Ecosystem Intelligence",
+  title: "Strata — The Trust Layer for AI Agents",
   description:
-    "Verified best practices, news, and integrations across 22 AI ecosystems. MCP server + REST API.",
+    "Strata scores 2,179 MCP servers for security and behavioral risk. Trust scores, capability flags, and injection scanning — so your agents know what they're connecting to.",
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -34,17 +34,27 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Strata — AI Ecosystem Intelligence",
+    title: "Strata — The Trust Layer for AI Agents",
     description:
-      "Verified best practices, news, and integrations across 22 AI ecosystems. MCP server + REST API.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+      "Strata scores 2,179 MCP servers for security and behavioral risk. Trust scores, capability flags, and injection scanning — so your agents know what they're connecting to.",
+    url: "https://usestrata.dev",
+    siteName: "Strata",
+    type: "website",
+    images: [
+      {
+        url: "https://usestrata.dev/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Strata — The Trust Layer for AI Agents",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Strata — AI Ecosystem Intelligence",
+    title: "Strata — The Trust Layer for AI Agents",
     description:
-      "Verified best practices, news, and integrations across 22 AI ecosystems. MCP server + REST API.",
-    images: ["/og-image.png"],
+      "Strata scores 2,179 MCP servers for security and behavioral risk. Trust scores, capability flags, and injection scanning — so your agents know what they're connecting to.",
+    images: ["https://usestrata.dev/og-image.png"],
   },
 };
 
