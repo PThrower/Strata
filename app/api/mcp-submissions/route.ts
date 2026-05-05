@@ -56,6 +56,13 @@ const DESC_MAX = 500
 const EMAIL_MAX = 254
 
 export async function POST(req: NextRequest) {
+  if (process.env.SUBMISSIONS_PAUSED === 'true') {
+    return Response.json(
+      { error: 'Public MCP submissions are temporarily paused — check back shortly.' },
+      { status: 503 }
+    )
+  }
+
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? ''
   if (ip && !allowSubmitIp(ip)) {
     return Response.json({ error: 'Too many submissions — max 3 per hour' }, { status: 429 })
