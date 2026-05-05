@@ -13,7 +13,7 @@ import { createUserClient } from '@/lib/supabase-server'
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code')
-  const rawNext = request.nextUrl.searchParams.get('next') ?? '/dashboard'
+  const rawNext = request.nextUrl.searchParams.get('next') ?? '/auth/confirmed'
 
   // Open-redirect guard: only allow same-origin paths starting with a single
   // forward slash. Reject scheme-relative ("//evil.com"), absolute URLs, and

@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation'
 import { createUserClient } from '@/lib/supabase-server'
 
-export type AuthFormState = { error?: string } | undefined
+export type AuthFormState = { error?: string; email?: string; unverified?: boolean } | undefined
 
 export async function loginAction(
   _prev: AuthFormState,
@@ -17,7 +17,11 @@ export async function loginAction(
 
   if (error) {
     if (error.message.toLowerCase().includes('email not confirmed')) {
-      return { error: 'Please verify your email.' }
+      return {
+        error: `Please verify your email before signing in. Check your inbox for a confirmation link from Strata${email ? ` (sent to ${email})` : ''}.`,
+        email,
+        unverified: true,
+      }
     }
     return { error: error.message }
   }
@@ -38,8 +42,13 @@ export async function signupAction(
     return { error: 'Password must be at least 8 characters and include an uppercase letter, a number, and a special character.' }
   }
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
   const supabase = await createUserClient()
-  const { error } = await supabase.auth.signUp({ email, password })
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: `${appUrl}/auth/callback` },
+  })
 
   if (error) {
     if (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('already been registered')) {
@@ -57,6 +66,24 @@ export async function signoutAction() {
   const supabase = await createUserClient()
   await supabase.auth.signOut()
   redirect('/login')
+}
+
+export type ResendState = { error?: string; sent?: boolean } | undefined
+
+export async function resendConfirmationAction(
+  _prev: ResendState,
+  formData: FormData,
+): Promise<ResendState> {
+  const email = formData.get('email') as string
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  const supabase = await createUserClient()
+  // Ignore the error — always return success to prevent email-existence disclosure.
+  await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: { emailRedirectTo: `${appUrl}/auth/callback` },
+  })
+  return { sent: true }
 }
 
 export type ForgotPasswordState = { error?: string; success?: boolean } | undefined

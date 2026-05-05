@@ -2,10 +2,11 @@
 
 import { useActionState } from 'react'
 import Link from 'next/link'
-import { loginAction } from '@/app/actions/auth'
+import { loginAction, resendConfirmationAction } from '@/app/actions/auth'
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState(loginAction, undefined)
+  const [resendState, resendAction, resendPending] = useActionState(resendConfirmationAction, undefined)
 
   return (
     <>
@@ -47,9 +48,27 @@ export default function LoginPage() {
           />
         </div>
 
-        {state?.error && (
+        {state?.unverified ? (
+          <div className="flex flex-col gap-2 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-3 py-2.5">
+            <p className="text-sm text-amber-700 dark:text-amber-400">{state.error}</p>
+            {resendState?.sent ? (
+              <p className="text-sm text-[#1D9E75]">Confirmation email sent — check your inbox.</p>
+            ) : (
+              <form action={resendAction}>
+                <input type="hidden" name="email" value={state.email ?? ''} />
+                <button
+                  type="submit"
+                  disabled={resendPending}
+                  className="text-sm text-[#1D9E75] hover:underline disabled:opacity-60"
+                >
+                  {resendPending ? 'Sending…' : 'Resend confirmation email →'}
+                </button>
+              </form>
+            )}
+          </div>
+        ) : state?.error ? (
           <p className="text-sm text-red-500">{state.error}</p>
-        )}
+        ) : null}
 
         <button
           type="submit"
