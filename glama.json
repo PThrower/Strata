@@ -1,21 +1,8 @@
 {
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": ["PThrower"],
   "name": "Strata MCP",
-  "description": "Security scoring and behavioral analysis for MCP servers. Find, verify, and monitor MCP servers across 22 AI ecosystems.",
-  "version": "1.0.0",
-  "author": "Parnell Thrower",
-  "homepage": "https://usestrata.dev",
+  "description": "Security scoring and behavioral analysis for 2,179 MCP servers across 22 AI ecosystems. Find, verify, and monitor MCP servers before connecting them to your agents.",
   "license": "MIT",
-  "tools": [
-    "find_mcp_servers",
-    "get_best_practices",
-    "get_latest_news",
-    "get_top_integrations",
-    "list_ecosystems",
-    "search_ecosystem"
-  ],
-  "authentication": {
-    "type": "api_key",
-    "header": "Authorization",
-    "prefix": "Bearer"
-  }
+  "homepage": "https://usestrata.dev"
 }
