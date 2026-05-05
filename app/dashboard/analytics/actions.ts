@@ -24,12 +24,17 @@ function computeAnalytics(rows: RawRequest[], days: number): AnalyticsData {
   const mostUsedTool = sortedTools[0]?.[0] ?? '—'
   const mostUsedToolCount = sortedTools[0]?.[1] ?? 0
 
-  // Group by ecosystem
+  // Group by ecosystem — relabel 'all' (cross-ecosystem search) for display
   const ecoMap: Record<string, number> = {}
-  for (const r of rows) ecoMap[r.ecosystem] = (ecoMap[r.ecosystem] ?? 0) + 1
+  for (const r of rows) {
+    const key = r.ecosystem === 'all' ? 'cross-ecosystem' : r.ecosystem
+    ecoMap[key] = (ecoMap[key] ?? 0) + 1
+  }
   const sortedEcos = Object.entries(ecoMap).sort((a, b) => b[1] - a[1])
-  const mostActiveEcosystem = sortedEcos[0]?.[0] ?? '—'
-  const mostActiveEcoCount = sortedEcos[0]?.[1] ?? 0
+  // Skip 'cross-ecosystem' for the stat card — show the top real ecosystem
+  const topRealEco = sortedEcos.find(([eco]) => eco !== 'cross-ecosystem')
+  const mostActiveEcosystem = topRealEco?.[0] ?? '—'
+  const mostActiveEcoCount = topRealEco?.[1] ?? 0
 
   // Daily counts — build ordered map with zero-filled entries for every day in range
   const dayMap = new Map<string, number>()
