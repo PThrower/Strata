@@ -1,16 +1,21 @@
 {
-  "$schema": "https://glama.ai/mcp/servers/schema.json",
-  "name": "strata",
-  "displayName": "Strata — AI Ecosystem Intelligence",
-  "description": "Best practices, latest news, top integrations, and MCP server trust scores across 22+ AI ecosystems. Powered by usestrata.dev.",
-  "run": {
-    "command": "node",
-    "args": ["./bin/strata"],
-    "env": {
-      "STRATA_API_KEY": {
-        "description": "Strata API key (sk_…). Get one at https://usestrata.dev/dashboard — optional, falls through to anon tier.",
-        "required": false
-      }
-    }
+  "name": "Strata MCP",
+  "description": "Security scoring and behavioral analysis for MCP servers. Find, verify, and monitor MCP servers across 22 AI ecosystems.",
+  "version": "1.0.0",
+  "author": "Parnell Thrower",
+  "homepage": "https://usestrata.dev",
+  "license": "MIT",
+  "tools": [
+    "find_mcp_servers",
+    "get_best_practices",
+    "get_latest_news",
+    "get_top_integrations",
+    "list_ecosystems",
+    "search_ecosystem"
+  ],
+  "authentication": {
+    "type": "api_key",
+    "header": "Authorization",
+    "prefix": "Bearer"
   }
 }
