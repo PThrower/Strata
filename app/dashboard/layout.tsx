@@ -4,7 +4,7 @@ import { FREE_LIMIT, PRO_LIMIT } from '@/lib/api-auth'
 import SidebarNav from './_components/sidebar-nav'
 import MobileNav from './_components/mobile-nav'
 import { AstronautPet } from '@/components/ui/AstronautPet'
-import { signoutAction } from '@/app/actions/auth'
+import { SignOutButton } from './_components/SignOutButton'
 
 export default async function DashboardLayout({
   children,
@@ -88,21 +88,7 @@ export default async function DashboardLayout({
           }}>
             {user?.email}
           </p>
-          <form action={signoutAction}>
-            <button
-              type="submit"
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: 12, fontFamily: 'var(--font-mono)',
-                color: 'var(--ink-faint)', paddingLeft: 12, paddingTop: 2,
-                transition: 'color 150ms',
-              }}
-              onMouseOver={e => (e.currentTarget.style.color = 'var(--ink-soft)')}
-              onMouseOut={e  => (e.currentTarget.style.color = 'var(--ink-faint)')}
-            >
-              Sign out
-            </button>
-          </form>
+          <SignOutButton />
         </div>
       </aside>
 
