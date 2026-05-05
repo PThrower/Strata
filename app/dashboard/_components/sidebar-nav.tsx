@@ -31,6 +31,7 @@ export default function SidebarNav({ isAdmin }: { isAdmin?: boolean }) {
           <Link
             key={href}
             href={href}
+            data-astro-anchor={`nav-${href.replace(/\//g, '-').replace(/^-/, '')}`}
             className={`dash-nav-link${isActive ? ' active' : ''}`}
           >
             {isDocs ? (

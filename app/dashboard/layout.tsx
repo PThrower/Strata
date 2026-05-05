@@ -3,7 +3,8 @@ import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server
 import { FREE_LIMIT, PRO_LIMIT } from '@/lib/api-auth'
 import SidebarNav from './_components/sidebar-nav'
 import MobileNav from './_components/mobile-nav'
-import { AstronautPet } from '@/components/ui/AstronautPet'
+import { AstronautPet } from '@/components/ui/astronaut'
+import { ParallaxStarField } from '@/components/ui/ParallaxStarField'
 import { SignOutButton } from './_components/SignOutButton'
 
 export default async function DashboardLayout({
@@ -36,18 +37,28 @@ export default async function DashboardLayout({
   }
 
   return (
+    // Outer wrapper: transparent so SpaceBackdrop + ParallaxStarField show through
     <div
       className="flex flex-col min-h-screen lg:flex-row lg:h-screen lg:overflow-hidden"
-      style={{ background: 'var(--bg-0)', color: 'var(--ink)' }}
+      style={{ color: 'var(--ink)' }}
     >
+      {/* Parallax star field — portal-mounted, position:fixed, behind everything */}
+      <ParallaxStarField />
+
+      {/* Astronaut — portal-mounted, position:fixed, z-index:9999 */}
+      <AstronautPet
+        usagePercent={usagePercent}
+        founderBadge={founderBadge}
+      />
+
       <MobileNav isAdmin={isAdmin} email={user?.email} />
 
-      {/* ── Desktop sidebar ── */}
+      {/* ── Desktop sidebar — explicit background so content is readable over backdrop ── */}
       <aside
         className="hidden lg:flex w-[220px] shrink-0 flex-col px-3 py-6"
         style={{
           borderRight: '1px solid rgba(255,255,255,0.08)',
-          background: 'rgba(5,6,13,0.7)',
+          background: 'rgba(5,6,13,0.82)',
         }}
       >
         {/* Brand */}
@@ -71,16 +82,8 @@ export default async function DashboardLayout({
 
         <SidebarNav isAdmin={isAdmin} />
 
-        {/* Astronaut companion */}
-        <div style={{ paddingTop: 16, paddingBottom: 8 }}>
-          <AstronautPet
-            usagePercent={usagePercent}
-            founderBadge={founderBadge}
-          />
-        </div>
-
         {/* Footer: email + sign out */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12 }}>
+        <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12 }}>
           <p style={{
             fontSize: 11, fontFamily: 'var(--font-mono)',
             color: 'var(--ink-faint)', paddingLeft: 12,
@@ -92,10 +95,10 @@ export default async function DashboardLayout({
         </div>
       </aside>
 
-      {/* ── Main content ── */}
+      {/* ── Main content — explicit bg so Glass cards read well over backdrop ── */}
       <main
         className="flex-1 overflow-y-auto p-4 pt-[68px] lg:p-8"
-        style={{ background: 'transparent' }}
+        style={{ background: 'rgba(5,6,13,0.55)' }}
       >
         {children}
       </main>

@@ -81,7 +81,7 @@ export default async function DashboardPage() {
 
       {/* ── Stat cards ── */}
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <Glass shimmer className="dash-stagger-card dash-card-hover" style={{ padding: 16, animationDelay: '0ms' }}>
+        <Glass shimmer className="dash-stagger-card dash-card-hover" data-astro-anchor="stat-calls" style={{ padding: 16, animationDelay: '0ms' }}>
           <p style={eyebrow}>api calls this month</p>
           <p style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
             {profile.calls_used.toLocaleString()}{' '}
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
           </p>
         </Glass>
 
-        <Glass shimmer className="dash-stagger-card dash-card-hover" style={{ padding: 16, animationDelay: '60ms' }}>
+        <Glass shimmer className="dash-stagger-card dash-card-hover" data-astro-anchor="stat-tier" style={{ padding: 16, animationDelay: '60ms' }}>
           <p style={eyebrow}>current tier</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
             <span style={{
@@ -121,7 +121,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* ── Usage bar ── */}
-      <Glass className="dash-stagger-card dash-card-hover" style={{ padding: 16, marginBottom: 16, animationDelay: '120ms' }}>
+      <Glass className="dash-stagger-card dash-card-hover" data-astro-anchor="usage-bar" style={{ padding: 16, marginBottom: 16, animationDelay: '120ms' }}>
         <UsageBar pct={pct} resetDate={resetDate} />
       </Glass>
 
@@ -139,7 +139,7 @@ export default async function DashboardPage() {
       )}
 
       {/* ── Submit MCP ── */}
-      <Glass className="dash-stagger-card dash-card-hover" style={{ padding: 16, marginBottom: 16, animationDelay: '240ms' }}>
+      <Glass className="dash-stagger-card dash-card-hover" data-astro-anchor="submit-mcp" style={{ padding: 16, marginBottom: 16, animationDelay: '240ms' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
           <div>
             <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)', marginBottom: 4 }}>

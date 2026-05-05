@@ -922,10 +922,34 @@ body {
   }
 }
 
+/* ─── Jetpack flame flicker ─── */
+@keyframes jetpack-flame {
+  from { transform: scaleY(0.85) scaleX(0.9); opacity: 0.85; }
+  to   { transform: scaleY(1.15) scaleX(1.1); opacity: 1.00; }
+}
+
+/* ─── Landing dust particle radiate ─── */
+@keyframes dust-radiate {
+  from {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.7;
+  }
+  to {
+    transform:
+      translate(
+        calc(-50% + cos(var(--angle)) * var(--dist)),
+        calc(-50% + sin(var(--angle)) * var(--dist) * -1)
+      )
+      scale(0.2);
+    opacity: 0;
+  }
+}
+
 /* ─── Reduce motion: silence all dash/astro animations ─── */
 @media (prefers-reduced-motion: reduce) {
   .dash-stagger-card { animation: none; opacity: 1; }
   .astro-float,
   .astro-float-neutral,
   .astro-float-worried { animation: none; }
+  @keyframes jetpack-flame { from { opacity: 0.7; } to { opacity: 0.7; } }
 }
