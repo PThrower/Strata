@@ -3,6 +3,7 @@ import { authenticateMcpRequest } from './mcp-auth'
 import { checkEcosystemAccess, logApiRequest, logQueryAudit } from './api-auth'
 import { embed } from './embeddings'
 import { freshnessEnvelope } from './freshness'
+import { verifyX402Endpoint } from './x402-verifier'
 
 export type MCPToolResult = CallToolResult
 
@@ -145,6 +146,28 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         },
       },
       required: ['query'],
+    },
+  },
+  {
+    name: 'verify_payment_endpoint',
+    description:
+      'Verifies an x402 payment endpoint before an agent pays it. Checks SSL ' +
+      'validity, domain age, payment amount reasonableness, and whether the ' +
+      '402 response is well-formed. Returns a trust score (0-100), risk level ' +
+      '(critical/high/medium/low), and capability flags. Use this before any ' +
+      'autonomous payment to confirm the endpoint is legitimate. Does not make ' +
+      'any actual payment. Returns cached results if checked within 24 hours.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          description:
+            'The full https:// URL of the payment endpoint to verify. Must ' +
+            "return HTTP 402 with x402 payment details. Example: 'https://api.example.com/premium-data'",
+        },
+      },
+      required: ['url'],
     },
   },
 ]
@@ -461,6 +484,22 @@ export async function handleToolCall(
 
     await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'mcp-servers', ecosystem: 'mcp', statusCode: 200 })
     return ok({ query, results }, rows.map(r => r.id))
+  }
+
+  if (name === 'verify_payment_endpoint') {
+    const rawUrl = typeof args.url === 'string' ? args.url : ''
+    if (!rawUrl) return err('Error: url is required', 400)
+    let parsed: URL
+    try {
+      parsed = new URL(rawUrl)
+    } catch {
+      return err('Error: invalid url', 400)
+    }
+    if (parsed.protocol !== 'https:') return err('Error: url must be https', 400)
+
+    const result = await verifyX402Endpoint(parsed.toString())
+    await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'x402-verify', ecosystem: 'x402', statusCode: 200 })
+    return ok(result)
   }
 
   return err(`Error: Unknown tool: ${name}`, 400)

@@ -142,6 +142,31 @@ HTTP MCP endpoint using `WebStandardStreamableHTTPServerTransport`. `GET /mcp` r
 
 All tool results include an epistemic notice and freshness envelope (`content_age_hours`, `data_freshness` from `lib/freshness.ts`). Quarantined items (`is_quarantined = true`) are filtered from all tool responses.
 
+### x402 payment endpoint verification
+
+Trust scoring for autonomous-payment HTTP endpoints. The same scoring rigor that grades MCP servers, applied to x402 endpoints — SSL validity, domain age, payment amount reasonableness, well-formed 402 response.
+
+- **Table** `x402_endpoints` — `url` (unique), `domain`, `security_score` (0–100), `is_quarantined`, `payment_amount_usd`, `payment_currency`, `payment_network`, `declared_capability`, `ssl_valid`, `domain_age_days`, `flags text[]`, `raw_402_response jsonb`, `first_seen_at`, `last_checked_at`. RLS: anyone authenticated can SELECT; writes are service-role only.
+- **Route** `GET /api/v1/x402/verify?url=…` — same auth shape as MCP verify (`authenticateOrAnon`); writes one ledger row per call.
+- **MCP tool** `verify_payment_endpoint(url)` — same scoring path, returns the full trust assessment as JSON.
+- **24-hour cache** — repeat calls within the window return the stored row without re-fetching the endpoint.
+
+Scoring (0–100): +20 ssl_valid, up to +25 domain_age_days, up to +15 payment_amount_usd (smaller is safer), +15 well-formed 402, +10 first_seen older than 7 days, +15 if zero flags else −10/flag. Clamped to [0, 100].
+
+Risk levels (conservative early-exit, mirrors `lib/risk.ts`):
+- `critical` — `is_quarantined` OR `security_score < 20`
+- `high`     — flag `ssl_invalid` OR `known_fraud`
+- `medium`   — flag `drain_risk` OR `mismatched_capability`
+- otherwise `low`
+
+Flags written by the verifier (in `lib/x402-verifier.ts`):
+- `unverified_domain` — domain age < 30d or WHOIS unavailable. Always set in v1 (no WHOIS lookup yet — `domain_age_days` is always null).
+- `ssl_invalid`       — fetch threw a TLS cert error.
+- `no_payment_details` — non-402 response, fetch error, timeout (5s), or unparseable 402 body.
+- `drain_risk`        — `payment_amount_usd > 1.00`.
+- `known_fraud`       — domain on a known fraud list. v1 stub: never set.
+- `mismatched_capability` — reserved for a future cross-check between declared and observed capabilities. v1: never set.
+
 ### Database schema (Supabase Postgres)
 
 Key tables in `supabase/migrations/`:
