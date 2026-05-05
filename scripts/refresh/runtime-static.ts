@@ -128,6 +128,17 @@ const README_ENDPOINT_PATTERNS: RegExp[] = [
   /(?:^|\s)mcp(?:_endpoint|_url)?\s*[:=]\s*['"]?(https?:\/\/[^\s)>"'\]]+)['"]?/gim,
 ]
 
+// Reject URLs that are registry/docs pages rather than live MCP endpoints.
+// These domains host listings and specifications, not runnable servers.
+function isKnownNonEndpoint(url: string): boolean {
+  return (
+    /registry\.modelcontextprotocol\.io/i.test(url) ||
+    /spec\.modelcontextprotocol\.io/i.test(url)     ||
+    /[/&?]search=/i.test(url)                        ||
+    url.includes('`')
+  )
+}
+
 const NPM_PKG_RX = /"name"\s*:\s*"([^"\\]+)"/
 
 // ── Tool extraction ─────────────────────────────────────────────────────────
@@ -163,8 +174,8 @@ export function extractEndpointHints(readme: string): string | null {
     rx.lastIndex = 0
     const m = rx.exec(readme)
     if (m) {
-      const url = (m[1] ?? m[0]).trim().replace(/[).,;>"'\]]+$/, '')
-      if (/^https?:\/\//i.test(url)) return url
+      const url = (m[1] ?? m[0]).trim().replace(/[).,;>"'\]`]+$/, '')
+      if (/^https?:\/\//i.test(url) && !isKnownNonEndpoint(url)) return url
     }
   }
   return null
