@@ -7,16 +7,18 @@ interface AstronautSVGProps {
   flamesActive?: boolean
 }
 
-// Stars placed inside visor ellipse (cx=50 cy=34 rx=19 ry=16) — all verified inside
+// 10 stars verified inside visor ellipse (cx=50 cy=33 rx=22 ry=19)
 const VISOR_STARS: Array<{ cx: number; cy: number; r: number }> = [
-  { cx: 40, cy: 22, r: 1.0 },
-  { cx: 50, cy: 21, r: 0.8 },
-  { cx: 59, cy: 24, r: 0.9 },
-  { cx: 63, cy: 29, r: 0.7 },
-  { cx: 44, cy: 27, r: 0.7 },
-  { cx: 56, cy: 32, r: 0.6 },
-  { cx: 37, cy: 31, r: 0.8 },
-  { cx: 62, cy: 38, r: 0.7 },
+  { cx: 40, cy: 20, r: 1.0 },
+  { cx: 52, cy: 19, r: 0.8 },
+  { cx: 61, cy: 23, r: 0.9 },
+  { cx: 66, cy: 30, r: 0.7 },
+  { cx: 43, cy: 26, r: 0.7 },
+  { cx: 57, cy: 29, r: 0.6 },
+  { cx: 36, cy: 30, r: 0.8 },
+  { cx: 64, cy: 38, r: 0.7 },
+  { cx: 34, cy: 37, r: 0.8 },
+  { cx: 47, cy: 43, r: 0.6 },
 ]
 
 const OUTLINE = '#1a1a2e'
@@ -32,9 +34,8 @@ export function AstronautSVG({
   const depleted = mood === 'depleted'
   const glowAlpha = depleted ? 0.10 : 0.32
 
-  // Depleted arm rotation pivots (top-center of each arm group)
-  const leftArmTransform  = depleted ? 'rotate(28, 20, 62)' : undefined
-  const rightArmTransform = depleted ? 'rotate(-28, 80, 62)' : undefined
+  const leftArmTransform  = depleted ? 'rotate(28, 18, 65)' : undefined
+  const rightArmTransform = depleted ? 'rotate(-28, 82, 65)' : undefined
 
   return (
     <svg
@@ -49,19 +50,19 @@ export function AstronautSVG({
       aria-hidden="true"
     >
       <defs>
-        {/* Visor clip — must be first */}
+        {/* Visor clip — cx=50 cy=33 rx=22 ry=19 */}
         <clipPath id="visorClip">
-          <ellipse cx="50" cy="34" rx="19" ry="16" />
+          <ellipse cx="50" cy="33" rx="22" ry="19" />
         </clipPath>
 
         {/* Visor gradient */}
-        <linearGradient id="lv" x1="50" y1="18" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+        <linearGradient id="lv" x1="50" y1="14" x2="50" y2="52" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#0a1628" />
           <stop offset="100%" stopColor="#1e4080" />
         </linearGradient>
 
         {/* Helmet gradient */}
-        <linearGradient id="lh" x1="22" y1="4" x2="78" y2="60" gradientUnits="userSpaceOnUse">
+        <linearGradient id="lh" x1="21" y1="2" x2="79" y2="60" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#eef1f8" />
           <stop offset="60%"  stopColor="#dde4f0" />
           <stop offset="100%" stopColor="#b8c4d4" />
@@ -75,26 +76,26 @@ export function AstronautSVG({
         </linearGradient>
 
         {/* Arm gradients */}
-        <linearGradient id="lal" x1="12" y1="62" x2="28" y2="88" gradientUnits="userSpaceOnUse">
+        <linearGradient id="lal" x1="10" y1="65" x2="25" y2="93" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#e8edf6" />
           <stop offset="100%" stopColor="#b0bac8" />
         </linearGradient>
-        <linearGradient id="lar" x1="88" y1="62" x2="72" y2="88" gradientUnits="userSpaceOnUse">
+        <linearGradient id="lar" x1="90" y1="65" x2="75" y2="93" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#e8edf6" />
           <stop offset="100%" stopColor="#b0bac8" />
         </linearGradient>
 
         {/* Leg gradients */}
-        <linearGradient id="lll" x1="35" y1="92" x2="49" y2="130" gradientUnits="userSpaceOnUse">
+        <linearGradient id="lll" x1="30" y1="94" x2="46" y2="130" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#dde4f0" />
           <stop offset="100%" stopColor="#a8b2c2" />
         </linearGradient>
-        <linearGradient id="llr" x1="65" y1="92" x2="51" y2="130" gradientUnits="userSpaceOnUse">
+        <linearGradient id="llr" x1="70" y1="94" x2="54" y2="130" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#dde4f0" />
           <stop offset="100%" stopColor="#a8b2c2" />
         </linearGradient>
 
-        {/* Flame gradient (objectBoundingBox so it scales per element) */}
+        {/* Flame gradient */}
         <linearGradient id="lf" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%"   stopColor="#ff8c1a" stopOpacity={0.95} />
           <stop offset="55%"  stopColor="#ffbe20" stopOpacity={0.70} />
@@ -116,13 +117,10 @@ export function AstronautSVG({
           JETPACK — behind torso
           ═══════════════════════════════════════════════════════════ */}
       <g id="jetpack">
-        {/* Hump body */}
         <rect x={26} y={60} width={48} height={30} rx={13}
           fill="#7a8696" stroke={OUTLINE} strokeWidth={1.5} />
-        {/* Gold accent band */}
         <rect x={30} y={68} width={40} height={4} rx={1}
           fill={GOLD} stroke={OUTLINE} strokeWidth={0.5} />
-        {/* Highlight on hump top */}
         <path d="M 32 62 Q 50 58 68 62"
           stroke="rgba(255,255,255,0.25)" strokeWidth={1.2}
           strokeLinecap="round" fill="none" />
@@ -137,7 +135,6 @@ export function AstronautSVG({
           fill="#2e3540" stroke={OUTLINE} strokeWidth={1} />
         <ellipse cx={66} cy={92} rx={4} ry={2.5} fill="#1a2028" />
 
-        {/* Flames when active */}
         {flamesActive && (
           <>
             <ellipse cx={34} cy={99} rx={4.5} ry={8}
@@ -153,48 +150,47 @@ export function AstronautSVG({
       </g>
 
       {/* ═══════════════════════════════════════════════════════════
-          LEGS — left then right
+          LEGS — wider stance x=30/54
           ═══════════════════════════════════════════════════════════ */}
       <g id="legs">
         {/* ── Left leg ── */}
-        <rect x={35} y={92} width={14} height={24} rx={6}
+        <rect x={30} y={94} width={16} height={20} rx={6}
           fill="url(#lll)" stroke={OUTLINE} strokeWidth={1.5} />
         {/* Left thigh ring */}
-        <rect x={35} y={93} width={14} height={4} rx={2}
+        <rect x={30} y={95} width={16} height={4} rx={2}
           fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
-        {/* Left knee pad */}
-        <rect x={34} y={104} width={16} height={12} rx={4}
+        {/* Left knee pad — chunky */}
+        <rect x={27} y={102} width={22} height={15} rx={6}
           fill="#6b7280" stroke={GOLD} strokeWidth={1.5} />
-        <rect x={34} y={104} width={16} height={12} rx={4}
+        <rect x={27} y={102} width={22} height={15} rx={6}
           fill="none" stroke={OUTLINE} strokeWidth={0.5} opacity={0.5} />
         {/* Left boot top ring */}
-        <rect x={34} y={113} width={16} height={4} rx={2}
+        <rect x={27} y={111} width={22} height={5} rx={2}
           fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
         {/* Left boot */}
-        <rect x={33} y={116} width={18} height={14} rx={5}
+        <rect x={26} y={115} width={24} height={15} rx={7}
           fill={GLOVE} stroke={OUTLINE} strokeWidth={1.5} />
-        {/* Boot toe highlight */}
-        <ellipse cx={33+9} cy={127} rx={6} ry={2}
+        <ellipse cx={38} cy={128} rx={8} ry={2.5}
           fill="rgba(255,255,255,0.1)" />
 
         {/* ── Right leg ── */}
-        <rect x={51} y={92} width={14} height={24} rx={6}
+        <rect x={54} y={94} width={16} height={20} rx={6}
           fill="url(#llr)" stroke={OUTLINE} strokeWidth={1.5} />
         {/* Right thigh ring */}
-        <rect x={51} y={93} width={14} height={4} rx={2}
+        <rect x={54} y={95} width={16} height={4} rx={2}
           fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
-        {/* Right knee pad */}
-        <rect x={50} y={104} width={16} height={12} rx={4}
+        {/* Right knee pad — chunky */}
+        <rect x={51} y={102} width={22} height={15} rx={6}
           fill="#6b7280" stroke={GOLD} strokeWidth={1.5} />
-        <rect x={50} y={104} width={16} height={12} rx={4}
+        <rect x={51} y={102} width={22} height={15} rx={6}
           fill="none" stroke={OUTLINE} strokeWidth={0.5} opacity={0.5} />
         {/* Right boot top ring */}
-        <rect x={50} y={113} width={16} height={4} rx={2}
+        <rect x={51} y={111} width={22} height={5} rx={2}
           fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
         {/* Right boot */}
-        <rect x={49} y={116} width={18} height={14} rx={5}
+        <rect x={50} y={115} width={24} height={15} rx={7}
           fill={GLOVE} stroke={OUTLINE} strokeWidth={1.5} />
-        <ellipse cx={49+9} cy={127} rx={6} ry={2}
+        <ellipse cx={62} cy={128} rx={8} ry={2.5}
           fill="rgba(255,255,255,0.1)" />
       </g>
 
@@ -202,74 +198,68 @@ export function AstronautSVG({
           TORSO + CHEST PANEL
           ═══════════════════════════════════════════════════════════ */}
       <g id="body">
-        {/* Main torso */}
         <rect x={28} y={58} width={44} height={36} rx={12}
           fill="url(#ls)" stroke={OUTLINE} strokeWidth={1.5} />
-        {/* Shoulder seam highlight */}
         <path d="M 34 60 Q 50 56 66 60"
           stroke="#eef1f8" strokeWidth={1.2}
           strokeLinecap="round" fill="none" opacity={0.65} />
 
-        {/* Chest panel */}
-        <rect x={35} y={66} width={30} height={20} rx={4}
+        {/* Chest panel — wider */}
+        <rect x={33} y={66} width={34} height={22} rx={4}
           fill="#f0f4f8" stroke={OUTLINE} strokeWidth={1.5} />
-        {/* Panel strap / divider line */}
-        <rect x={35} y={74} width={30} height={2}
+        <rect x={33} y={75} width={34} height={2}
           fill={OUTLINE} opacity={0.18} />
+
+        {/* Cord from panel bottom */}
+        <path d="M 50 88 Q 48 92 44 95"
+          stroke={OUTLINE} strokeWidth={0.8}
+          strokeLinecap="round" fill="none" opacity={0.35} />
 
         {/* Red indicator glow */}
         <ellipse cx={43} cy={78} rx={7} ry={7} fill="url(#rg)" opacity={0.9} />
-        {/* Red indicator */}
         <circle cx={43} cy={78} r={4.5}
           fill="#dc2626" stroke={OUTLINE} strokeWidth={1} />
         <circle cx={41.5} cy={76.5} r={1.5} fill="rgba(255,255,255,0.45)" />
 
         {/* Gold indicator glow */}
         <ellipse cx={57} cy={78} rx={7} ry={7} fill="url(#ag)" opacity={0.9} />
-        {/* Gold indicator */}
         <circle cx={57} cy={78} r={4.5}
           fill="#f59e0b" stroke={OUTLINE} strokeWidth={1} />
         <circle cx={55.5} cy={76.5} r={1.5} fill="rgba(255,255,255,0.45)" />
       </g>
 
       {/* ═══════════════════════════════════════════════════════════
-          LEFT ARM
+          LEFT ARM — x=10 y=65 w=15 h=28
           ═══════════════════════════════════════════════════════════ */}
       <g id="leftArm" transform={leftArmTransform}>
-        <rect x={12} y={62} width={16} height={26} rx={7}
+        <rect x={10} y={65} width={15} height={28} rx={7}
           fill="url(#lal)" stroke={OUTLINE} strokeWidth={1.5} />
-        {/* Upper arm / shoulder ring */}
-        <rect x={13} y={63} width={14} height={4} rx={2}
+        <rect x={11} y={66} width={13} height={4} rx={2}
           fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
-        {/* Wrist ring */}
-        <rect x={13} y={83} width={14} height={4} rx={2}
+        <rect x={11} y={89} width={13} height={4} rx={2}
           fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
-        {/* Glove */}
-        <rect x={11} y={86} width={18} height={13} rx={7}
+        {/* Glove — chunkier */}
+        <rect x={8} y={91} width={20} height={14} rx={8}
           fill={GLOVE} stroke={OUTLINE} strokeWidth={1.5} />
-        {/* Glove knuckle line */}
-        <path d="M 14 92 Q 20 90 26 92"
+        <path d="M 11 98 Q 18 96 27 98"
           stroke="rgba(255,255,255,0.12)" strokeWidth={1}
           strokeLinecap="round" fill="none" />
       </g>
 
       {/* ═══════════════════════════════════════════════════════════
-          RIGHT ARM
+          RIGHT ARM — x=75 y=65 w=15 h=28
           ═══════════════════════════════════════════════════════════ */}
       <g id="rightArm" transform={rightArmTransform}>
-        <rect x={72} y={62} width={16} height={26} rx={7}
+        <rect x={75} y={65} width={15} height={28} rx={7}
           fill="url(#lar)" stroke={OUTLINE} strokeWidth={1.5} />
-        {/* Upper arm / shoulder ring */}
-        <rect x={73} y={63} width={14} height={4} rx={2}
+        <rect x={76} y={66} width={13} height={4} rx={2}
           fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
-        {/* Wrist ring */}
-        <rect x={73} y={83} width={14} height={4} rx={2}
+        <rect x={76} y={89} width={13} height={4} rx={2}
           fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
-        {/* Glove */}
-        <rect x={71} y={86} width={18} height={13} rx={7}
+        {/* Glove — chunkier */}
+        <rect x={72} y={91} width={20} height={14} rx={8}
           fill={GLOVE} stroke={OUTLINE} strokeWidth={1.5} />
-        {/* Glove knuckle line */}
-        <path d="M 74 92 Q 80 90 86 92"
+        <path d="M 73 98 Q 80 96 91 98"
           stroke="rgba(255,255,255,0.12)" strokeWidth={1}
           strokeLinecap="round" fill="none" />
       </g>
@@ -279,89 +269,84 @@ export function AstronautSVG({
           ═══════════════════════════════════════════════════════════ */}
       <g id="helmet">
         {/* Neck connector */}
-        <rect x={38} y={56} width={24} height={8} rx={3}
+        <rect x={36} y={54} width={28} height={8} rx={3}
           fill="#c5cad8" stroke={OUTLINE} strokeWidth={1.2} />
 
-        {/* Red collar ring */}
-        <rect x={35} y={57} width={30} height={7} rx={3}
+        {/* Red collar ring — wider */}
+        <rect x={32} y={57} width={36} height={10} rx={4}
           fill="#dc2626" stroke={OUTLINE} strokeWidth={1.5} />
 
-        {/* Helmet sphere */}
-        <circle cx={50} cy={32} r={28}
+        {/* Helmet sphere — cx=50 cy=31 r=29 */}
+        <circle cx={50} cy={31} r={29}
           fill="url(#lh)" stroke={OUTLINE} strokeWidth={1.5} />
-        {/* Helmet top specular arc */}
         <path d="M 30 18 Q 42 8 62 14"
           stroke="rgba(255,255,255,0.40)" strokeWidth={1.8}
           strokeLinecap="round" fill="none" />
 
-        {/* Gold ear piece — left */}
-        <ellipse cx={22} cy={32} rx={4} ry={7}
+        {/* Gold ear piece — left — rx=5 ry=8 */}
+        <ellipse cx={21} cy={31} rx={5} ry={8}
           fill={GOLD} stroke={OUTLINE} strokeWidth={1.5} />
-        <ellipse cx={22} cy={30} rx={2} ry={3}
+        <ellipse cx={21} cy={29} rx={2.5} ry={3.5}
           fill="rgba(255,255,255,0.25)" />
 
-        {/* Gold ear piece — right */}
-        <ellipse cx={78} cy={32} rx={4} ry={7}
+        {/* Gold ear piece — right — rx=5 ry=8 */}
+        <ellipse cx={79} cy={31} rx={5} ry={8}
           fill={GOLD} stroke={OUTLINE} strokeWidth={1.5} />
-        <ellipse cx={78} cy={30} rx={2} ry={3}
+        <ellipse cx={79} cy={29} rx={2.5} ry={3.5}
           fill="rgba(255,255,255,0.25)" />
 
-        {/* ── Visor (clipped group) ── */}
+        {/* ── Visor (clipped group) — cx=50 cy=33 rx=22 ry=19 ── */}
         <g clipPath="url(#visorClip)">
-          {/* Visor fill */}
-          <ellipse cx={50} cy={34} rx={19} ry={16} fill="url(#lv)" />
+          <ellipse cx={50} cy={33} rx={22} ry={19} fill="url(#lv)" />
 
-          {/* Star field */}
           {VISOR_STARS.map((s, i) => (
             <circle key={i} cx={s.cx} cy={s.cy} r={s.r}
               fill="rgba(255,255,255,0.82)" />
           ))}
 
-          {/* THE SWOOSH — approved: d="M 35 25 C 41 18 58 20 65 31" */}
+          {/* THE SWOOSH */}
           <path
-            d="M 35 25 C 41 18 58 20 65 31"
+            d="M 32 24 C 40 15 60 19 68 33"
             stroke="white"
-            strokeWidth={3.5}
+            strokeWidth={4.5}
             strokeLinecap="round"
-            opacity={0.55}
+            opacity={0.6}
             fill="none"
           />
 
-          {/* Small secondary specular fill */}
-          <ellipse cx={40} cy={25} rx={5} ry={3}
+          <ellipse cx={39} cy={22} rx={6} ry={3.5}
             fill="rgba(255,255,255,0.18)" />
         </g>
 
-        {/* Visor rim — ice-blue stroke, outside clip */}
-        <ellipse cx={50} cy={34} rx={19} ry={16}
+        {/* Visor rim */}
+        <ellipse cx={50} cy={33} rx={22} ry={19}
           fill="none"
           stroke="rgba(120,200,255,0.42)"
           strokeWidth={0.8} />
         {/* Visor outline */}
-        <ellipse cx={50} cy={34} rx={19} ry={16}
+        <ellipse cx={50} cy={33} rx={22} ry={19}
           fill="none"
           stroke={OUTLINE}
           strokeWidth={1.2} />
 
-        {/* Eyes — visible when eyeVisible */}
+        {/* Eyes at cy=38 */}
         {eyeVisible && (
           <>
-            <circle cx={44} cy={36} r={2.8}
+            <circle cx={44} cy={38} r={2.8}
               fill="rgba(255,255,255,0.90)"
               style={{ transition: 'opacity 80ms linear' }} />
-            <circle cx={56} cy={36} r={2.8}
+            <circle cx={56} cy={38} r={2.8}
               fill="rgba(255,255,255,0.90)"
               style={{ transition: 'opacity 80ms linear' }} />
-            <circle cx={44.6} cy={36.5} r={1.3} fill="rgba(5,15,35,0.75)" />
-            <circle cx={56.6} cy={36.5} r={1.3} fill="rgba(5,15,35,0.75)" />
+            <circle cx={44.6} cy={38.5} r={1.3} fill="rgba(5,15,35,0.75)" />
+            <circle cx={56.6} cy={38.5} r={1.3} fill="rgba(5,15,35,0.75)" />
           </>
         )}
 
         {/* Neck seal ring */}
-        <ellipse cx={50} cy={59} rx={14} ry={3.5}
+        <ellipse cx={50} cy={60} rx={17} ry={4}
           fill="#c8cedd" stroke={OUTLINE} strokeWidth={1} />
 
-        {/* Founder gold star — top-right of helmet */}
         {founderBadge && (
           <g transform="translate(72,8) scale(0.65)">
             <polygon
