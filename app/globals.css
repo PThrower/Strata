@@ -945,11 +945,168 @@ body {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   LARRY ANIMATION SYSTEM
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Idle: head look-around (helmet group) ─── */
+@keyframes larry-look-left {
+  0%         { transform: rotate(0deg); }
+  15%, 35%   { transform: rotate(-15deg); }
+  50%        { transform: rotate(0deg); }
+  65%, 85%   { transform: rotate(15deg); }
+  100%       { transform: rotate(0deg); }
+}
+.astro-idle-look #helmet {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: larry-look-left 4.2s ease-in-out forwards;
+}
+
+/* ─── Idle: right arm wave ─── */
+@keyframes larry-wave-arm {
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(-45deg); }
+  50%  { transform: rotate(-15deg); }
+  75%  { transform: rotate(-45deg); }
+  100% { transform: rotate(0deg); }
+}
+.astro-idle-wave #rightArm {
+  transform-box: fill-box;
+  transform-origin: center top;
+  animation: larry-wave-arm 1.5s ease-in-out forwards;
+}
+
+/* ─── Idle: thumbs-up (right arm raises) ─── */
+@keyframes larry-thumbs-arm {
+  0%         { transform: rotate(0deg); }
+  20%, 70%   { transform: rotate(-60deg); }
+  100%       { transform: rotate(0deg); }
+}
+.astro-idle-thumbs #rightArm {
+  transform-box: fill-box;
+  transform-origin: center top;
+  animation: larry-thumbs-arm 2.2s ease-in-out forwards;
+}
+
+/* ─── Idle: both arms stretch outward ─── */
+@keyframes larry-stretch-left {
+  0%, 100%  { transform: rotate(0deg); }
+  30%, 70%  { transform: rotate(30deg); }
+}
+@keyframes larry-stretch-right {
+  0%, 100%  { transform: rotate(0deg); }
+  30%, 70%  { transform: rotate(-30deg); }
+}
+.astro-idle-stretch #leftArm {
+  transform-box: fill-box;
+  transform-origin: center top;
+  animation: larry-stretch-left 2.6s ease-in-out forwards;
+}
+.astro-idle-stretch #rightArm {
+  transform-box: fill-box;
+  transform-origin: center top;
+  animation: larry-stretch-right 2.6s ease-in-out forwards;
+}
+
+/* ─── Flight: launch crouch ─── */
+@keyframes larry-launch {
+  0%   { transform: scaleY(1)    translateY(0); }
+  30%  { transform: scaleY(0.88) translateY(5px); }
+  100% { transform: scaleY(1)    translateY(0); }
+}
+.astro-flight-launch {
+  animation: larry-launch 300ms ease-out forwards;
+  transform-origin: center bottom;
+}
+
+/* ─── Flight: glide wobble (looped while in air) ─── */
+@keyframes larry-glide-wobble {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(3deg); }
+}
+.astro-flight-glide {
+  animation: larry-glide-wobble 0.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* ─── Flight: landing bounce ─── */
+@keyframes larry-land {
+  0%   { transform: scaleY(1)    translateY(0); }
+  28%  { transform: scaleY(1.15) translateY(-4px); }
+  55%  { transform: scaleY(0.93) translateY(2px); }
+  80%  { transform: scaleY(1.02) translateY(-1px); }
+  100% { transform: scaleY(1)    translateY(0); }
+}
+.astro-flight-land {
+  animation: larry-land 420ms ease-out forwards;
+  transform-origin: center bottom;
+}
+
+/* ─── Wait/listening (Phase B — keyframes available now) ─── */
+@keyframes larry-wait-lean {
+  0%, 100% { transform: rotate(0deg); }
+  50%      { transform: rotate(8deg); }
+}
+.astro-wait-lean {
+  animation: larry-wait-lean 2s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+@keyframes larry-wait-tap-foot {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+/* ─── React animations (Phase B/C — keyframes available now) ─── */
+@keyframes larry-surprised {
+  0%   { transform: translateY(0)   scale(1); }
+  25%  { transform: translateY(-16px) scale(1.12); }
+  60%  { transform: translateY(-7px)  scale(1.05); }
+  100% { transform: translateY(0)   scale(1); }
+}
+.astro-react-surprised {
+  animation: larry-surprised 500ms ease-out forwards;
+  transform-origin: center bottom;
+}
+
+@keyframes larry-happy-spin {
+  0%   { transform: rotate(0deg)   scale(1); }
+  50%  { transform: rotate(180deg) scale(1.15); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+.astro-react-happy {
+  animation: larry-happy-spin 500ms ease-out forwards;
+  transform-origin: center bottom;
+}
+
+@keyframes larry-thinking-head {
+  0%, 100%  { transform: rotate(0deg); }
+  30%, 70%  { transform: rotate(20deg); }
+}
+.astro-react-thinking #helmet {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: larry-thinking-head 3s ease-in-out infinite;
+}
+
 /* ─── Reduce motion: silence all dash/astro animations ─── */
 @media (prefers-reduced-motion: reduce) {
   .dash-stagger-card { animation: none; opacity: 1; }
   .astro-float,
   .astro-float-neutral,
-  .astro-float-worried { animation: none; }
+  .astro-float-worried,
+  .astro-idle-look #helmet,
+  .astro-idle-wave #rightArm,
+  .astro-idle-thumbs #rightArm,
+  .astro-idle-stretch #leftArm,
+  .astro-idle-stretch #rightArm,
+  .astro-flight-launch,
+  .astro-flight-glide,
+  .astro-flight-land,
+  .astro-wait-lean,
+  .astro-react-surprised,
+  .astro-react-happy,
+  .astro-react-thinking #helmet { animation: none; }
   @keyframes jetpack-flame { from { opacity: 0.7; } to { opacity: 0.7; } }
 }
