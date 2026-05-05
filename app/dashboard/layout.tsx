@@ -1,7 +1,9 @@
 import Link from 'next/link'
-import { createUserClient } from '@/lib/supabase-server'
+import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server'
+import { FREE_LIMIT, PRO_LIMIT } from '@/lib/api-auth'
 import SidebarNav from './_components/sidebar-nav'
 import MobileNav from './_components/mobile-nav'
+import { AstronautPet } from '@/components/ui/AstronautPet'
 import { signoutAction } from '@/app/actions/auth'
 
 export default async function DashboardLayout({
@@ -16,24 +18,52 @@ export default async function DashboardLayout({
 
   const isAdmin = user?.email === process.env.ADMIN_EMAIL
 
-  return (
-    <div className="flex flex-col min-h-screen lg:flex-row lg:h-screen lg:overflow-hidden">
+  // Fetch usage data for AstronautPet mood + founder badge
+  let usagePercent = 0
+  let founderBadge = false
+  if (user) {
+    const svc = createServiceRoleClient()
+    const { data: profile } = await svc
+      .from('profiles')
+      .select('calls_used, tier, lifetime_pro')
+      .eq('id', user.id)
+      .maybeSingle()
+    if (profile) {
+      const limit = profile.tier === 'pro' ? PRO_LIMIT : FREE_LIMIT
+      usagePercent = Math.min((profile.calls_used / limit) * 100, 100)
+      founderBadge = profile.lifetime_pro ?? false
+    }
+  }
 
+  return (
+    <div
+      className="flex flex-col min-h-screen lg:flex-row lg:h-screen lg:overflow-hidden"
+      style={{ background: 'var(--bg-0)', color: 'var(--ink)' }}
+    >
       <MobileNav isAdmin={isAdmin} email={user?.email} />
 
-      <aside className="hidden lg:flex w-[220px] shrink-0 flex-col border-r border-border bg-white dark:bg-zinc-900 px-4 py-6">
-        <Link href="/" className="flex items-center gap-2 px-3 no-underline group" style={{ textDecoration: 'none' }}>
+      {/* ── Desktop sidebar ── */}
+      <aside
+        className="hidden lg:flex w-[220px] shrink-0 flex-col px-3 py-6"
+        style={{
+          borderRight: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(5,6,13,0.7)',
+        }}
+      >
+        {/* Brand */}
+        <Link href="/" className="flex items-center gap-2 px-3 mb-2 no-underline" style={{ textDecoration: 'none' }}>
           <span style={{
             width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-            background: 'linear-gradient(135deg, #c084fc, #818cf8, #5fb085)',
-            boxShadow: '0 0 8px rgba(192,132,252,0.6)',
+            background: 'var(--emerald-glow)',
+            boxShadow: '0 0 10px rgba(95,176,133,0.7)',
             display: 'inline-block',
           }} />
-          <span className="brand-gradient-text" style={{
+          <span style={{
             fontFamily: 'var(--font-serif)',
-            fontWeight: 600,
+            fontWeight: 400,
             fontSize: 18,
-            letterSpacing: '0.01em',
+            letterSpacing: '0.1em',
+            color: 'var(--emerald-glow)',
           }}>
             Strata
           </span>
@@ -41,14 +71,34 @@ export default async function DashboardLayout({
 
         <SidebarNav isAdmin={isAdmin} />
 
-        <div className="mt-auto pt-4 border-t border-border">
-          <p className="text-xs text-muted-foreground truncate px-3 mb-2">
+        {/* Astronaut companion */}
+        <div style={{ paddingTop: 16, paddingBottom: 8 }}>
+          <AstronautPet
+            usagePercent={usagePercent}
+            founderBadge={founderBadge}
+          />
+        </div>
+
+        {/* Footer: email + sign out */}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12 }}>
+          <p style={{
+            fontSize: 11, fontFamily: 'var(--font-mono)',
+            color: 'var(--ink-faint)', paddingLeft: 12,
+            marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
             {user?.email}
           </p>
           <form action={signoutAction}>
             <button
               type="submit"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1"
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 12, fontFamily: 'var(--font-mono)',
+                color: 'var(--ink-faint)', paddingLeft: 12, paddingTop: 2,
+                transition: 'color 150ms',
+              }}
+              onMouseOver={e => (e.currentTarget.style.color = 'var(--ink-soft)')}
+              onMouseOut={e  => (e.currentTarget.style.color = 'var(--ink-faint)')}
             >
               Sign out
             </button>
@@ -56,7 +106,11 @@ export default async function DashboardLayout({
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto p-4 pt-[68px] lg:p-8 bg-gray-50 dark:bg-zinc-950">
+      {/* ── Main content ── */}
+      <main
+        className="flex-1 overflow-y-auto p-4 pt-[68px] lg:p-8"
+        style={{ background: 'transparent' }}
+      >
         {children}
       </main>
     </div>

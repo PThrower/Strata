@@ -61,7 +61,7 @@ function DimRow({ text }: { text: string }) {
 
 const glowPanel = {
   background: 'linear-gradient(135deg, rgba(45,106,79,0.18) 0%, rgba(95,176,133,0.06) 100%)',
-  border: '1px solid var(--border)',
+  border: '1px solid rgba(95,176,133,0.18)',
   borderRadius: 18,
   padding: '28px 32px',
   position: 'relative' as const,
@@ -69,8 +69,8 @@ const glowPanel = {
 }
 
 const flatPanel = {
-  background: 'var(--background)',
-  border: '1px solid var(--border)',
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.10)',
   borderRadius: 18,
   padding: '24px 28px',
 }
@@ -112,9 +112,9 @@ export default async function BillingPage() {
         <p style={{
           fontFamily: 'var(--font-mono)',
           fontSize: 10,
-          letterSpacing: '0.14em',
+          letterSpacing: '0.15em',
           textTransform: 'uppercase',
-          color: 'var(--muted-foreground)',
+          color: 'var(--ink-faint)',
           marginBottom: 8,
         }}>
           subscription
@@ -123,7 +123,7 @@ export default async function BillingPage() {
           fontFamily: 'var(--font-serif)',
           fontSize: 28,
           fontWeight: 500,
-          color: 'var(--foreground)',
+          color: 'var(--ink)',
           lineHeight: 1.1,
           margin: 0,
         }}>

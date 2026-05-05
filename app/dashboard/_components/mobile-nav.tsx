@@ -24,73 +24,87 @@ export default function MobileNav({ isAdmin, email }: { isAdmin?: boolean; email
 
   return (
     <>
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 h-[52px] bg-white dark:bg-zinc-900 border-b border-border">
+      {/* Fixed top bar */}
+      <div
+        className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4"
+        style={{
+          height: 52,
+          background: 'rgba(5,6,13,0.9)',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+          backdropFilter: 'blur(12px)',
+        }}
+      >
         <Link href="/" className="flex items-center gap-2" style={{ textDecoration: 'none' }}>
           <span style={{
             width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-            background: 'linear-gradient(135deg, #c084fc, #818cf8, #5fb085)',
-            boxShadow: '0 0 8px rgba(192,132,252,0.6)',
+            background: 'var(--emerald-glow)',
+            boxShadow: '0 0 10px rgba(95,176,133,0.7)',
             display: 'inline-block',
           }} />
-          <span className="brand-gradient-text" style={{
-            fontFamily: 'var(--font-serif)',
-            fontWeight: 600,
-            fontSize: 17,
-            letterSpacing: '0.01em',
+          <span style={{
+            fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 17,
+            letterSpacing: '0.1em', color: 'var(--emerald-glow)',
           }}>Strata</span>
         </Link>
         <button
           onClick={() => setOpen(true)}
-          className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 8, color: 'var(--ink-muted)', fontSize: 18 }}
           aria-label="Open menu"
         >☰</button>
       </div>
 
       {open && (
         <div className="lg:hidden fixed inset-0 z-40">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
-          <aside className="absolute top-0 left-0 h-full flex flex-col w-[240px] bg-white dark:bg-zinc-900 border-r border-border px-4 py-6 overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
+          <div
+            className="absolute inset-0"
+            style={{ background: 'rgba(0,0,0,0.6)' }}
+            onClick={() => setOpen(false)}
+          />
+          <aside
+            className="absolute top-0 left-0 h-full flex flex-col overflow-y-auto"
+            style={{
+              width: 240,
+              background: 'rgba(5,6,13,0.97)',
+              borderRight: '1px solid rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(20px)',
+              padding: '24px 12px',
+            }}
+          >
+            <div className="flex items-center justify-between mb-5 px-1">
               <Link href="/" className="flex items-center gap-2" style={{ textDecoration: 'none' }}>
                 <span style={{
                   width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                  background: 'linear-gradient(135deg, #c084fc, #818cf8, #5fb085)',
-                  boxShadow: '0 0 8px rgba(192,132,252,0.6)',
+                  background: 'var(--emerald-glow)',
+                  boxShadow: '0 0 10px rgba(95,176,133,0.7)',
                   display: 'inline-block',
                 }} />
-                <span className="brand-gradient-text" style={{
-                  fontFamily: 'var(--font-serif)',
-                  fontWeight: 600,
-                  fontSize: 18,
-                  letterSpacing: '0.01em',
+                <span style={{
+                  fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 18,
+                  letterSpacing: '0.1em', color: 'var(--emerald-glow)',
                 }}>Strata</span>
               </Link>
               <button
                 onClick={() => setOpen(false)}
-                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-muted)', fontSize: 18 }}
                 aria-label="Close menu"
               >✕</button>
             </div>
 
-            <nav className="flex-1 flex flex-col gap-1">
+            <nav className="flex-1 flex flex-col gap-0.5">
               {items.map(({ label, href }) => {
-                const isActive = pathname === href
+                const isActive  = pathname === href
+                const isDocs    = href === '/docs' || href === '/docs/sdk'
+                const isSuggest = href === '/dashboard/suggest'
                 return (
                   <Link
                     key={href}
                     href={href}
                     onClick={() => setOpen(false)}
-                    className={`px-3 py-2 rounded-md text-sm transition-colors ${
-                      isActive
-                        ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 font-medium'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800'
-                    }`}
+                    className={`dash-nav-link${isActive ? ' active' : ''}`}
                   >
-                    {href === '/docs' || href === '/docs/sdk' ? (
+                    {isDocs ? (
                       <span className="brand-gradient-text">{label}</span>
-                    ) : href === '/dashboard/suggest' && !isActive ? (
+                    ) : isSuggest && !isActive ? (
                       <span style={{ color: '#9be0bd' }}>{label}</span>
                     ) : label}
                   </Link>
@@ -98,12 +112,25 @@ export default function MobileNav({ isAdmin, email }: { isAdmin?: boolean; email
               })}
             </nav>
 
-            <div className="mt-auto pt-4 border-t border-border">
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12, marginTop: 8 }}>
               {email && (
-                <p className="text-xs text-muted-foreground truncate px-3 mb-2">{email}</p>
+                <p style={{
+                  fontSize: 11, fontFamily: 'var(--font-mono)',
+                  color: 'var(--ink-faint)', paddingLeft: 12,
+                  marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {email}
+                </p>
               )}
               <form action={signoutAction}>
-                <button type="submit" className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1">
+                <button
+                  type="submit"
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    fontSize: 12, fontFamily: 'var(--font-mono)',
+                    color: 'var(--ink-faint)', paddingLeft: 12,
+                  }}
+                >
                   Sign out
                 </button>
               </form>

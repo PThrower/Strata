@@ -807,3 +807,125 @@ body {
     padding-right: 1rem;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DASHBOARD — space aesthetic + astronaut companion
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Card stagger-in ─── */
+@keyframes dash-stagger {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.dash-stagger-card {
+  animation: dash-stagger 380ms ease-out both;
+  opacity: 0;
+}
+
+/* ─── Dashboard card hover glow ─── */
+.dash-card-hover {
+  transition: box-shadow 300ms ease;
+}
+.dash-card-hover:hover {
+  box-shadow:
+    0 0 20px rgba(0,196,114,0.08),
+    0 24px 60px -24px rgba(0,0,0,0.70),
+    0  4px 14px  -4px rgba(0,0,0,0.40);
+}
+
+/* ─── Request table row hover ─── */
+.dash-table tbody tr {
+  transition: background 120ms;
+  cursor: default;
+}
+.dash-table tbody tr:hover {
+  background: rgba(0,196,114,0.04);
+}
+
+/* ─── Dashboard sidebar nav ─── */
+.dash-nav-link {
+  display: flex;
+  align-items: center;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-decoration: none;
+  transition: background 150ms, color 150ms;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+.dash-nav-link:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--ink);
+}
+.dash-nav-link.active {
+  background: rgba(0,196,114,0.10);
+  color: var(--emerald-glow);
+  font-weight: 500;
+}
+
+/* ─── Astronaut idle float + rock ─── */
+@keyframes dash-float {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-4px); }
+}
+@keyframes dash-rock {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-2deg); }
+  75%      { transform: rotate(2deg); }
+}
+@keyframes dash-worried-shake {
+  0%, 100% { transform: rotate(-5deg); }
+  30%      { transform: rotate(-8deg); }
+  70%      { transform: rotate(-2deg); }
+}
+.astro-float {
+  animation: dash-float 3s ease-in-out infinite, dash-rock 4.3s ease-in-out infinite;
+}
+.astro-float-neutral {
+  animation: dash-float 4s ease-in-out infinite, dash-rock 5.2s ease-in-out infinite;
+}
+.astro-float-worried {
+  animation: dash-float 5s ease-in-out infinite, dash-worried-shake 2.2s ease-in-out infinite;
+}
+
+/* ─── Astronaut reactive animations ─── */
+@keyframes dash-bounce {
+  0%   { transform: translateY(0); }
+  28%  { transform: translateY(-12px); }
+  52%  { transform: translateY(-2px); }
+  68%  { transform: translateY(-7px); }
+  84%  { transform: translateY(-1px); }
+  100% { transform: translateY(0); }
+}
+@keyframes dash-flip {
+  from { transform: rotateY(0deg); }
+  to   { transform: rotateY(360deg); }
+}
+@keyframes dash-api-star {
+  0%   { transform: translateX(-50%) translateY(0);     opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-24px); opacity: 0; }
+}
+@keyframes dash-particle {
+  from {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform:
+      translate(
+        calc(-50% + cos(var(--angle)) * var(--dist)),
+        calc(-50% + sin(var(--angle)) * var(--dist) * -1)
+      )
+      scale(0);
+    opacity: 0;
+  }
+}
+
+/* ─── Reduce motion: silence all dash/astro animations ─── */
+@media (prefers-reduced-motion: reduce) {
+  .dash-stagger-card { animation: none; opacity: 1; }
+  .astro-float,
+  .astro-float-neutral,
+  .astro-float-worried { animation: none; }
+}

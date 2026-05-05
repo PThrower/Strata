@@ -2,8 +2,10 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server'
 import { FREE_LIMIT, PRO_LIMIT } from '@/lib/api-auth'
+import { Glass } from '@/components/ui/glass'
 import ApiKeyCard from './_components/api-key-card'
 import UpgradeCTA from './_components/upgrade-cta'
+import { UsageBar } from './_components/UsageBar'
 
 type DashboardProfile = {
   id: string
@@ -25,29 +27,25 @@ type ApiRequest = {
 function formatResetDate(iso: string | null): string {
   if (!iso) return 'N/A'
   return new Date(iso).toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
+    month: 'long', day: 'numeric', year: 'numeric',
   })
 }
 
 function formatRequestTime(iso: string): string {
   return new Date(iso).toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
   })
 }
 
-const card = 'bg-white dark:bg-zinc-900 rounded-lg border border-border p-4'
+const eyebrow: React.CSSProperties = {
+  fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 500,
+  letterSpacing: '0.15em', textTransform: 'uppercase',
+  color: 'var(--ink-faint)', margin: '0 0 8px',
+}
 
 export default async function DashboardPage() {
   const userClient = await createUserClient()
-  const {
-    data: { user },
-  } = await userClient.auth.getUser()
-
+  const { data: { user } } = await userClient.auth.getUser()
   if (!user) redirect('/login')
 
   const serviceClient = createServiceRoleClient()
@@ -67,133 +65,158 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(10)
 
-  const limit = profile.tier === 'pro' ? PRO_LIMIT : FREE_LIMIT
-  const pct = Math.min((profile.calls_used / limit) * 100, 100)
+  const limit    = profile.tier === 'pro' ? PRO_LIMIT : FREE_LIMIT
+  const pct      = Math.min((profile.calls_used / limit) * 100, 100)
   const resetDate = formatResetDate(profile.calls_reset_at)
-  const requests = (recentRequests ?? []) as ApiRequest[]
+  const requests  = (recentRequests ?? []) as ApiRequest[]
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="font-serif text-2xl font-semibold mb-6">Overview</h1>
+      <h1 style={{
+        fontFamily: 'var(--font-serif)', fontSize: 26, fontWeight: 500,
+        letterSpacing: '-0.01em', color: 'var(--ink)', margin: '0 0 24px',
+      }}>
+        Overview
+      </h1>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className={card}>
-          <p className="text-xs text-muted-foreground mb-1">api calls this month</p>
-          <p className="text-xl font-semibold tabular-nums">
+      {/* ── Stat cards ── */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <Glass shimmer className="dash-stagger-card dash-card-hover" style={{ padding: 16, animationDelay: '0ms' }}>
+          <p style={eyebrow}>api calls this month</p>
+          <p style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
             {profile.calls_used.toLocaleString()}{' '}
-            <span className="text-base font-normal text-muted-foreground">
+            <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--ink-muted)' }}>
               / {limit.toLocaleString()}
             </span>
           </p>
-        </div>
-        <div className={card}>
-          <p className="text-xs text-muted-foreground mb-1">current tier</p>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                profile.tier === 'pro'
-                  ? 'bg-[#1D9E75]/10 text-[#1D9E75]'
-                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'
-              }`}
-            >
+        </Glass>
+
+        <Glass shimmer className="dash-stagger-card dash-card-hover" style={{ padding: 16, animationDelay: '60ms' }}>
+          <p style={eyebrow}>current tier</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center',
+              padding: '2px 10px', borderRadius: 999,
+              fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 500,
+              background: profile.tier === 'pro'
+                ? 'rgba(0,196,114,0.12)'
+                : 'rgba(255,255,255,0.08)',
+              color: profile.tier === 'pro' ? '#00c472' : 'var(--ink-muted)',
+            }}>
               {profile.tier === 'pro' ? 'Pro' : 'Free'}
             </span>
             {profile.lifetime_pro && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#00c472]/10 text-[#00c472]">
+              <span style={{
+                display: 'inline-flex', alignItems: 'center',
+                padding: '2px 10px', borderRadius: 999,
+                fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 500,
+                background: 'rgba(0,196,114,0.10)',
+                color: '#00c472',
+              }}>
                 Founding Member
               </span>
             )}
           </div>
-        </div>
+        </Glass>
       </div>
 
-      {/* Usage bar */}
-      <div className={`${card} mb-6`}>
-        <p className="text-sm text-muted-foreground mb-2">monthly usage</p>
-        <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 mb-1.5">
-          <div
-            style={{ width: `${pct}%` }}
-            className="h-2 rounded-full bg-[#1D9E75] transition-all"
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">resets on: {resetDate}</p>
-      </div>
+      {/* ── Usage bar ── */}
+      <Glass className="dash-stagger-card dash-card-hover" style={{ padding: 16, marginBottom: 16, animationDelay: '120ms' }}>
+        <UsageBar pct={pct} resetDate={resetDate} />
+      </Glass>
 
-      {/* API Key */}
-      <div className={`${card} mb-6`}>
-        <p className="text-sm font-medium mb-3">api key</p>
+      {/* ── API Key ── */}
+      <Glass className="dash-stagger-card dash-card-hover" style={{ padding: 16, marginBottom: 16, animationDelay: '180ms' }}>
+        <p style={{ ...eyebrow, marginBottom: 12 }}>api key</p>
         <ApiKeyCard apiKey={profile.api_key} />
-      </div>
+      </Glass>
 
-      {/* Upgrade CTA (free tier only) */}
+      {/* ── Upgrade CTA (free tier only) ── */}
       {profile.tier === 'free' && (
-        <div className={`${card} mb-6`}>
+        <Glass className="dash-stagger-card dash-card-hover" style={{ padding: 16, marginBottom: 16, animationDelay: '240ms' }}>
           <UpgradeCTA />
-        </div>
+        </Glass>
       )}
 
-      {/* Submit MCP Server */}
-      <div className={`${card} mb-6 flex items-center justify-between gap-4`}>
-        <div>
-          <p className="text-sm font-medium mb-0.5">Submit an MCP server</p>
-          <p className="text-xs text-muted-foreground">
-            Add your server directly to the Strata directory — no waiting for awesome-mcp-servers.
-          </p>
+      {/* ── Submit MCP ── */}
+      <Glass className="dash-stagger-card dash-card-hover" style={{ padding: 16, marginBottom: 16, animationDelay: '240ms' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)', marginBottom: 4 }}>
+              Submit an MCP server
+            </p>
+            <p style={{ fontSize: 12, color: 'var(--ink-muted)' }}>
+              Add your server directly to the Strata directory — no waiting for awesome-mcp-servers.
+            </p>
+          </div>
+          <Link
+            href="/submit-mcp"
+            style={{
+              flexShrink: 0, fontSize: 12, fontWeight: 500,
+              padding: '6px 14px', borderRadius: 8, textDecoration: 'none',
+              background: 'rgba(0,196,114,0.15)',
+              border: '1px solid rgba(0,196,114,0.25)',
+              color: '#00c472',
+            }}
+          >
+            Submit →
+          </Link>
         </div>
-        <Link
-          href="/submit-mcp"
-          className="shrink-0 text-xs font-medium px-3 py-1.5 rounded-md transition-colors"
-          style={{ background: '#1D9E75', color: 'white', textDecoration: 'none' }}
-        >
-          Submit →
-        </Link>
-      </div>
+      </Glass>
 
-      {/* Recent Requests */}
-      <div className={card}>
-        <p className="text-sm font-medium mb-3">recent requests</p>
+      {/* ── Recent Requests ── */}
+      <Glass className="dash-stagger-card dash-card-hover" style={{ padding: 16, animationDelay: '300ms' }}>
+        <p style={{ ...eyebrow, marginBottom: 12 }}>recent requests</p>
         {requests.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            no api calls yet — check the docs to get started
+          <p style={{ fontSize: 14, color: 'var(--ink-muted)' }}>
+            no api calls yet — check the{' '}
+            <Link href="/docs" style={{ color: 'var(--emerald-glow)' }}>docs</Link>
+            {' '}to get started
           </p>
         ) : (
           <div className="dashboard-table-scroll">
-          <table className="w-full text-sm" style={{ minWidth: 420 }}>
-            <thead>
-              <tr className="text-xs text-muted-foreground border-b border-border">
-                <th className="text-left pb-2 font-medium">time</th>
-                <th className="text-left pb-2 font-medium">tool</th>
-                <th className="text-left pb-2 font-medium">ecosystem</th>
-                <th className="text-left pb-2 font-medium">status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map((req) => (
-                <tr key={req.id} className="border-b border-border last:border-0">
-                  <td className="py-2 text-muted-foreground text-xs tabular-nums">
-                    {formatRequestTime(req.created_at)}
-                  </td>
-                  <td className="py-2 font-mono text-xs">{req.tool}</td>
-                  <td className="py-2 font-mono text-xs">{req.ecosystem}</td>
-                  <td className="py-2">
-                    <span
-                      className={`text-xs ${
-                        req.status_code < 400
-                          ? 'text-[#1D9E75]'
-                          : 'text-red-500'
-                      }`}
-                    >
-                      ● {req.status_code}
-                    </span>
-                  </td>
+            <table className="dash-table w-full" style={{ minWidth: 420 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  {['time', 'tool', 'ecosystem', 'status'].map(col => (
+                    <th key={col} style={{
+                      textAlign: 'left', paddingBottom: 8,
+                      fontFamily: 'var(--font-mono)', fontSize: 9,
+                      fontWeight: 500, letterSpacing: '0.15em',
+                      textTransform: 'uppercase', color: 'var(--ink-faint)',
+                    }}>
+                      {col}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {requests.map((req) => (
+                  <tr key={req.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <td style={{ padding: '8px 0', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--ink-faint)', fontVariantNumeric: 'tabular-nums' }}>
+                      {formatRequestTime(req.created_at)}
+                    </td>
+                    <td style={{ padding: '8px 8px 8px 0', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--ink-soft)' }}>
+                      {req.tool}
+                    </td>
+                    <td style={{ padding: '8px 8px 8px 0', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--ink-soft)' }}>
+                      {req.ecosystem}
+                    </td>
+                    <td style={{ padding: '8px 0' }}>
+                      <span style={{
+                        fontSize: 12,
+                        color: req.status_code < 400 ? 'var(--emerald-glow)' : '#ef4444',
+                      }}>
+                        ● {req.status_code}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-      </div>
+      </Glass>
     </div>
   )
 }
