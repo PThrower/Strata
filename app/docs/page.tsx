@@ -459,7 +459,7 @@ const ALL_IDS = [
 
 function ParamRow({ name, type, req, desc }: { name: string; type: string; req: boolean; desc: string }) {
   return (
-    <tr className="border-b border-[--border]">
+    <tr className="border-b border-white/8">
       <td className="py-2.5 pr-4 align-top">
         <code className="font-mono text-[16px] text-[--foreground]">{name}</code>
       </td>
@@ -478,7 +478,7 @@ function ParamRow({ name, type, req, desc }: { name: string; type: string; req: 
 
 function RespRow({ name, type, desc }: { name: string; type: string; desc: string }) {
   return (
-    <tr className="border-b border-[--border]">
+    <tr className="border-b border-white/8">
       <td className="py-2.5 pr-4 align-top">
         <code className="font-mono text-[16px] text-[--foreground]">{name}</code>
       </td>
@@ -493,7 +493,7 @@ function RespRow({ name, type, desc }: { name: string; type: string; desc: strin
 function TableHead({ cols }: { cols: string[] }) {
   return (
     <thead>
-      <tr className="border-b border-[--border]">
+      <tr className="border-b border-white/8">
         {cols.map(c => (
           <th key={c} className="pb-2 pr-4 text-left font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground]">
             {c}
@@ -507,7 +507,7 @@ function TableHead({ cols }: { cols: string[] }) {
 function SectionH({ id, label, sub }: { id: string; label: string; sub?: string }) {
   return (
     <div id={id} className="mb-8 scroll-mt-[68px] lg:scroll-mt-8">
-      <p className="font-mono text-[9px] uppercase tracking-widest text-[--muted-foreground] mb-2">
+      <p className="font-mono text-[9px] uppercase mb-2" style={{ letterSpacing: '0.15em', color: 'var(--ink-faint)' }}>
         Strata API
       </p>
       <h2 className="font-serif text-3xl font-normal text-[--foreground] leading-tight mb-2">{label}</h2>
@@ -564,7 +564,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 }
 
 function Divider() {
-  return <hr className="border-[--border] my-10" />
+  return <hr className="my-10" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 }
 
 function TierBadge({ tier }: { tier: 'free+pro' | 'pro' }) {
@@ -752,25 +752,25 @@ export default function DocsPage() {
   const panel = PANELS[active] ?? PANELS['quickstart']
 
   return (
-    <div className="docs-root flex min-h-screen" style={{ background: '#000', color: '#ededed' }}>
+    <div className="docs-root flex min-h-screen" style={{ background: 'var(--bg-0)', color: 'var(--ink)' }}>
+      <style>{`.docs-root tbody tr { transition: background 120ms; } .docs-root tbody tr:hover { background: rgba(255,255,255,0.025); }`}</style>
 
       {/* ── Mobile header ──────────────────────────────────────────────── */}
       <div
-        className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 border-b border-[--border]"
-        style={{ background: '#000', height: 52 }}
+        className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 border-b border-white/8"
+        style={{ background: 'var(--bg-0)', height: 52 }}
       >
         <Link href="/" className="flex items-center gap-2" style={{ textDecoration: 'none' }}>
           <span style={{
             width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
-            background: 'linear-gradient(135deg, #c084fc, #818cf8, #5fb085)',
-            boxShadow: '0 0 8px rgba(192,132,252,0.6)',
+            background: 'var(--emerald-glow)',
+            boxShadow: '0 0 10px rgba(95,176,133,0.7)',
             display: 'inline-block',
           }} />
           <span style={{
-            fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 15,
-            letterSpacing: '-0.01em',
-            background: 'linear-gradient(135deg, #c084fc 0%, #818cf8 40%, #38bdf8 70%, #5fb085 100%)',
-            WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent',
+            fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 17,
+            letterSpacing: '0.1em',
+            color: 'var(--emerald-glow)',
           }}>Strata Docs</span>
         </Link>
         <button
@@ -789,22 +789,21 @@ export default function DocsPage() {
             onClick={() => setNavOpen(false)}
           />
           <nav
-            className="absolute top-0 left-0 h-full overflow-y-auto border-r border-[--border]"
-            style={{ width: 280, background: '#000' }}
+            className="absolute top-0 left-0 h-full overflow-y-auto border-r border-white/8"
+            style={{ width: 280, background: 'var(--bg-0)' }}
           >
-            <div className="p-5 pb-4 border-b border-[--border] flex items-center justify-between">
+            <div className="p-5 pb-4 border-b border-white/8 flex items-center justify-between">
               <Link href="/" className="flex items-center gap-2" style={{ textDecoration: 'none' }}>
                 <span style={{
                   width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                  background: 'linear-gradient(135deg, #c084fc, #818cf8, #5fb085)',
-                  boxShadow: '0 0 8px rgba(192,132,252,0.6)',
+                  background: 'var(--emerald-glow)',
+                  boxShadow: '0 0 10px rgba(95,176,133,0.7)',
                   display: 'inline-block',
                 }} />
                 <span style={{
-                  fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 17,
-                  letterSpacing: '-0.01em',
-                  background: 'linear-gradient(135deg, #c084fc 0%, #818cf8 40%, #38bdf8 70%, #5fb085 100%)',
-                  WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                  fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 17,
+                  letterSpacing: '0.1em',
+                  color: 'var(--emerald-glow)',
                 }}>Strata</span>
               </Link>
               <button
@@ -815,7 +814,7 @@ export default function DocsPage() {
             </div>
             <Link
               href="/dashboard"
-              className="flex items-center gap-1.5 px-5 py-3 text-[13px] font-mono border-b border-[--border] transition-colors hover:opacity-80"
+              className="flex items-center gap-1.5 px-5 py-3 text-[13px] font-mono border-b border-white/8 transition-colors hover:opacity-80"
               style={{ color: 'var(--muted-foreground)' }}
             >
               ← dashboard
@@ -863,26 +862,23 @@ export default function DocsPage() {
 
       {/* ── Sidebar ──────────────────────────────────────────────────────── */}
       <nav
-        className="hidden lg:block fixed top-0 left-0 h-screen overflow-y-auto z-20 border-r border-[--border]"
-        style={{ width: 220, background: '#000' }}
+        className="hidden lg:block fixed top-0 left-0 h-screen overflow-y-auto z-20 border-r border-white/8"
+        style={{ width: 220, background: 'var(--bg-0)' }}
       >
-        <div className="p-5 pb-4 border-b border-[--border]">
+        <div className="p-5 pb-4 border-b border-white/8">
           <Link href="/" className="flex items-center gap-2 no-underline" style={{ textDecoration: 'none' }}>
             <span style={{
               width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-              background: 'linear-gradient(135deg, #c084fc, #818cf8, #5fb085)',
-              boxShadow: '0 0 8px rgba(192,132,252,0.6)',
+              background: 'var(--emerald-glow)',
+              boxShadow: '0 0 10px rgba(95,176,133,0.7)',
               display: 'inline-block',
             }} />
             <span style={{
-              fontFamily: 'var(--font-mono)',
-              fontWeight: 600,
+              fontFamily: 'var(--font-serif)',
+              fontWeight: 400,
               fontSize: 17,
-              letterSpacing: '-0.01em',
-              background: 'linear-gradient(135deg, #c084fc 0%, #818cf8 40%, #38bdf8 70%, #5fb085 100%)',
-              WebkitBackgroundClip: 'text',
-              backgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              letterSpacing: '0.1em',
+              color: 'var(--emerald-glow)',
             }}>
               Strata
             </span>
@@ -983,7 +979,14 @@ export default function DocsPage() {
             Never expose your key in client-side code or version control.
           </p>
 
-          <div className="rounded-lg border border-[--border] p-4 mb-6 text-[17px] text-[--muted-foreground] leading-relaxed">
+          <div className="rounded-lg p-4 mb-6 text-[17px] leading-relaxed" style={{
+            borderLeft: '2px solid #00c472',
+            borderRight: '1px solid rgba(255,255,255,0.08)',
+            borderTop: '1px solid rgba(255,255,255,0.08)',
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            background: 'rgba(0,196,114,0.06)',
+            color: 'var(--ink-muted)',
+          }}>
             <strong className="text-[--foreground] font-medium">Finding your key:</strong>{' '}
             Dashboard → Overview → <em>Your API Key</em> section. If your key is compromised, use
             the <strong className="text-[--foreground] font-medium">Regenerate</strong> button — the old key is immediately revoked.
@@ -1013,7 +1016,7 @@ export default function DocsPage() {
                 { slug: 'langchain', name: 'LangChain', vendor: 'LangChain' },
                 { slug: 'ollama',    name: 'Ollama',    vendor: 'Ollama' },
               ].map(({ slug, name, vendor }) => (
-                <tr key={slug} className="border-b border-[--border]">
+                <tr key={slug} className="border-b border-white/8">
                   <td className="py-2.5 pr-4 align-top"><code className="font-mono text-[13px] text-[--foreground]">{slug}</code></td>
                   <td className="py-2.5 pr-4 align-top text-[--foreground]">{name}</td>
                   <td className="py-2.5 pr-4 align-top text-[--muted-foreground]">{vendor}</td>
@@ -1038,7 +1041,7 @@ export default function DocsPage() {
                 { slug: 'copilot',    name: 'Copilot',     vendor: 'Microsoft' },
                 { slug: 'cody',       name: 'Cody',        vendor: 'Sourcegraph' },
               ].map(({ slug, name, vendor }) => (
-                <tr key={slug} className="border-b border-[--border]">
+                <tr key={slug} className="border-b border-white/8">
                   <td className="py-2.5 pr-4 align-top"><code className="font-mono text-[13px] text-[--foreground]">{slug}</code></td>
                   <td className="py-2.5 pr-4 align-top text-[--foreground]">{name}</td>
                   <td className="py-2.5 pr-4 align-top text-[--muted-foreground]">{vendor}</td>
@@ -1060,7 +1063,7 @@ export default function DocsPage() {
                 { slug: 'youcom',     name: 'You.com',    vendor: 'You.com' },
                 { slug: 'exa',        name: 'Exa',        vendor: 'Exa' },
               ].map(({ slug, name, vendor }) => (
-                <tr key={slug} className="border-b border-[--border]">
+                <tr key={slug} className="border-b border-white/8">
                   <td className="py-2.5 pr-4 align-top"><code className="font-mono text-[13px] text-[--foreground]">{slug}</code></td>
                   <td className="py-2.5 pr-4 align-top text-[--foreground]">{name}</td>
                   <td className="py-2.5 pr-4 align-top text-[--muted-foreground]">{vendor}</td>
@@ -1083,7 +1086,7 @@ export default function DocsPage() {
                 { slug: 'groq',       name: 'Groq',        vendor: 'Groq' },
                 { slug: 'fireworks',  name: 'Fireworks',   vendor: 'Fireworks AI' },
               ].map(({ slug, name, vendor }) => (
-                <tr key={slug} className="border-b border-[--border]">
+                <tr key={slug} className="border-b border-white/8">
                   <td className="py-2.5 pr-4 align-top"><code className="font-mono text-[13px] text-[--foreground]">{slug}</code></td>
                   <td className="py-2.5 pr-4 align-top text-[--foreground]">{name}</td>
                   <td className="py-2.5 pr-4 align-top text-[--muted-foreground]">{vendor}</td>
@@ -1106,7 +1109,7 @@ export default function DocsPage() {
                 { slug: 'v0',         name: 'v0',         vendor: 'Vercel' },
                 { slug: 'bolt',       name: 'Bolt',       vendor: 'StackBlitz' },
               ].map(({ slug, name, vendor }) => (
-                <tr key={slug} className="border-b border-[--border]">
+                <tr key={slug} className="border-b border-white/8">
                   <td className="py-2.5 pr-4 align-top"><code className="font-mono text-[13px] text-[--foreground]">{slug}</code></td>
                   <td className="py-2.5 pr-4 align-top text-[--foreground]">{name}</td>
                   <td className="py-2.5 pr-4 align-top text-[--muted-foreground]">{vendor}</td>
@@ -1124,7 +1127,7 @@ export default function DocsPage() {
           <table className="w-full text-[17px] mb-6">
             <TableHead cols={['Plan', 'Calls / month', 'News lag', 'Refresh rate']} />
             <tbody>
-              <tr className="border-b border-[--border]">
+              <tr className="border-b border-white/8">
                 <td className="py-2.5 pr-4 font-medium">Free</td>
                 <td className="py-2.5 pr-4 text-[--muted-foreground]">100</td>
                 <td className="py-2.5 pr-4 text-[--muted-foreground]">24 hours</td>
@@ -1269,22 +1272,22 @@ export default function DocsPage() {
           <table className="w-full text-[17px] mb-6">
             <TableHead cols={['Status', 'Code', 'Description']} />
             <tbody>
-              <tr className="border-b border-[--border]">
+              <tr className="border-b border-white/8">
                 <td className="py-2.5 pr-4 font-mono text-[16px]" style={{ color: SYN.kw }}>401</td>
                 <td className="py-2.5 pr-4 text-[--foreground]">Invalid API key</td>
                 <td className="py-2.5 text-[--muted-foreground]">Key missing or not found</td>
               </tr>
-              <tr className="border-b border-[--border]">
+              <tr className="border-b border-white/8">
                 <td className="py-2.5 pr-4 font-mono text-[16px]" style={{ color: SYN.kw }}>403</td>
                 <td className="py-2.5 pr-4 text-[--foreground]">Ecosystem not available on free tier</td>
                 <td className="py-2.5 text-[--muted-foreground]">Upgrade to Pro for this ecosystem</td>
               </tr>
-              <tr className="border-b border-[--border]">
+              <tr className="border-b border-white/8">
                 <td className="py-2.5 pr-4 font-mono text-[16px]" style={{ color: SYN.kw }}>404</td>
                 <td className="py-2.5 pr-4 text-[--foreground]">Ecosystem not found</td>
                 <td className="py-2.5 text-[--muted-foreground]">Check the ecosystem slug</td>
               </tr>
-              <tr className="border-b border-[--border]">
+              <tr className="border-b border-white/8">
                 <td className="py-2.5 pr-4 font-mono text-[16px]" style={{ color: SYN.kw }}>429</td>
                 <td className="py-2.5 pr-4 text-[--foreground]">Monthly limit reached</td>
                 <td className="py-2.5 text-[--muted-foreground]">Upgrade or wait for monthly reset</td>
@@ -1454,7 +1457,7 @@ export default function DocsPage() {
                 usage: null,
               },
             ].map(prompt => (
-              <div key={prompt.name} className="border border-[--border] rounded-xl p-4 mb-3">
+              <div key={prompt.name} className="border border-white/8 rounded-xl p-4 mb-3">
                 <code className="font-mono text-[14px] font-semibold" style={{ color: ACCENT }}>{prompt.name}</code>
                 <p className="text-[15px] text-[--muted-foreground] mt-1.5 mb-2 leading-relaxed">{prompt.desc}</p>
                 <div className="font-mono text-[12px] text-[--muted-foreground] space-y-0.5">
@@ -1483,7 +1486,7 @@ export default function DocsPage() {
         {/* ── Right panel ── */}
         <aside
           className="hidden lg:flex flex-col fixed top-0 right-0 h-screen overflow-hidden z-10"
-          style={{ width: 460, background: CODE_BG }}
+          style={{ width: 460, background: CODE_BG, borderLeft: '1px solid rgba(255,255,255,0.08)' }}
         >
           {/* Tab bar */}
           <div
