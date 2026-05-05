@@ -338,19 +338,6 @@ export function AstronautSVG({
           stroke={OUTLINE}
           strokeWidth={1.3} />
 
-        {/* Eyes at cy=44 */}
-        {eyeVisible && (
-          <>
-            <circle cx={53} cy={44} r={3.2}
-              fill="rgba(255,255,255,0.90)"
-              style={{ transition: 'opacity 80ms linear' }} />
-            <circle cx={67} cy={44} r={3.2}
-              fill="rgba(255,255,255,0.90)"
-              style={{ transition: 'opacity 80ms linear' }} />
-            <circle cx={53.8} cy={44.5} r={1.4} fill="rgba(5,15,35,0.75)" />
-            <circle cx={67.8} cy={44.5} r={1.4} fill="rgba(5,15,35,0.75)" />
-          </>
-        )}
 
         {/* Neck seal ring */}
         <ellipse cx={60} cy={77} rx={20} ry={5}
