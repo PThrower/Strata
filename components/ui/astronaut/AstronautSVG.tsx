@@ -108,8 +108,8 @@ export function AstronautSVG({
 
         {/* Flame gradient */}
         <linearGradient id="lf" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="#ff8c1a" stopOpacity={0.95} />
-          <stop offset="55%"  stopColor="#ffbe20" stopOpacity={0.70} />
+          <stop offset="0%"   stopColor="#ff5500" stopOpacity={1.00} />
+          <stop offset="50%"  stopColor="#ffcc00" stopOpacity={0.90} />
           <stop offset="100%" stopColor="#fff176" stopOpacity={0} />
         </linearGradient>
 
@@ -149,11 +149,11 @@ export function AstronautSVG({
           <ellipse cx={78} cy={115} rx={4.5} ry={3} fill="#1a2028" />
           {flamesActive && (
             <>
-              <ellipse cx={42} cy={126} rx={5.5} ry={10}
+              <ellipse cx={42} cy={133} rx={8} ry={15}
                 fill="url(#lf)"
                 style={{ animation: 'jetpack-flame 120ms ease-in-out infinite alternate' }}
               />
-              <ellipse cx={78} cy={126} rx={5.5} ry={10}
+              <ellipse cx={78} cy={133} rx={8} ry={15}
                 fill="url(#lf)"
                 style={{ animation: 'jetpack-flame 120ms ease-in-out infinite alternate', animationDelay: '60ms' }}
               />

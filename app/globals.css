@@ -959,7 +959,7 @@ body {
 }
 .astro-idle-look #helmet {
   transform-box: fill-box;
-  transform-origin: center bottom;
+  transform-origin: 50% 100%;
   animation: larry-look-left 4.2s ease-in-out forwards;
 }
 
@@ -972,6 +972,8 @@ body {
   100% { transform: rotate(-5deg); }
 }
 .astro-idle-wave #larry-arm-right {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
   animation: larry-wave-arm 1.5s ease-in-out forwards;
 }
 
@@ -982,6 +984,8 @@ body {
   100%       { transform: rotate(-5deg); }
 }
 .astro-idle-thumbs #larry-arm-right {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
   animation: larry-thumbs-arm 2.2s ease-in-out forwards;
 }
 
@@ -995,9 +999,13 @@ body {
   30%, 70%  { transform: rotate(-28deg); }
 }
 .astro-idle-stretch #larry-arm-left {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
   animation: larry-stretch-left 2.6s ease-in-out forwards;
 }
 .astro-idle-stretch #larry-arm-right {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
   animation: larry-stretch-right 2.6s ease-in-out forwards;
 }
 
@@ -1144,10 +1152,10 @@ body {
   50%      { transform: rotate(8deg);  }
 }
 
-.larry-flying #larry-arm-left  { animation: larry-arm-swing-left  1.2s ease-in-out infinite; }
-.larry-flying #larry-arm-right { animation: larry-arm-swing-right 1.2s ease-in-out infinite 0.3s; }
-.larry-flying #larry-leg-left  { animation: larry-leg-walk-left   1.2s ease-in-out infinite; }
-.larry-flying #larry-leg-right { animation: larry-leg-walk-right  1.2s ease-in-out infinite 0.6s; }
+.larry-flying #larry-arm-left  { transform-box: fill-box; transform-origin: 50% 0%; animation: larry-arm-swing-left  1.2s ease-in-out infinite; }
+.larry-flying #larry-arm-right { transform-box: fill-box; transform-origin: 50% 0%; animation: larry-arm-swing-right 1.2s ease-in-out infinite 0.3s; }
+.larry-flying #larry-leg-left  { transform-box: fill-box; transform-origin: 50% 0%; animation: larry-leg-walk-left   1.2s ease-in-out infinite; }
+.larry-flying #larry-leg-right { transform-box: fill-box; transform-origin: 50% 0%; animation: larry-leg-walk-right  1.2s ease-in-out infinite 0.6s; }
 
 /* ─── Flight bob + idle shuffle on the SVG element ─────────────────────── */
 @keyframes larry-flight-bob {

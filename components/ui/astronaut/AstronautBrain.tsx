@@ -213,9 +213,12 @@ export function useAstronautBrain({
   const wanderTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Idle animation cycling ────────────────────────────────────────────────
+  // delay param: first call at mount uses 5s so Larry does something quickly.
+  // Recursive calls (after each anim completes) use the default 8-12s cadence.
 
-  function scheduleIdleAnim() {
+  function scheduleIdleAnim(initialDelay?: number) {
     if (idleAnimTimer.current) clearTimeout(idleAnimTimer.current)
+    const delay = initialDelay ?? (8000 + Math.random() * 4000)
     idleAnimTimer.current = setTimeout(() => {
       if (flightStateRef.current !== 'idle') {
         scheduleIdleAnim()
@@ -227,7 +230,7 @@ export function useAstronautBrain({
         setIdleAnimClass('base')
         scheduleIdleAnim()
       }, pick.duration)
-    }, 15000 + Math.random() * 15000)
+    }, delay)
   }
 
   // ── Wander + flight ──────────────────────────────────────────────────────
@@ -365,7 +368,8 @@ export function useAstronautBrain({
     rafRef.current = requestAnimationFrame(tick)
     // 800ms initial delay lets the page hydrate and render DOM targets before first query
     scheduleWander(800)
-    scheduleIdleAnim()
+    // 5s initial delay so Larry does something visually interesting quickly on first load
+    scheduleIdleAnim(5000)
 
     return () => {
       cancelAnimationFrame(rafRef.current)

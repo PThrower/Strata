@@ -141,12 +141,12 @@ interface SparkBurstProps {
 
 export function SparkBurst({ x, y, onDone }: SparkBurstProps) {
   const [sparks] = useState<SparkData[]>(() => {
-    const count = 6 + Math.floor(Math.random() * 3)
+    const count = 8 + Math.floor(Math.random() * 2)
     return Array.from({ length: count }, (_, i) => ({
       id: i,
       x, y,
       angle: (360 / count) * i + Math.random() * 20,
-      dist: 22 + Math.random() * 18,
+      dist: 30 + Math.random() * 24,
     }))
   })
 
@@ -164,13 +164,14 @@ export function SparkBurst({ x, y, onDone }: SparkBurstProps) {
             position: 'fixed',
             left: s.x,
             top:  s.y,
-            width: 5,
-            height: 5,
+            width: 9,
+            height: 9,
             borderRadius: '50%',
-            background: '#00c472',
+            background: '#00e882',
+            boxShadow: '0 0 8px 3px rgba(0,196,114,0.75)',
             pointerEvents: 'none',
-            zIndex: 9998,
-            animation: 'dash-particle 620ms ease-out forwards',
+            zIndex: 10000,
+            animation: 'dash-particle 640ms ease-out forwards',
             '--angle': `${s.angle}deg`,
             '--dist': `${s.dist}px`,
           } as React.CSSProperties}

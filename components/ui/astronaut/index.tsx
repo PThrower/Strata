@@ -67,6 +67,7 @@ function Tooltip({ text }: { text: string }) {
 
 function AstronautPortal({ usagePercent, apiCallCount = 0, founderBadge = false }: AstronautPetProps) {
   const [showTooltip, setShowTooltip] = useState(false)
+  const [flipping,    setFlipping]    = useState(false)
 
   const onTick = (cursor: Vec2) => {
     ;(window as Window & { __astroCursor?: Vec2 }).__astroCursor = cursor
@@ -97,6 +98,14 @@ function AstronautPortal({ usagePercent, apiCallCount = 0, founderBadge = false 
   const moodTransform =
     state.mood === 'worried'  ? 'rotate(-5deg)'   :
     state.mood === 'depleted' ? 'translateY(6px)' : ''
+
+  const handleClick = () => {
+    onClickAstronaut()
+    if (!flipping) {
+      setFlipping(true)
+      setTimeout(() => setFlipping(false), 520)
+    }
+  }
 
   // Forward lean during glide (inline, complements the wobble class)
   const flightLean = flightAnimClass === 'astro-flight-glide'
@@ -135,32 +144,40 @@ function AstronautPortal({ usagePercent, apiCallCount = 0, founderBadge = false 
             cursor: 'pointer',
             userSelect: 'none',
             position: 'relative',
+            perspective: '600px',
             transform: scale !== 1 ? `scale(${scale})` : undefined,
             transformOrigin: 'center bottom',
           }}
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
-          onClick={onClickAstronaut}
+          onClick={handleClick}
         >
           {showTooltip && <Tooltip text={MOOD_TOOLTIP[state.mood]} />}
 
-          {/* Layer 1: animation class (flight wobble / idle float / specific idle) */}
-          <div
-            className={animClass}
-            style={{ width: '100%', height: '100%', transformOrigin: 'center bottom' }}
-          >
-            {/* Layer 2: mood persistent offset + flight lean */}
-            <div style={{
-              width: '100%', height: '100%',
-              transform: [moodTransform, flightLean].filter(Boolean).join(' ') || undefined,
-              transformOrigin: 'center bottom',
-            }}>
-              <AstronautSVG
-                mood={state.mood}
-                founderBadge={state.founderBadge}
-                eyeVisible={state.eyeVisible}
-                flamesActive={flamesActive}
-              />
+          {/* Flip wrapper — rotateY on click, separate from float/glide animations */}
+          <div style={{
+            width: '100%', height: '100%',
+            animation: flipping ? 'dash-flip 520ms ease-in-out' : undefined,
+            transformOrigin: 'center center',
+          }}>
+            {/* Layer 1: animation class (flight wobble / idle float / specific idle) */}
+            <div
+              className={animClass}
+              style={{ width: '100%', height: '100%', transformOrigin: 'center bottom' }}
+            >
+              {/* Layer 2: mood persistent offset + flight lean */}
+              <div style={{
+                width: '100%', height: '100%',
+                transform: [moodTransform, flightLean].filter(Boolean).join(' ') || undefined,
+                transformOrigin: 'center bottom',
+              }}>
+                <AstronautSVG
+                  mood={state.mood}
+                  founderBadge={state.founderBadge}
+                  eyeVisible={state.eyeVisible}
+                  flamesActive={flamesActive}
+                />
+              </div>
             </div>
           </div>
         </div>
