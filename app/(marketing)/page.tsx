@@ -4,6 +4,7 @@ import { Btn } from '@/components/ui/button'
 import { LiveBadge } from '@/components/ui/live-badge'
 import { SectionHeading } from '@/components/ui/section-heading'
 import { EcosystemCarousel } from './EcosystemCarousel'
+import { TerminalDemo } from '@/components/ui/TerminalDemo'
 import { createServiceRoleClient } from '@/lib/supabase-server'
 
 // Re-render at most once an hour so the live counts don't drift more than that
@@ -414,6 +415,33 @@ export default async function LandingPage() {
             </Glass>
           ))}
         </div>
+      </section>
+
+      {/* ══ Terminal Demo ══ */}
+      <section style={{ padding: '72px 0', borderTop: '1px solid var(--hair)' }} id="terminal-demo">
+        <p style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11.5, fontWeight: 500,
+          letterSpacing: '0.20em', textTransform: 'uppercase', color: 'var(--ink-faint)',
+          margin: '0 0 22px', display: 'flex', alignItems: 'center', gap: 14,
+        }}>
+          <span aria-hidden="true" style={{ width: 32, height: 1, background: 'rgba(255,255,255,0.35)', display: 'inline-block', flexShrink: 0 }} />
+          see it in action
+        </p>
+        <h2 style={{
+          fontFamily: 'var(--font-serif)', fontSize: 40, fontWeight: 500,
+          letterSpacing: '-0.02em', lineHeight: 1.1,
+          color: 'var(--ink)', margin: '0 0 14px',
+        }}>
+          Three ways to use Strata.
+        </h2>
+        <p style={{
+          fontSize: 16, color: 'var(--ink-soft)', lineHeight: 1.6,
+          maxWidth: 620, margin: '0 0 36px',
+        }}>
+          Scan your agent config, verify a server before connecting, or query the
+          directory from inside Claude Code or Cursor.
+        </p>
+        <TerminalDemo />
       </section>
 
       {/* ══ Ecosystems ══ */}
