@@ -78,6 +78,7 @@ export async function GET(request: NextRequest) {
       .eq('category', 'integrations')
       .eq('is_quarantined', false)
       .order('published_at', { ascending: false })
+      .limit(20)
 
     if (profile.tier === 'free') query = query.eq('is_pro_only', false)
 

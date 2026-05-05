@@ -27,7 +27,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: 'get_best_practices',
     description:
-      'Get AI-verified best practices for an AI ecosystem. Each result includes: title, body, source_urls[], confidence, content_age_hours, data_freshness. Results ordered by recency. Check data_freshness before acting on time-sensitive guidance. ' +
+      'Get AI-verified best practices for an AI ecosystem. Each result includes: title, body, source_urls[], confidence (high/medium/low), content_age_hours, data_freshness. Results ordered by recency. Check data_freshness before acting on time-sensitive guidance. ' +
       EPISTEMIC_NOTICE,
     inputSchema: {
       type: 'object',
@@ -311,6 +311,7 @@ export async function handleToolCall(
       .eq('category', 'integrations')
       .eq('is_quarantined', false)
       .order('published_at', { ascending: false })
+      .limit(20)
 
     if (profile.tier === 'free') query = query.eq('is_pro_only', false)
 
