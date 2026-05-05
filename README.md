@@ -6,6 +6,10 @@ Strata scores every MCP server for security and behavioral
 risk — so your agents know what they're connecting to before 
 they connect.
 
+[![Strata MCP server](https://glama.ai/mcp/servers/PThrower/Strata/badges/card.svg)](https://glama.ai/mcp/servers/PThrower/Strata)
+
+[![Strata MCP server](https://glama.ai/mcp/servers/PThrower/Strata/badges/score.svg)](https://glama.ai/mcp/servers/PThrower/Strata)
+
 → [usestrata.dev](https://usestrata.dev)
 
 ---
@@ -66,13 +70,15 @@ https://www.usestrata.dev/mcp
 ## Ecosystems
 
 Claude · OpenAI · Gemini · Cursor · Copilot · LangChain · 
-Ollama · Groq · Codex · Windsurf · Perplexity · cing
+Ollama · Groq · Codex · Windsurf · Perplexity · Together AI · 
+Replicate · Fireworks · Exa · Cody · YouCom · Bolt · V0 · 
+Manus · Higgsfield · Cohere
 
 | Tier | Price | Calls | Ecosystems |
 |------|-------|-------|------------|
 | Free | $0 | 100/month | 5 core |
 | Pro | $29/month | 10,000/month | All 22 |
-| Founder | $100 one-time | 10,000/month | All 22, forever |
+| Founder | $100 one-time | 10,000/month forever | All 22, forever |
 
 ---
 
