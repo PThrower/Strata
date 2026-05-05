@@ -402,13 +402,13 @@ export function useAstronautBrain({
     scale: renderScale,
     idleAnimClass,
     flightAnimClass,
-    nozzleLeft:  { x: renderPos.x + 34, y: renderPos.y + 99 },
-    nozzleRight: { x: renderPos.x + 66, y: renderPos.y + 99 },
+    nozzleLeft:  { x: renderPos.x + 32, y: renderPos.y + 86 },
+    nozzleRight: { x: renderPos.x + 59, y: renderPos.y + 86 },
     onClickAstronaut,
     showSparkBurst,
     onSparkDone,
     showDustCloud,
     onDustDone,
-    dustPos: { x: renderPos.x + 50, y: renderPos.y + 117 },
+    dustPos: { x: renderPos.x + 45, y: renderPos.y + 120 },
   }
 }

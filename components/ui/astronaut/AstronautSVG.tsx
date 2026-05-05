@@ -7,23 +7,26 @@ interface AstronautSVGProps {
   flamesActive?: boolean
 }
 
-// 10 stars verified inside visor ellipse (cx=50 cy=33 rx=22 ry=19)
+// 12 stars verified inside visor (cx=60 cy=38 rx=24 ry=21)
 const VISOR_STARS: Array<{ cx: number; cy: number; r: number }> = [
-  { cx: 40, cy: 20, r: 1.0 },
-  { cx: 52, cy: 19, r: 0.8 },
-  { cx: 61, cy: 23, r: 0.9 },
-  { cx: 66, cy: 30, r: 0.7 },
-  { cx: 43, cy: 26, r: 0.7 },
-  { cx: 57, cy: 29, r: 0.6 },
-  { cx: 36, cy: 30, r: 0.8 },
-  { cx: 64, cy: 38, r: 0.7 },
-  { cx: 34, cy: 37, r: 0.8 },
-  { cx: 47, cy: 43, r: 0.6 },
+  { cx: 46, cy: 24, r: 1.0 },
+  { cx: 62, cy: 22, r: 0.8 },
+  { cx: 74, cy: 27, r: 0.9 },
+  { cx: 80, cy: 35, r: 0.7 },
+  { cx: 52, cy: 30, r: 0.7 },
+  { cx: 68, cy: 32, r: 0.6 },
+  { cx: 44, cy: 35, r: 0.8 },
+  { cx: 78, cy: 46, r: 0.7 },
+  { cx: 42, cy: 45, r: 0.8 },
+  { cx: 57, cy: 54, r: 0.6 },
+  { cx: 72, cy: 52, r: 0.7 },
+  { cx: 66, cy: 28, r: 0.6 },
 ]
 
 const OUTLINE = '#1a1a2e'
 const GOLD    = '#c8920a'
 const GLOVE   = '#4a5568'
+const KNEECOL = '#6b7a9e'
 
 export function AstronautSVG({
   mood,
@@ -34,15 +37,13 @@ export function AstronautSVG({
   const depleted = mood === 'depleted'
   const glowAlpha = depleted ? 0.10 : 0.32
 
-  const leftArmTransform  = depleted ? 'rotate(28, 18, 65)' : undefined
-  const rightArmTransform = depleted ? 'rotate(-28, 82, 65)' : undefined
-
   return (
     <svg
-      width={90} height={117}
-      viewBox="0 0 100 130"
+      width={90} height={120}
+      viewBox="0 0 120 160"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      data-mood={mood}
       style={{
         filter: `drop-shadow(0 0 8px rgba(95,176,133,${glowAlpha}))`,
         overflow: 'visible',
@@ -50,49 +51,59 @@ export function AstronautSVG({
       aria-hidden="true"
     >
       <defs>
-        {/* Visor clip — cx=50 cy=33 rx=22 ry=19 */}
+        {/* Visor clip — cx=60 cy=38 rx=24 ry=21 */}
         <clipPath id="visorClip">
-          <ellipse cx="50" cy="33" rx="22" ry="19" />
+          <ellipse cx="60" cy="38" rx="24" ry="21" />
         </clipPath>
 
         {/* Visor gradient */}
-        <linearGradient id="lv" x1="50" y1="14" x2="50" y2="52" gradientUnits="userSpaceOnUse">
+        <linearGradient id="lv" x1="60" y1="17" x2="60" y2="59" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#0a1628" />
           <stop offset="100%" stopColor="#1e4080" />
         </linearGradient>
 
         {/* Helmet gradient */}
-        <linearGradient id="lh" x1="21" y1="2" x2="79" y2="60" gradientUnits="userSpaceOnUse">
+        <linearGradient id="lh" x1="28" y1="4" x2="92" y2="68" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#eef1f8" />
           <stop offset="60%"  stopColor="#dde4f0" />
           <stop offset="100%" stopColor="#b8c4d4" />
         </linearGradient>
 
-        {/* Suit body gradient */}
-        <linearGradient id="ls" x1="28" y1="58" x2="72" y2="94" gradientUnits="userSpaceOnUse">
+        {/* Suit torso gradient */}
+        <linearGradient id="ls" x1="32" y1="70" x2="88" y2="114" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#eef1f8" />
           <stop offset="55%"  stopColor="#dde4f0" />
           <stop offset="100%" stopColor="#b4bece" />
         </linearGradient>
 
-        {/* Arm gradients */}
-        <linearGradient id="lal" x1="10" y1="65" x2="25" y2="93" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"   stopColor="#e8edf6" />
-          <stop offset="100%" stopColor="#b0bac8" />
-        </linearGradient>
-        <linearGradient id="lar" x1="90" y1="65" x2="75" y2="93" gradientUnits="userSpaceOnUse">
+        {/* Left arm gradient */}
+        <linearGradient id="lal" x1="12" y1="74" x2="30" y2="108" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#e8edf6" />
           <stop offset="100%" stopColor="#b0bac8" />
         </linearGradient>
 
-        {/* Leg gradients */}
-        <linearGradient id="lll" x1="30" y1="94" x2="46" y2="130" gradientUnits="userSpaceOnUse">
+        {/* Right arm gradient */}
+        <linearGradient id="lar" x1="108" y1="74" x2="90" y2="108" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#e8edf6" />
+          <stop offset="100%" stopColor="#b0bac8" />
+        </linearGradient>
+
+        {/* Left leg gradient */}
+        <linearGradient id="lll" x1="36" y1="112" x2="54" y2="160" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#dde4f0" />
           <stop offset="100%" stopColor="#a8b2c2" />
         </linearGradient>
-        <linearGradient id="llr" x1="70" y1="94" x2="54" y2="130" gradientUnits="userSpaceOnUse">
+
+        {/* Right leg gradient */}
+        <linearGradient id="llr" x1="84" y1="112" x2="66" y2="160" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#dde4f0" />
           <stop offset="100%" stopColor="#a8b2c2" />
+        </linearGradient>
+
+        {/* Jetpack gradient */}
+        <linearGradient id="lj" x1="34" y1="72" x2="86" y2="112" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="#8a96a6" />
+          <stop offset="100%" stopColor="#6a7686" />
         </linearGradient>
 
         {/* Flame gradient */}
@@ -114,241 +125,240 @@ export function AstronautSVG({
       </defs>
 
       {/* ═══════════════════════════════════════════════════════════
-          JETPACK — behind torso
+          BODY TILT GROUP — torso+arms+legs tilt 2deg for personality.
+          Helmet stays outside (upright).
           ═══════════════════════════════════════════════════════════ */}
-      <g id="jetpack">
-        <rect x={26} y={60} width={48} height={30} rx={13}
-          fill="#7a8696" stroke={OUTLINE} strokeWidth={1.5} />
-        <rect x={30} y={68} width={40} height={4} rx={1}
-          fill={GOLD} stroke={OUTLINE} strokeWidth={0.5} />
-        <path d="M 32 62 Q 50 58 68 62"
-          stroke="rgba(255,255,255,0.25)" strokeWidth={1.2}
-          strokeLinecap="round" fill="none" />
+      <g transform="rotate(2, 60, 110)">
 
-        {/* Left nozzle */}
-        <ellipse cx={34} cy={92} rx={6} ry={4}
-          fill="#2e3540" stroke={OUTLINE} strokeWidth={1} />
-        <ellipse cx={34} cy={92} rx={4} ry={2.5} fill="#1a2028" />
+        {/* ── Jetpack — behind torso ── */}
+        <g id="jetpack">
+          <rect x={34} y={72} width={52} height={40} rx={14}
+            fill="url(#lj)" stroke={OUTLINE} strokeWidth={1.5} />
+          <rect x={38} y={82} width={44} height={5} rx={2}
+            fill={GOLD} stroke={OUTLINE} strokeWidth={0.5} />
+          <path d="M 40 74 Q 60 70 80 74"
+            stroke="rgba(255,255,255,0.22)" strokeWidth={1.4}
+            strokeLinecap="round" fill="none" />
+          {/* Left nozzle */}
+          <ellipse cx={42} cy={115} rx={7} ry={5}
+            fill="#2e3540" stroke={OUTLINE} strokeWidth={1} />
+          <ellipse cx={42} cy={115} rx={4.5} ry={3} fill="#1a2028" />
+          {/* Right nozzle */}
+          <ellipse cx={78} cy={115} rx={7} ry={5}
+            fill="#2e3540" stroke={OUTLINE} strokeWidth={1} />
+          <ellipse cx={78} cy={115} rx={4.5} ry={3} fill="#1a2028" />
+          {flamesActive && (
+            <>
+              <ellipse cx={42} cy={126} rx={5.5} ry={10}
+                fill="url(#lf)"
+                style={{ animation: 'jetpack-flame 120ms ease-in-out infinite alternate' }}
+              />
+              <ellipse cx={78} cy={126} rx={5.5} ry={10}
+                fill="url(#lf)"
+                style={{ animation: 'jetpack-flame 120ms ease-in-out infinite alternate', animationDelay: '60ms' }}
+              />
+            </>
+          )}
+        </g>
 
-        {/* Right nozzle */}
-        <ellipse cx={66} cy={92} rx={6} ry={4}
-          fill="#2e3540" stroke={OUTLINE} strokeWidth={1} />
-        <ellipse cx={66} cy={92} rx={4} ry={2.5} fill="#1a2028" />
+        {/* ── Left leg — CSS handles 5deg tilt via #larry-leg-left ── */}
+        <g id="larry-leg-left">
+          <rect x={36} y={112} width={18} height={24} rx={7}
+            fill="url(#lll)" stroke={OUTLINE} strokeWidth={1.5} />
+          {/* Thigh ring */}
+          <rect x={36} y={116} width={18} height={5} rx={2}
+            fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
+          {/* Knee pad — large, blue-gray */}
+          <rect x={33} y={126} width={24} height={18} rx={7}
+            fill={KNEECOL} stroke={GOLD} strokeWidth={1.5} />
+          <rect x={33} y={126} width={24} height={18} rx={7}
+            fill="none" stroke={OUTLINE} strokeWidth={0.5} opacity={0.5} />
+          {/* Boot ring */}
+          <rect x={33} y={141} width={24} height={6} rx={2}
+            fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
+          {/* Boot */}
+          <rect x={32} y={146} width={26} height={14} rx={8}
+            fill={GLOVE} stroke={OUTLINE} strokeWidth={1.5} />
+          <ellipse cx={45} cy={158} rx={9} ry={3}
+            fill="rgba(255,255,255,0.10)" />
+        </g>
 
-        {flamesActive && (
-          <>
-            <ellipse cx={34} cy={99} rx={4.5} ry={8}
-              fill="url(#lf)"
-              style={{ animation: 'jetpack-flame 120ms ease-in-out infinite alternate' }}
-            />
-            <ellipse cx={66} cy={99} rx={4.5} ry={8}
-              fill="url(#lf)"
-              style={{ animation: 'jetpack-flame 120ms ease-in-out infinite alternate', animationDelay: '60ms' }}
-            />
-          </>
-        )}
-      </g>
+        {/* ── Right leg — CSS handles -3deg tilt via #larry-leg-right ── */}
+        <g id="larry-leg-right">
+          <rect x={66} y={112} width={18} height={24} rx={7}
+            fill="url(#llr)" stroke={OUTLINE} strokeWidth={1.5} />
+          <rect x={66} y={116} width={18} height={5} rx={2}
+            fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
+          <rect x={63} y={126} width={24} height={18} rx={7}
+            fill={KNEECOL} stroke={GOLD} strokeWidth={1.5} />
+          <rect x={63} y={126} width={24} height={18} rx={7}
+            fill="none" stroke={OUTLINE} strokeWidth={0.5} opacity={0.5} />
+          <rect x={63} y={141} width={24} height={6} rx={2}
+            fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
+          <rect x={62} y={146} width={26} height={14} rx={8}
+            fill={GLOVE} stroke={OUTLINE} strokeWidth={1.5} />
+          <ellipse cx={75} cy={158} rx={9} ry={3}
+            fill="rgba(255,255,255,0.10)" />
+        </g>
+
+        {/* ── Torso + chest panel ── */}
+        <g id="body">
+          <rect x={32} y={70} width={56} height={44} rx={14}
+            fill="url(#ls)" stroke={OUTLINE} strokeWidth={1.5} />
+          <path d="M 36 72 Q 60 68 84 72"
+            stroke="#eef1f8" strokeWidth={1.2}
+            strokeLinecap="round" fill="none" opacity={0.65} />
+
+          {/* Chest panel */}
+          <rect x={40} y={79} width={40} height={26} rx={5}
+            fill="#f0f4f8" stroke={OUTLINE} strokeWidth={1.5} />
+          {/* Panel divider */}
+          <rect x={40} y={90} width={40} height={2}
+            fill={OUTLINE} opacity={0.18} />
+
+          {/* Chest strap cord */}
+          <path d="M 60 105 Q 57 111 52 115"
+            stroke={OUTLINE} strokeWidth={0.8}
+            strokeLinecap="round" fill="none" opacity={0.35} />
+
+          {/* Red indicator */}
+          <ellipse cx={53} cy={96} rx={8} ry={8} fill="url(#rg)" opacity={0.8} />
+          <circle cx={53} cy={96} r={5}
+            fill="#dc2626" stroke={OUTLINE} strokeWidth={1} />
+          <circle cx={51.5} cy={94.5} r={1.8} fill="rgba(255,255,255,0.45)" />
+
+          {/* Gold indicator */}
+          <ellipse cx={67} cy={96} rx={8} ry={8} fill="url(#ag)" opacity={0.8} />
+          <circle cx={67} cy={96} r={5}
+            fill="#f59e0b" stroke={OUTLINE} strokeWidth={1} />
+          <circle cx={65.5} cy={94.5} r={1.8} fill="rgba(255,255,255,0.45)" />
+        </g>
+
+        {/* ── Left arm — CSS handles 8deg rotation + flight swing ── */}
+        <g id="larry-arm-left">
+          <rect x={12} y={74} width={18} height={34} rx={8}
+            fill="url(#lal)" stroke={OUTLINE} strokeWidth={1.5} />
+          {/* Upper arm ring */}
+          <rect x={13} y={82} width={16} height={5} rx={2}
+            fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
+          {/* Wrist ring */}
+          <rect x={13} y={100} width={16} height={5} rx={2}
+            fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
+          {/* Glove */}
+          <rect x={10} y={106} width={22} height={16} rx={9}
+            fill={GLOVE} stroke={OUTLINE} strokeWidth={1.5} />
+          <path d="M 13 114 Q 21 112 31 114"
+            stroke="rgba(255,255,255,0.12)" strokeWidth={1}
+            strokeLinecap="round" fill="none" />
+        </g>
+
+        {/* ── Right arm — CSS handles -5deg rotation + flight swing ── */}
+        <g id="larry-arm-right">
+          <rect x={90} y={74} width={18} height={34} rx={8}
+            fill="url(#lar)" stroke={OUTLINE} strokeWidth={1.5} />
+          {/* Upper arm ring */}
+          <rect x={91} y={82} width={16} height={5} rx={2}
+            fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
+          {/* Wrist ring */}
+          <rect x={91} y={100} width={16} height={5} rx={2}
+            fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
+          {/* Glove */}
+          <rect x={88} y={106} width={22} height={16} rx={9}
+            fill={GLOVE} stroke={OUTLINE} strokeWidth={1.5} />
+          <path d="M 89 114 Q 99 112 109 114"
+            stroke="rgba(255,255,255,0.12)" strokeWidth={1}
+            strokeLinecap="round" fill="none" />
+        </g>
+
+      </g>{/* end body tilt */}
 
       {/* ═══════════════════════════════════════════════════════════
-          LEGS — wider stance x=30/54
-          ═══════════════════════════════════════════════════════════ */}
-      <g id="legs">
-        {/* ── Left leg ── */}
-        <rect x={30} y={94} width={16} height={20} rx={6}
-          fill="url(#lll)" stroke={OUTLINE} strokeWidth={1.5} />
-        {/* Left thigh ring */}
-        <rect x={30} y={95} width={16} height={4} rx={2}
-          fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
-        {/* Left knee pad — chunky */}
-        <rect x={27} y={102} width={22} height={15} rx={6}
-          fill="#6b7280" stroke={GOLD} strokeWidth={1.5} />
-        <rect x={27} y={102} width={22} height={15} rx={6}
-          fill="none" stroke={OUTLINE} strokeWidth={0.5} opacity={0.5} />
-        {/* Left boot top ring */}
-        <rect x={27} y={111} width={22} height={5} rx={2}
-          fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
-        {/* Left boot */}
-        <rect x={26} y={115} width={24} height={15} rx={7}
-          fill={GLOVE} stroke={OUTLINE} strokeWidth={1.5} />
-        <ellipse cx={38} cy={128} rx={8} ry={2.5}
-          fill="rgba(255,255,255,0.1)" />
-
-        {/* ── Right leg ── */}
-        <rect x={54} y={94} width={16} height={20} rx={6}
-          fill="url(#llr)" stroke={OUTLINE} strokeWidth={1.5} />
-        {/* Right thigh ring */}
-        <rect x={54} y={95} width={16} height={4} rx={2}
-          fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
-        {/* Right knee pad — chunky */}
-        <rect x={51} y={102} width={22} height={15} rx={6}
-          fill="#6b7280" stroke={GOLD} strokeWidth={1.5} />
-        <rect x={51} y={102} width={22} height={15} rx={6}
-          fill="none" stroke={OUTLINE} strokeWidth={0.5} opacity={0.5} />
-        {/* Right boot top ring */}
-        <rect x={51} y={111} width={22} height={5} rx={2}
-          fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
-        {/* Right boot */}
-        <rect x={50} y={115} width={24} height={15} rx={7}
-          fill={GLOVE} stroke={OUTLINE} strokeWidth={1.5} />
-        <ellipse cx={62} cy={128} rx={8} ry={2.5}
-          fill="rgba(255,255,255,0.1)" />
-      </g>
-
-      {/* ═══════════════════════════════════════════════════════════
-          TORSO + CHEST PANEL
-          ═══════════════════════════════════════════════════════════ */}
-      <g id="body">
-        <rect x={28} y={58} width={44} height={36} rx={12}
-          fill="url(#ls)" stroke={OUTLINE} strokeWidth={1.5} />
-        <path d="M 34 60 Q 50 56 66 60"
-          stroke="#eef1f8" strokeWidth={1.2}
-          strokeLinecap="round" fill="none" opacity={0.65} />
-
-        {/* Chest panel — wider */}
-        <rect x={33} y={66} width={34} height={22} rx={4}
-          fill="#f0f4f8" stroke={OUTLINE} strokeWidth={1.5} />
-        <rect x={33} y={75} width={34} height={2}
-          fill={OUTLINE} opacity={0.18} />
-
-        {/* Cord from panel bottom */}
-        <path d="M 50 88 Q 48 92 44 95"
-          stroke={OUTLINE} strokeWidth={0.8}
-          strokeLinecap="round" fill="none" opacity={0.35} />
-
-        {/* Red indicator glow */}
-        <ellipse cx={43} cy={78} rx={7} ry={7} fill="url(#rg)" opacity={0.9} />
-        <circle cx={43} cy={78} r={4.5}
-          fill="#dc2626" stroke={OUTLINE} strokeWidth={1} />
-        <circle cx={41.5} cy={76.5} r={1.5} fill="rgba(255,255,255,0.45)" />
-
-        {/* Gold indicator glow */}
-        <ellipse cx={57} cy={78} rx={7} ry={7} fill="url(#ag)" opacity={0.9} />
-        <circle cx={57} cy={78} r={4.5}
-          fill="#f59e0b" stroke={OUTLINE} strokeWidth={1} />
-        <circle cx={55.5} cy={76.5} r={1.5} fill="rgba(255,255,255,0.45)" />
-      </g>
-
-      {/* ═══════════════════════════════════════════════════════════
-          LEFT ARM — x=10 y=65 w=15 h=28
-          ═══════════════════════════════════════════════════════════ */}
-      <g id="leftArm" transform={leftArmTransform}>
-        <rect x={10} y={65} width={15} height={28} rx={7}
-          fill="url(#lal)" stroke={OUTLINE} strokeWidth={1.5} />
-        <rect x={11} y={66} width={13} height={4} rx={2}
-          fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
-        <rect x={11} y={89} width={13} height={4} rx={2}
-          fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
-        {/* Glove — chunkier */}
-        <rect x={8} y={91} width={20} height={14} rx={8}
-          fill={GLOVE} stroke={OUTLINE} strokeWidth={1.5} />
-        <path d="M 11 98 Q 18 96 27 98"
-          stroke="rgba(255,255,255,0.12)" strokeWidth={1}
-          strokeLinecap="round" fill="none" />
-      </g>
-
-      {/* ═══════════════════════════════════════════════════════════
-          RIGHT ARM — x=75 y=65 w=15 h=28
-          ═══════════════════════════════════════════════════════════ */}
-      <g id="rightArm" transform={rightArmTransform}>
-        <rect x={75} y={65} width={15} height={28} rx={7}
-          fill="url(#lar)" stroke={OUTLINE} strokeWidth={1.5} />
-        <rect x={76} y={66} width={13} height={4} rx={2}
-          fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
-        <rect x={76} y={89} width={13} height={4} rx={2}
-          fill={GOLD} stroke={OUTLINE} strokeWidth={0.8} />
-        {/* Glove — chunkier */}
-        <rect x={72} y={91} width={20} height={14} rx={8}
-          fill={GLOVE} stroke={OUTLINE} strokeWidth={1.5} />
-        <path d="M 73 98 Q 80 96 91 98"
-          stroke="rgba(255,255,255,0.12)" strokeWidth={1}
-          strokeLinecap="round" fill="none" />
-      </g>
-
-      {/* ═══════════════════════════════════════════════════════════
-          HELMET (top layer)
+          HELMET — outside body tilt, always upright
           ═══════════════════════════════════════════════════════════ */}
       <g id="helmet">
         {/* Neck connector */}
-        <rect x={36} y={54} width={28} height={8} rx={3}
+        <rect x={46} y={62} width={28} height={10} rx={4}
           fill="#c5cad8" stroke={OUTLINE} strokeWidth={1.2} />
 
-        {/* Red collar ring — wider */}
-        <rect x={32} y={57} width={36} height={10} rx={4}
+        {/* Red collar */}
+        <rect x={38} y={65} width={44} height={12} rx={5}
           fill="#dc2626" stroke={OUTLINE} strokeWidth={1.5} />
 
-        {/* Helmet sphere — cx=50 cy=31 r=29 */}
-        <circle cx={50} cy={31} r={29}
+        {/* Helmet sphere — cx=60 cy=36 r=32 */}
+        <circle cx={60} cy={36} r={32}
           fill="url(#lh)" stroke={OUTLINE} strokeWidth={1.5} />
-        <path d="M 30 18 Q 42 8 62 14"
-          stroke="rgba(255,255,255,0.40)" strokeWidth={1.8}
+        <path d="M 36 20 Q 50 10 74 16"
+          stroke="rgba(255,255,255,0.40)" strokeWidth={2}
           strokeLinecap="round" fill="none" />
 
-        {/* Gold ear piece — left — rx=5 ry=8 */}
-        <ellipse cx={21} cy={31} rx={5} ry={8}
+        {/* Gold ear piece — left — rx=6 ry=9 */}
+        <ellipse cx={28} cy={36} rx={6} ry={9}
           fill={GOLD} stroke={OUTLINE} strokeWidth={1.5} />
-        <ellipse cx={21} cy={29} rx={2.5} ry={3.5}
+        <ellipse cx={28} cy={33} rx={3} ry={4}
           fill="rgba(255,255,255,0.25)" />
 
-        {/* Gold ear piece — right — rx=5 ry=8 */}
-        <ellipse cx={79} cy={31} rx={5} ry={8}
+        {/* Gold ear piece — right — rx=6 ry=9 */}
+        <ellipse cx={92} cy={36} rx={6} ry={9}
           fill={GOLD} stroke={OUTLINE} strokeWidth={1.5} />
-        <ellipse cx={79} cy={29} rx={2.5} ry={3.5}
+        <ellipse cx={92} cy={33} rx={3} ry={4}
           fill="rgba(255,255,255,0.25)" />
 
-        {/* ── Visor (clipped group) — cx=50 cy=33 rx=22 ry=19 ── */}
+        {/* ── Visor (clipped) ── */}
         <g clipPath="url(#visorClip)">
-          <ellipse cx={50} cy={33} rx={22} ry={19} fill="url(#lv)" />
+          <ellipse cx={60} cy={38} rx={24} ry={21} fill="url(#lv)" />
 
           {VISOR_STARS.map((s, i) => (
             <circle key={i} cx={s.cx} cy={s.cy} r={s.r}
               fill="rgba(255,255,255,0.82)" />
           ))}
 
-          {/* THE SWOOSH */}
+          {/* Swoosh — starts outside clip, clipped at visor rim naturally */}
           <path
-            d="M 32 24 C 40 15 60 19 68 33"
+            d="M 38 26 C 48 14 72 18 82 34"
             stroke="white"
-            strokeWidth={4.5}
+            strokeWidth={5}
             strokeLinecap="round"
             opacity={0.6}
             fill="none"
           />
 
-          <ellipse cx={39} cy={22} rx={6} ry={3.5}
+          {/* Specular fill */}
+          <ellipse cx={47} cy={26} rx={7} ry={4}
             fill="rgba(255,255,255,0.18)" />
         </g>
 
-        {/* Visor rim */}
-        <ellipse cx={50} cy={33} rx={22} ry={19}
+        {/* Visor rim — ice-blue */}
+        <ellipse cx={60} cy={38} rx={24} ry={21}
           fill="none"
           stroke="rgba(120,200,255,0.42)"
-          strokeWidth={0.8} />
+          strokeWidth={0.9} />
         {/* Visor outline */}
-        <ellipse cx={50} cy={33} rx={22} ry={19}
+        <ellipse cx={60} cy={38} rx={24} ry={21}
           fill="none"
           stroke={OUTLINE}
-          strokeWidth={1.2} />
+          strokeWidth={1.3} />
 
-        {/* Eyes at cy=38 */}
+        {/* Eyes at cy=44 */}
         {eyeVisible && (
           <>
-            <circle cx={44} cy={38} r={2.8}
+            <circle cx={53} cy={44} r={3.2}
               fill="rgba(255,255,255,0.90)"
               style={{ transition: 'opacity 80ms linear' }} />
-            <circle cx={56} cy={38} r={2.8}
+            <circle cx={67} cy={44} r={3.2}
               fill="rgba(255,255,255,0.90)"
               style={{ transition: 'opacity 80ms linear' }} />
-            <circle cx={44.6} cy={38.5} r={1.3} fill="rgba(5,15,35,0.75)" />
-            <circle cx={56.6} cy={38.5} r={1.3} fill="rgba(5,15,35,0.75)" />
+            <circle cx={53.8} cy={44.5} r={1.4} fill="rgba(5,15,35,0.75)" />
+            <circle cx={67.8} cy={44.5} r={1.4} fill="rgba(5,15,35,0.75)" />
           </>
         )}
 
         {/* Neck seal ring */}
-        <ellipse cx={50} cy={60} rx={17} ry={4}
+        <ellipse cx={60} cy={77} rx={20} ry={5}
           fill="#c8cedd" stroke={OUTLINE} strokeWidth={1} />
 
+        {/* Founder gold star */}
         {founderBadge && (
-          <g transform="translate(72,8) scale(0.65)">
+          <g transform="translate(88, 8) scale(0.70)">
             <polygon
               points="7,0 8.9,5.8 15,5.8 9.9,9.4 11.8,15.2 7,11.6 2.2,15.2 4.1,9.4 -1,5.8 5.1,5.8"
               fill="#fbbf24" stroke="#f59e0b" strokeWidth={0.8}

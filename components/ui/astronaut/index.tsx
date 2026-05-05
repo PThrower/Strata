@@ -115,12 +115,13 @@ function AstronautPortal({ usagePercent, apiCallCount = 0, founderBadge = false 
 
       {/* ── Outer positioning wrapper (pointer-events: none so it doesn't block page) ── */}
       <div
+        className={flightAnimClass === 'astro-flight-glide' ? 'larry-flying' : flightAnimClass === '' ? 'larry-idle' : ''}
         style={{
           position: 'fixed',
           left:   pos.x,
           top:    pos.y + bobY,
           width:  90,
-          height: 117,
+          height: 120,
           zIndex: 9999,
           pointerEvents: 'none',      // ← transparent to mouse by default
           transformOrigin: 'center bottom',
