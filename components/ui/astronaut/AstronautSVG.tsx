@@ -7,7 +7,7 @@ interface AstronautSVGProps {
   flamesActive?: boolean
 }
 
-// 12 stars verified inside visor (cx=60 cy=38 rx=24 ry=21)
+// 12 stars verified inside visor (cx=60 cy=36 rx=26 ry=23)
 const VISOR_STARS: Array<{ cx: number; cy: number; r: number }> = [
   { cx: 46, cy: 24, r: 1.0 },
   { cx: 62, cy: 22, r: 0.8 },
@@ -51,19 +51,19 @@ export function AstronautSVG({
       aria-hidden="true"
     >
       <defs>
-        {/* Visor clip — cx=60 cy=38 rx=24 ry=21 */}
+        {/* Visor clip — cx=60 cy=36 rx=26 ry=23 */}
         <clipPath id="visorClip">
-          <ellipse cx="60" cy="38" rx="24" ry="21" />
+          <ellipse cx="60" cy="36" rx="26" ry="23" />
         </clipPath>
 
         {/* Visor gradient */}
-        <linearGradient id="lv" x1="60" y1="17" x2="60" y2="59" gradientUnits="userSpaceOnUse">
+        <linearGradient id="lv" x1="60" y1="13" x2="60" y2="59" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#0a1628" />
           <stop offset="100%" stopColor="#1e4080" />
         </linearGradient>
 
         {/* Helmet gradient */}
-        <linearGradient id="lh" x1="28" y1="4" x2="92" y2="68" gradientUnits="userSpaceOnUse">
+        <linearGradient id="lh" x1="24" y1="-2" x2="96" y2="70" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#eef1f8" />
           <stop offset="60%"  stopColor="#dde4f0" />
           <stop offset="100%" stopColor="#b8c4d4" />
@@ -281,31 +281,31 @@ export function AstronautSVG({
           fill="#c5cad8" stroke={OUTLINE} strokeWidth={1.2} />
 
         {/* Red collar */}
-        <rect x={38} y={65} width={44} height={12} rx={5}
+        <rect x={38} y={67} width={44} height={12} rx={5}
           fill="#dc2626" stroke={OUTLINE} strokeWidth={1.5} />
 
-        {/* Helmet sphere — cx=60 cy=36 r=32 */}
-        <circle cx={60} cy={36} r={32}
+        {/* Helmet sphere — cx=60 cy=34 r=36 */}
+        <circle cx={60} cy={34} r={36}
           fill="url(#lh)" stroke={OUTLINE} strokeWidth={1.5} />
-        <path d="M 36 20 Q 50 10 74 16"
+        <path d="M 32 18 Q 50 8 76 14"
           stroke="rgba(255,255,255,0.40)" strokeWidth={2}
           strokeLinecap="round" fill="none" />
 
-        {/* Gold ear piece — left — rx=6 ry=9 */}
-        <ellipse cx={28} cy={36} rx={6} ry={9}
+        {/* Gold ear piece — left — cx=24 cy=34 rx=6 ry=9 */}
+        <ellipse cx={24} cy={34} rx={6} ry={9}
           fill={GOLD} stroke={OUTLINE} strokeWidth={1.5} />
-        <ellipse cx={28} cy={33} rx={3} ry={4}
+        <ellipse cx={24} cy={31} rx={3} ry={4}
           fill="rgba(255,255,255,0.25)" />
 
-        {/* Gold ear piece — right — rx=6 ry=9 */}
-        <ellipse cx={92} cy={36} rx={6} ry={9}
+        {/* Gold ear piece — right — cx=96 cy=34 rx=6 ry=9 */}
+        <ellipse cx={96} cy={34} rx={6} ry={9}
           fill={GOLD} stroke={OUTLINE} strokeWidth={1.5} />
-        <ellipse cx={92} cy={33} rx={3} ry={4}
+        <ellipse cx={96} cy={31} rx={3} ry={4}
           fill="rgba(255,255,255,0.25)" />
 
         {/* ── Visor (clipped) ── */}
         <g clipPath="url(#visorClip)">
-          <ellipse cx={60} cy={38} rx={24} ry={21} fill="url(#lv)" />
+          <ellipse cx={60} cy={36} rx={26} ry={23} fill="url(#lv)" />
 
           {VISOR_STARS.map((s, i) => (
             <circle key={i} cx={s.cx} cy={s.cy} r={s.r}
@@ -314,9 +314,9 @@ export function AstronautSVG({
 
           {/* Swoosh — starts outside clip, clipped at visor rim naturally */}
           <path
-            d="M 38 26 C 48 14 72 18 82 34"
+            d="M 36 24 C 47 11 74 16 84 33"
             stroke="white"
-            strokeWidth={5}
+            strokeWidth={5.5}
             strokeLinecap="round"
             opacity={0.6}
             fill="none"
@@ -328,12 +328,12 @@ export function AstronautSVG({
         </g>
 
         {/* Visor rim — ice-blue */}
-        <ellipse cx={60} cy={38} rx={24} ry={21}
+        <ellipse cx={60} cy={36} rx={26} ry={23}
           fill="none"
           stroke="rgba(120,200,255,0.42)"
           strokeWidth={0.9} />
         {/* Visor outline */}
-        <ellipse cx={60} cy={38} rx={24} ry={21}
+        <ellipse cx={60} cy={36} rx={26} ry={23}
           fill="none"
           stroke={OUTLINE}
           strokeWidth={1.3} />
