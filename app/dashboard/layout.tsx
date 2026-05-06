@@ -1,10 +1,7 @@
 import Link from 'next/link'
-import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server'
-import { FREE_LIMIT, PRO_LIMIT } from '@/lib/api-auth'
+import { createUserClient } from '@/lib/supabase-server'
 import SidebarNav from './_components/sidebar-nav'
 import MobileNav from './_components/mobile-nav'
-import { AstronautPet } from '@/components/ui/astronaut'
-import { ParallaxStarField } from '@/components/ui/ParallaxStarField'
 import { SignOutButton } from './_components/SignOutButton'
 
 export default async function DashboardLayout({
@@ -19,38 +16,12 @@ export default async function DashboardLayout({
 
   const isAdmin = user?.email === process.env.ADMIN_EMAIL
 
-  // Fetch usage data for AstronautPet mood + founder badge
-  let usagePercent = 0
-  let founderBadge = false
-  if (user) {
-    const svc = createServiceRoleClient()
-    const { data: profile } = await svc
-      .from('profiles')
-      .select('calls_used, tier, lifetime_pro')
-      .eq('id', user.id)
-      .maybeSingle()
-    if (profile) {
-      const limit = profile.tier === 'pro' ? PRO_LIMIT : FREE_LIMIT
-      usagePercent = Math.min((profile.calls_used / limit) * 100, 100)
-      founderBadge = profile.lifetime_pro ?? false
-    }
-  }
-
   return (
-    // Outer wrapper: transparent so SpaceBackdrop + ParallaxStarField show through
+    // Outer wrapper: transparent so SpaceBackdrop shows through
     <div
       className="flex flex-col min-h-screen lg:flex-row lg:h-screen lg:overflow-hidden"
       style={{ color: 'var(--ink)' }}
     >
-      {/* Parallax star field — portal-mounted, position:fixed, behind everything */}
-      <ParallaxStarField />
-
-      {/* Astronaut — portal-mounted, position:fixed, z-index:9999 */}
-      <AstronautPet
-        usagePercent={usagePercent}
-        founderBadge={founderBadge}
-      />
-
       <MobileNav isAdmin={isAdmin} email={user?.email} />
 
       {/* ── Desktop sidebar — explicit background so content is readable over backdrop ── */}
