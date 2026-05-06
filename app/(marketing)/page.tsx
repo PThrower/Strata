@@ -477,14 +477,14 @@ export default async function LandingPage() {
           letterSpacing: '-0.02em', lineHeight: 1.1,
           color: 'var(--ink)', margin: '0 0 14px',
         }}>
-          Three ways to use Strata.
+          Six ways to use Strata.
         </h2>
         <p style={{
           fontSize: 16, color: 'var(--ink-soft)', lineHeight: 1.6,
           maxWidth: 620, margin: '0 0 36px',
         }}>
-          Scan your agent config, verify a server before connecting, or query the
-          directory from inside Claude Code or Cursor.
+          Scan your agent config, verify servers and payments, issue agent identities,
+          enforce policies, or query the directory from inside Claude Code or Cursor.
         </p>
         <TerminalDemo />
       </section>

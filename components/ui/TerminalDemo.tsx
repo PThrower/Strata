@@ -46,6 +46,7 @@ const TABS: TabDef[] = [
       '  ⚠ owner/unknown-server',
       '    risk: high  |  security: 44  |  runtime: 31',
       '    flags: shell_exec, dynamic_eval',
+      '    dangerous tools: 2 of 8',
       '',
       '  ✗ sketchy-org/mcp-tool',
       '    risk: critical  |  security: 8  |  quarantined',
@@ -71,6 +72,62 @@ const TABS: TabDef[] = [
       '  Trusted:        yes',
       '',
       '  ✓ Safe to connect.',
+    ],
+  },
+  {
+    label: 'x402 payment',
+    prompt: '$',
+    command: 'npx @strata-ai/sdk verify-payment https://api.example.com/premium',
+    output: [
+      '  Checking https://api.example.com/premium...',
+      '',
+      '  Protocol:       x402 ✓',
+      '  SSL:            valid',
+      '  Domain age:     847 days',
+      '  Amount:         $0.05 per request',
+      '  Risk:           low',
+      '  Score:          78 / 100',
+      '  Flags:          unverified_domain',
+      '',
+      '  ✓ Safe to pay. Amount is reasonable.',
+    ],
+  },
+  {
+    label: 'Agent identity',
+    prompt: '>',
+    command: 'create an agent identity for my production bot',
+    output: [
+      '  Creating agent identity...',
+      '',
+      '  Name:           production-bot',
+      '  Agent ID:       agt_a1b2c3d4e5f6...',
+      '  Capabilities:   mcp:invoke, x402:pay',
+      '  Expires:        2027-05-06',
+      '',
+      '  ✓ Ed25519 credential issued.',
+      '',
+      '  Present as: Authorization: Bearer eyJhbGc...',
+      '',
+      '  ⚠ Copy this credential now. It will not be shown again.',
+    ],
+  },
+  {
+    label: 'Policy engine',
+    prompt: '>',
+    command: 'block all servers with shell_exec in production',
+    output: [
+      '  Creating policy...',
+      '',
+      '  Name:     No shell execution',
+      '  Action:   block',
+      '  Trigger:  capability_flags contains shell_exec',
+      '  Scope:    all agents',
+      '',
+      '  ✓ Policy active. Enforced before every tool call.',
+      '',
+      '  Test: verifying github.com/owner/shell-server...',
+      '  → Policy blocked: "No shell execution" matched shell_exec flag',
+      '  → Returned 403 before tool executed.',
     ],
   },
   {
@@ -114,7 +171,6 @@ export function TerminalDemo() {
   const bodyRef   = useRef<HTMLDivElement>(null)
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
-  // Observe visibility — restart animation on scroll-into-view
   useEffect(() => {
     const el = rootRef.current
     if (!el) return
@@ -126,13 +182,11 @@ export function TerminalDemo() {
     return () => obs.disconnect()
   }, [])
 
-  // Auto-scroll terminal body as output lines appear
   useEffect(() => {
     const el = bodyRef.current
     if (el) el.scrollTop = el.scrollHeight
   }, [shown])
 
-  // Animation loop — restarts on tab switch, visibility change, or cycle end
   useEffect(() => {
     timersRef.current.forEach(clearTimeout)
     timersRef.current = []
@@ -152,21 +206,18 @@ export function TerminalDemo() {
       return
     }
 
-    // Phase 1: type the command char by char
     for (let i = 1; i <= tab.command.length; i++) {
       timersRef.current.push(setTimeout(() => setTyped(i), i * TYPE_MS))
     }
 
     const cmdDone = tab.command.length * TYPE_MS + 250
 
-    // Phase 2: reveal output lines one at a time
     for (let i = 1; i <= tab.output.length; i++) {
       timersRef.current.push(
         setTimeout(() => setShown(i), cmdDone + i * LINE_MS),
       )
     }
 
-    // Phase 3: loop
     const cycleDone = cmdDone + tab.output.length * LINE_MS + PAUSE_MS
     timersRef.current.push(setTimeout(() => setNonce(n => n + 1), cycleDone))
 
@@ -181,15 +232,23 @@ export function TerminalDemo() {
 
   return (
     <div ref={rootRef} style={{ maxWidth: 880, margin: '0 auto' }} aria-live="off">
-      <style>{`@keyframes strata-blink{0%,100%{opacity:1}50%{opacity:0}}`}</style>
+      <style>{`
+        @keyframes strata-blink{0%,100%{opacity:1}50%{opacity:0}}
+        .strata-tabs::-webkit-scrollbar{display:none}
+      `}</style>
 
-      {/* ── Tab row ── */}
+      {/* ── Tab row — scrollable on mobile ── */}
       <div
         role="tablist"
         aria-label="Terminal demo"
+        className="strata-tabs"
         style={{
           display: 'flex',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
         }}
       >
         {TABS.map((t, i) => (
@@ -212,6 +271,8 @@ export function TerminalDemo() {
               cursor: 'pointer',
               transition: 'color 0.15s',
               outline: 'none',
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
             }}
           >
             {t.label}
@@ -311,7 +372,7 @@ export function TerminalDemo() {
           {/* Output lines */}
           {tab.output.slice(0, shown).map((text, i) => (
             <div key={i} style={{ color: COLOR[lineKind(text)] }}>
-              {text || ' '}
+              {text || ' '}
             </div>
           ))}
         </div>
