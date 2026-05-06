@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import type { GraphNode, GraphEdge } from '@/lib/dependency-graph'
+import { safeHttpHref } from '@/lib/dependency-graph'
 
 interface Props {
   node:  GraphNode
@@ -46,17 +47,24 @@ export default function NodeDetailPanel({ node, edges, onClose }: Props) {
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="min-w-0">
           <p className="font-medium text-sm truncate" title={node.name}>{node.name}</p>
-          {node.url && (
-            <a
-              href={node.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors block truncate"
-              title={node.url}
-            >
-              {node.url}
-            </a>
-          )}
+          {node.url && (() => {
+            const href = safeHttpHref(node.url)
+            return href ? (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors block truncate"
+                title={node.url}
+              >
+                {node.url}
+              </a>
+            ) : (
+              <span className="font-mono text-xs text-muted-foreground block truncate" title={node.url}>
+                {node.url}
+              </span>
+            )
+          })()}
         </div>
         <button
           onClick={onClose}

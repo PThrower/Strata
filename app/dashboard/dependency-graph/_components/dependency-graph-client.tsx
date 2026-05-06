@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import type { DependencyGraph, GraphNode } from '@/lib/dependency-graph'
+import { safeHttpHref } from '@/lib/dependency-graph'
 import GraphSvg from './graph-svg'
 import NodeDetailPanel from './node-detail-panel'
 
@@ -174,7 +175,10 @@ export default function DependencyGraphClient({
         </div>
 
         <span className="ml-auto text-xs text-muted-foreground">
-          {graph.nodes.length} server{graph.nodes.length !== 1 ? 's' : ''}
+          {graph.summary.total_count_before_cap > graph.nodes.length
+            ? `Showing ${graph.nodes.length} of ${graph.summary.total_count_before_cap} servers (highest-risk first)`
+            : `${graph.nodes.length} server${graph.nodes.length !== 1 ? 's' : ''}`
+          }
           {graph.summary.total_edges > 0 && ` · ${graph.summary.total_edges} flow${graph.summary.total_edges !== 1 ? 's' : ''}`}
         </span>
       </div>
@@ -273,18 +277,25 @@ export default function DependencyGraphClient({
                   >
                     <td className="px-4 py-3">
                       <p className="font-medium text-sm truncate max-w-[200px]" title={node.name}>{node.name}</p>
-                      {node.url && (
-                        <a
-                          href={node.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={e => e.stopPropagation()}
-                          className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors truncate block max-w-[200px]"
-                          title={node.url}
-                        >
-                          {safeHostname(node.url)}
-                        </a>
-                      )}
+                      {node.url && (() => {
+                        const href = safeHttpHref(node.url)
+                        return href ? (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="font-mono text-xs text-muted-foreground hover:text-foreground transition-colors truncate block max-w-[200px]"
+                            title={node.url}
+                          >
+                            {safeHostname(node.url)}
+                          </a>
+                        ) : (
+                          <span className="font-mono text-xs text-muted-foreground truncate block max-w-[200px]" title={node.url}>
+                            {safeHostname(node.url)}
+                          </span>
+                        )
+                      })()}
                     </td>
                     <td className="px-4 py-3">
                       <span

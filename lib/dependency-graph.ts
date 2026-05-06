@@ -53,8 +53,9 @@ export interface DependencyGraph {
     circuit_broken_count: number
     quarantined_count:    number
     policy_blocked_count: number
-    no_edges:             boolean
-    period_days:          number | null
+    no_edges:               boolean
+    period_days:            number | null
+    total_count_before_cap: number   // total unique URLs before 50-node cap
   }
   generated_at: string
 }
@@ -69,22 +70,42 @@ function higherRisk(a: string, b: string): string {
 
 type PolicyRow = { match_capability_flags: string[] | null; match_risk_level_gte: string | null }
 
+// AND semantics matching lib/policy-engine.ts policyMatches — all non-null conditions
+// must pass for the policy to fire. OR semantics would produce false positives for
+// combined-condition rules (e.g. match_capability_flags + match_risk_level_gte both set).
+// Simplifications vs live engine: match_tool_names, time windows, and agent_id are
+// not evaluated here — the graph is a server-centric view, not a per-call view.
 function isBlocked(riskLevel: string, flags: string[], policies: PolicyRow[]): boolean {
-  for (const p of policies) {
+  outer: for (const p of policies) {
     if (p.match_capability_flags?.length) {
-      if (p.match_capability_flags.some(f => flags.includes(f))) return true
+      if (!p.match_capability_flags.some(f => flags.includes(f))) continue outer
     }
     if (p.match_risk_level_gte) {
       const nodeR = RISK_ORDER[riskLevel] ?? -1
       const minR  = RISK_ORDER[p.match_risk_level_gte] ?? -1
-      if (nodeR >= 0 && nodeR >= minR) return true
+      if (nodeR < 0 || nodeR < minR) continue outer
     }
+    // Policy has no server-side conditions we can evaluate — skip it.
+    if (!p.match_capability_flags?.length && !p.match_risk_level_gte) continue outer
+    return true
   }
   return false
 }
 
 function safeHostname(url: string): string {
   try { return new URL(url).hostname } catch { return url }
+}
+
+// Exported so client components can guard <a href> against javascript:/data:/etc URLs.
+export function safeHttpHref(url: string | null | undefined): string | undefined {
+  if (!url) return undefined
+  try {
+    const u = new URL(url)
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return undefined
+    return u.toString()
+  } catch {
+    return undefined
+  }
 }
 
 // ── Assembly ──────────────────────────────────────────────────────────────────
@@ -195,32 +216,29 @@ export async function assembleDepGraph(
     }
   }
 
-  // ── Collect + cap unique URLs ─────────────────────────────────────────────
+  // ── Collect unique URLs ───────────────────────────────────────────────────
 
   const allUrls = new Set([...nodeSeenAt.keys(), ...lineageNodeUrls])
-  const sortedUrls = [...allUrls]
-    .sort((a, b) => {
-      const ta = nodeSeenAt.get(a)?.last_seen_at ?? lineageLastSeen.get(a) ?? ''
-      const tb = nodeSeenAt.get(b)?.last_seen_at ?? lineageLastSeen.get(b) ?? ''
-      return tb.localeCompare(ta)
-    })
-    .slice(0, MAX_NODES)
-  const urlSet = new Set(sortedUrls)
+  const totalCountBeforeCap = allUrls.size
 
-  if (sortedUrls.length === 0) {
+  if (allUrls.size === 0) {
     return {
       nodes: [], edges: [],
-      summary: { total_nodes: 0, total_edges: 0, risk_distribution: {}, circuit_broken_count: 0, quarantined_count: 0, policy_blocked_count: 0, no_edges: true, period_days: periodDays },
+      summary: { total_nodes: 0, total_edges: 0, risk_distribution: {}, circuit_broken_count: 0, quarantined_count: 0, policy_blocked_count: 0, no_edges: true, period_days: periodDays, total_count_before_cap: 0 },
       generated_at: new Date().toISOString(),
     }
   }
+
+  // Fetch enrichment for ALL urls first so we can sort by risk before capping.
+  // Only then apply the MAX_NODES limit — ensures critical/circuit-broken servers
+  // survive the cap even if they were less recently seen.
 
   // ── Round 2: enrich from mcp_servers ─────────────────────────────────────
 
   const { data: mcpRows } = await supabase
     .from('mcp_servers')
     .select('id, name, url, security_score, runtime_score, capability_flags, is_quarantined, circuit_broken, circuit_broken_reason, category')
-    .in('url', sortedUrls)
+    .in('url', [...allUrls])
 
   type McpEnriched = {
     id: string; name: string; url: string
@@ -231,7 +249,39 @@ export async function assembleDepGraph(
   const mcpByUrl = new Map<string, McpEnriched>()
   for (const r of (mcpRows ?? []) as McpEnriched[]) mcpByUrl.set(r.url, r)
 
-  const mcpIds = (mcpRows ?? []).map((r: { id: string }) => r.id)
+  // ── Risk-first sort + cap ─────────────────────────────────────────────────
+  // Sort by: risk_level DESC, circuit_broken DESC, last_seen_at DESC.
+  // Guarantees critical/circuit-broken servers survive the cap.
+
+  const urlRiskOrder: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1, unknown: 0 }
+
+  function urlRisk(url: string): number {
+    const mcp = mcpByUrl.get(url)
+    if (!mcp) return 0
+    const level = computeRiskLevel({
+      is_quarantined:   mcp.is_quarantined,
+      security_score:   mcp.security_score,
+      capability_flags: mcp.capability_flags,
+    }).level
+    return urlRiskOrder[level] ?? 0
+  }
+
+  const sortedUrls = [...allUrls].sort((a, b) => {
+    const riskDiff = urlRisk(b) - urlRisk(a)
+    if (riskDiff !== 0) return riskDiff
+    const cbA = mcpByUrl.get(a)?.circuit_broken ? 1 : 0
+    const cbB = mcpByUrl.get(b)?.circuit_broken ? 1 : 0
+    if (cbA !== cbB) return cbB - cbA
+    const ta = nodeSeenAt.get(a)?.last_seen_at ?? lineageLastSeen.get(a) ?? ''
+    const tb = nodeSeenAt.get(b)?.last_seen_at ?? lineageLastSeen.get(b) ?? ''
+    return tb.localeCompare(ta)
+  }).slice(0, MAX_NODES)
+
+  const urlSet = new Set(sortedUrls)
+
+  const mcpIds = (mcpRows ?? [])
+    .filter((r: { url: string }) => urlSet.has(r.url))
+    .map((r: { id: string }) => r.id)
 
   // ── Round 3: circuit_breaker_resets + threat_feed (parallel) ─────────────
 
@@ -335,8 +385,9 @@ export async function assembleDepGraph(
       circuit_broken_count: nodes.filter(n => n.circuit_broken).length,
       quarantined_count:    nodes.filter(n => n.is_quarantined).length,
       policy_blocked_count: nodes.filter(n => n.policy_blocked).length,
-      no_edges:             edges.length === 0,
-      period_days:          periodDays,
+      no_edges:               edges.length === 0,
+      period_days:            periodDays,
+      total_count_before_cap: totalCountBeforeCap,
     },
     generated_at: new Date().toISOString(),
   }
