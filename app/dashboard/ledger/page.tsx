@@ -109,11 +109,29 @@ export default async function LedgerPage({
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-      <div className="mb-8">
-        <h1 className="font-serif text-2xl font-semibold mb-1">Activity Ledger</h1>
-        <p className="text-sm text-muted-foreground">
-          Append-only, cryptographically-signed record of every API call. Foundation for SOC 2 audit.
-        </p>
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <h1 className="font-serif text-2xl font-semibold mb-1">Activity Ledger</h1>
+          <p className="text-sm text-muted-foreground">
+            Append-only, cryptographically-signed record of every API call. Foundation for SOC 2 audit.
+          </p>
+        </div>
+        <div className="flex gap-2 flex-shrink-0 mt-1">
+          <a
+            href="/api/compliance/report?format=json&period=90d&standard=soc2"
+            download
+            className="text-xs px-3 py-1.5 rounded-md border border-border bg-background hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-muted-foreground hover:text-foreground"
+          >
+            Export SOC 2 (JSON)
+          </a>
+          <a
+            href="/api/compliance/report?format=csv&period=90d"
+            download
+            className="text-xs px-3 py-1.5 rounded-md border border-border bg-background hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-muted-foreground hover:text-foreground"
+          >
+            Export CSV
+          </a>
+        </div>
       </div>
 
       {rows.length === 0 ? (
@@ -185,6 +203,9 @@ export default async function LedgerPage({
               )}
             </div>
           </div>
+          <p className="text-xs text-muted-foreground mt-3">
+            Exported reports cover 90 days and include tamper-evidence verification. Use the Export buttons above.
+          </p>
         </>
       )}
     </div>

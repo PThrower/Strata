@@ -217,6 +217,19 @@ Explicit agent-declared data flows: "I read from Server A and sent it to Server 
 - **Dashboard** `/dashboard/lineage` — flow table with source→dest arrow, session filter (click a session_id), egress-only filter, session chain header (Server A → B → C), and a 7-day risk banner when net-egress flows are present.
 - **`session_id` contract**: caller-supplied, opaque string. Strata does not issue session IDs — pass a LangChain `run_id`, LlamaIndex trace ID, or any UUID your application generates. Sessions are just a `GROUP BY session_id` — no session table.
 
+### Compliance Reporting
+
+One-click SOC 2 / ISO 27001 audit evidence packages generated from the Agent Activity Ledger.
+
+- **Route** `GET /api/compliance/report` — session cookie auth (`createUserClient`). Query params: `format=json|csv` (default `json`), `period=30d|90d|1y|custom` (default `90d`), `from`/`to` ISO dates (custom only, max 365-day span), `standard=soc2|iso27001` (default `soc2`). Returns `Content-Disposition: attachment` download.
+- **No new table** — queries existing `agent_activity_ledger`.
+- **Tamper-evidence spot-check**: verifies the last 1,000 rows with `verifyLedgerRow()` from `lib/ledger.ts`. Reports `verified_rows`, `unverified_rows` (null signature — pre-signing era), `failed_rows` (HMAC mismatch). When `LEDGER_SIGNING_KEY` is not set, `signing_key_configured: false` and `signing_key_warning` explain why all rows show as unverified.
+- **JSON report sections**: metadata, tamper_evidence, agent_access, external_systems, risk_posture, tool_breakdown, raw_rows. `parameters` and `response_summary` excluded from raw_rows (business-sensitive; visible in dashboard).
+- **CSV format**: flat rows — id, created_at, agent_id, tool_called, server_url, risk_level, capability_flags (pipe-sep), duration_ms, signature_valid.
+- **Dashboard entry**: two `<a download>` links in the Activity Ledger page header (`/dashboard/ledger`) — no JS required.
+- **PDF deferred to v2** — browser Print → Save as PDF works for now; server-side PDF requires a library.
+- **Pre-fix row note**: rows created before 2026-05-07 were signed with a narrower HMAC input and will return false from `verifyLedgerRow` — treated as "unverifiable (pre-fix)", not "tampered". Covered in report disclaimer.
+
 ### Policy Engine
 
 Per-profile rules that govern agent behavior. Enforced at the Strata layer before any MCP tool call executes.
