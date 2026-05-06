@@ -54,10 +54,22 @@ export async function PUT(request: NextRequest, { params }: Params) {
     (hasSh && hasEh)
   if (!hasCondition) return bad('at least one condition is required')
 
+  const agentIdFinal = typeof body.agent_id === 'string' ? (body.agent_id as string).trim() || null : null
+
   const sb = createServiceRoleClient()
   const { data: existing } = await sb
     .from('policies').select('id').eq('id', id).eq('profile_id', user.id).maybeSingle()
   if (!existing) return Response.json({ error: 'Not found' }, { status: 404 })
+
+  if (agentIdFinal) {
+    const { data: ownsAgent } = await sb
+      .from('agent_identities')
+      .select('id')
+      .eq('agent_id', agentIdFinal)
+      .eq('profile_id', user.id)
+      .maybeSingle()
+    if (!ownsAgent) return bad('agent_id does not belong to this profile')
+  }
 
   const { data, error } = await sb
     .from('policies')
@@ -71,11 +83,11 @@ export async function PUT(request: NextRequest, { params }: Params) {
       match_tool_names:       Array.isArray(body.match_tool_names) && (body.match_tool_names as unknown[]).length > 0 ? body.match_tool_names : null,
       time_start_hour:        hasSh ? Number(body.time_start_hour) : null,
       time_end_hour:          hasEh ? Number(body.time_end_hour)   : null,
-      agent_id:               typeof body.agent_id === 'string' ? (body.agent_id as string).trim() || null : null,
+      agent_id:               agentIdFinal,
       priority:               body.priority != null ? Number(body.priority) : 100,
       updated_at:             new Date().toISOString(),
     })
-    .eq('id', id)
+    .eq('id', id).eq('profile_id', user.id)
     .select()
     .single()
 
@@ -125,7 +137,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   if (!existing) return Response.json({ error: 'Not found' }, { status: 404 })
 
   const { data, error } = await sb
-    .from('policies').update(patch).eq('id', id).select().single()
+    .from('policies').update(patch).eq('id', id).eq('profile_id', user.id).select().single()
 
   if (error) {
     console.error('[policies] patch failed:', error.message)
@@ -149,7 +161,7 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
     .from('policies').select('id').eq('id', id).eq('profile_id', user.id).maybeSingle()
   if (!existing) return Response.json({ error: 'Not found' }, { status: 404 })
 
-  const { error } = await sb.from('policies').delete().eq('id', id)
+  const { error } = await sb.from('policies').delete().eq('id', id).eq('profile_id', user.id)
   if (error) {
     console.error('[policies] delete failed:', error.message)
     return Response.json({ error: 'Service error' }, { status: 503 })

@@ -129,7 +129,7 @@ async function loadPolicies(supabase: ServiceClient, profileId: string): Promise
   const cached = policyCache.get(profileId)
   if (cached && Date.now() - cached.loadedAt < CACHE_TTL_MS) return cached.policies
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('policies')
     .select(
       'id, name, enabled, action, match_capability_flags, match_risk_level_gte, ' +
@@ -140,6 +140,11 @@ async function loadPolicies(supabase: ServiceClient, profileId: string): Promise
     .order('priority', { ascending: true })
     .order('created_at', { ascending: true })
 
+  if (error) {
+    // Throw so evaluatePolicy's outer catch fails open for this request only.
+    // Do NOT cache the error — the next request will retry the DB.
+    throw new Error(`policy load failed: ${error.message}`)
+  }
   const policies = (data ?? []) as unknown as PolicyRow[]
   policyCache.set(profileId, { policies, loadedAt: Date.now() })
   return policies

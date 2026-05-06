@@ -110,7 +110,13 @@ export async function GET(request: NextRequest) {
       : { allowed: false, rule_name: decision.rule_name, reason: decision.reason }
   }
 
-  const responseBody = policyVerdict !== undefined ? { ...body, policy_verdict: policyVerdict } : body
+  const responseBody = policyVerdict !== undefined
+    ? {
+        ...body,
+        ...(policyVerdict.allowed === false ? { trusted: false } : {}),
+        policy_verdict: policyVerdict,
+      }
+    : body
 
   // Log every call, including anon, so /verify usage shows up in dashboards.
   // Anon traffic is bucketed under a sentinel "anon" key so per-user

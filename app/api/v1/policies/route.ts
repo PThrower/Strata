@@ -126,7 +126,20 @@ export async function POST(request: NextRequest) {
   const validErr = validateBody(body, true)
   if (validErr) return bad(validErr)
 
+  const agentIdFinal = typeof body.agent_id === 'string' ? body.agent_id.trim() || null : null
+
   const sb = createServiceRoleClient()
+
+  if (agentIdFinal) {
+    const { data: ownsAgent } = await sb
+      .from('agent_identities')
+      .select('id')
+      .eq('agent_id', agentIdFinal)
+      .eq('profile_id', user.id)
+      .maybeSingle()
+    if (!ownsAgent) return bad('agent_id does not belong to this profile')
+  }
+
   const { data, error } = await sb
     .from('policies')
     .insert({
@@ -142,7 +155,7 @@ export async function POST(request: NextRequest) {
                                 ? body.match_tool_names : null,
       time_start_hour:        body.time_start_hour != null ? Number(body.time_start_hour) : null,
       time_end_hour:          body.time_end_hour   != null ? Number(body.time_end_hour)   : null,
-      agent_id:               typeof body.agent_id === 'string' ? body.agent_id.trim() || null : null,
+      agent_id:               agentIdFinal,
       priority:               body.priority != null ? Number(body.priority) : 100,
     })
     .select()
