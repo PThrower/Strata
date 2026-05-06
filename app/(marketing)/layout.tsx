@@ -1,62 +1,12 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
-import { Btn } from '@/components/ui/button'
-import { MarketingMobileNav } from '@/components/ui/marketing-mobile-nav'
+import { MarketingHeader } from '@/components/ui/marketing-header'
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <div className="mkt-bg">
       <div className="relative" style={{ zIndex: 2 }}>
-        {/* Floating glass nav — sticky at top:16px */}
-        <div className="sticky top-4 z-50 px-4 sm:px-8">
-          <nav
-            className="glass max-w-[1200px] mx-auto flex items-center justify-between"
-            style={{ height: 64, borderRadius: 22, padding: '0 14px 0 22px' }}
-          >
-            <Link
-              href="/"
-              className="flex items-center gap-3"
-              style={{ textDecoration: 'none' }}
-            >
-              <span
-                aria-hidden="true"
-                style={{
-                  width: 9, height: 9, borderRadius: '50%',
-                  background: 'var(--emerald-glow)', flexShrink: 0, display: 'inline-block',
-                  boxShadow: [
-                    'inset 0 0 0 1px rgba(255,255,255,0.40)',
-                    '0 0 14px rgba(95,176,133,0.95)',
-                    '0 0 28px rgba(95,176,133,0.55)',
-                  ].join(', '),
-                }}
-              />
-              <span
-                className="brand-gradient-text"
-                style={{
-                  fontFamily: 'var(--font-serif)',
-                  fontSize: 22,
-                  fontWeight: 400,
-                  letterSpacing: '0.18em',
-                }}
-              >
-                <span style={{ textTransform: 'uppercase' }}>S</span>
-                <span style={{ textTransform: 'lowercase' }}>trata</span>
-              </span>
-            </Link>
-
-            <div className="flex items-center gap-7">
-              <Link href="/docs"          className="mkt-nav-link hidden sm:block">docs</Link>
-              <Link href="/docs/sdk"      className="mkt-nav-link hidden sm:block">sdk</Link>
-              <Link href="/how-it-works"  className="mkt-nav-link hidden sm:block">how it works</Link>
-              <Link href="/submit-mcp"    className="mkt-nav-link hidden sm:block">submit mcp</Link>
-              <Link href="/#pricing"      className="mkt-nav-link hidden sm:block">pricing</Link>
-              <span className="hidden sm:inline-flex">
-                <Btn variant="emerald" href="/signup">get api key</Btn>
-              </span>
-              <MarketingMobileNav />
-            </div>
-          </nav>
-        </div>
+        <MarketingHeader />
 
         <div className="max-w-[1200px] mx-auto px-4 sm:px-8">
           {children}
