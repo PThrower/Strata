@@ -93,14 +93,14 @@ export default function DependencyGraphClient({
     return true
   })
 
-  const card    = 'bg-white dark:bg-zinc-900 rounded-lg border border-border'
+  const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }
   const tabBase = 'px-3 py-1.5 text-xs rounded-md border transition-colors'
 
   // ── Empty state ─────────────────────────────────────────────────────────────
 
   if (graph.nodes.length === 0) {
     return (
-      <div className={`${card} p-12 text-center`}>
+      <div style={{ ...CARD, padding: 48, textAlign: 'center' }}>
         <p className="text-base font-medium mb-2">No dependency data yet.</p>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
           Your agents haven&apos;t logged any MCP server activity in the selected period.
@@ -121,7 +121,7 @@ export default function DependencyGraphClient({
           { label: 'Circuit broken',   value: graph.summary.circuit_broken_count, color: '#ef4444' },
           { label: 'Data flows',       value: graph.summary.total_edges,          color: 'rgba(255,255,255,0.5)' },
         ].map(({ label, value, color }) => (
-          <div key={label} className={`${card} px-4 py-3`}>
+          <div key={label} style={{ ...CARD, padding: '12px 16px' }}>
             <p className="text-xs text-muted-foreground mb-1">{label}</p>
             <p style={{ fontSize: 24, fontWeight: 600, color, fontVariantNumeric: 'tabular-nums' }}>{value}</p>
           </div>
@@ -130,7 +130,7 @@ export default function DependencyGraphClient({
 
       {/* ── No edges hint ── */}
       {graph.summary.no_edges && graph.nodes.length > 0 && (
-        <div className={`${card} px-4 py-3 mb-4 flex items-center gap-3 text-sm`}>
+        <div className="flex items-center gap-3 text-sm mb-4" style={{ ...CARD, padding: '12px 16px' }}>
           <span className="text-muted-foreground">
             No data flows recorded yet — showing server inventory only.
             Call{' '}
@@ -209,7 +209,7 @@ export default function DependencyGraphClient({
       {/* ── Graph view ── */}
       {view === 'graph' && (
         <div className="flex gap-4 items-start">
-          <div className={`${card} flex-1 min-w-0 p-3`}>
+          <div className="flex-1 min-w-0" style={{ ...CARD, padding: 12 }}>
             <GraphSvg
               nodes={graph.nodes}
               edges={graph.edges}
@@ -254,7 +254,7 @@ export default function DependencyGraphClient({
             </span>
           </div>
 
-          <div className={`${card} overflow-x-auto`}>
+          <div style={{ ...CARD, overflowX: 'auto' }}>
             <table className="w-full text-sm">
               <thead className="text-left border-b border-border">
                 <tr className="text-xs text-muted-foreground uppercase tracking-wider">

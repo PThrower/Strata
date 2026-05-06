@@ -40,7 +40,7 @@ export default function CircuitBreakersClient({ initialBreakers }: { initialBrea
   const [error, setError]               = useState<string | null>(null)
   const [isPending, startTransition]    = useTransition()
 
-  const card = 'bg-white dark:bg-zinc-900 rounded-lg border border-border'
+  const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }
 
   function handleReset(row: BreakerRow) {
     setResetTarget(row)
@@ -101,7 +101,7 @@ export default function CircuitBreakersClient({ initialBreakers }: { initialBrea
           { label: 'Blocking you',   count: activeCount,     color: '#f59e0b'              },
           { label: 'Your resets',    count: resetCount,      color: 'var(--emerald-glow)'  },
         ].map(({ label, count, color }) => (
-          <div key={label} className={`${card} px-4 py-3`}>
+          <div key={label} style={{ ...CARD, padding: '12px 16px' }}>
             <p className="text-xs text-muted-foreground mb-1">{label}</p>
             <p style={{ fontSize: 24, fontWeight: 600, color, fontVariantNumeric: 'tabular-nums' }}>
               {count}
@@ -116,7 +116,7 @@ export default function CircuitBreakersClient({ initialBreakers }: { initialBrea
 
       {/* ── Empty state ── */}
       {breakers.length === 0 ? (
-        <div className={`${card} p-12 flex flex-col items-center text-center`}>
+        <div style={{ ...CARD, padding: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           <p className="text-base font-medium mb-2">No circuit breakers tripped.</p>
           <p className="text-sm text-muted-foreground">
             Strata automatically trips circuit breakers when a connected server is quarantined,
@@ -124,7 +124,7 @@ export default function CircuitBreakersClient({ initialBreakers }: { initialBrea
           </p>
         </div>
       ) : (
-        <div className={`${card} overflow-x-auto`}>
+        <div style={{ ...CARD, overflowX: 'auto' }}>
           <table className="w-full text-sm">
             <thead className="text-left border-b border-border">
               <tr className="text-xs text-muted-foreground uppercase tracking-wider">

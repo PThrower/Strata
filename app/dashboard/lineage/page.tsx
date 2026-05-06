@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server'
 import { shortServerLabel } from '@/lib/lineage'
 import type { LineageRiskLevel } from '@/lib/lineage'
+import { RiskBadge } from '../_components/RiskBadge'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,30 +37,20 @@ function relativeTime(iso: string): string {
   return d < 30 ? `${d}d ago` : new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-const RISK_STYLES: Record<string, string> = {
-  low:      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
-  medium:   'bg-amber-100   text-amber-700   dark:bg-amber-900/40   dark:text-amber-400',
-  high:     'bg-red-100     text-red-700     dark:bg-red-900/40     dark:text-red-400',
-  critical: 'bg-red-100     text-red-700     dark:bg-red-900/50     dark:text-red-300 font-bold ring-1 ring-red-500/40',
-}
-
-function RiskBadge({ level }: { level: LineageRiskLevel | null }) {
-  const r = level ?? 'low'
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${RISK_STYLES[r] ?? RISK_STYLES.low}`}>
-      {r}
-    </span>
-  )
+const CARD: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.03)',
+  border: '1px solid rgba(255,255,255,0.07)',
+  borderRadius: 12,
 }
 
 function TagChips({ tags }: { tags: string[] | null }) {
-  if (!tags || tags.length === 0) return <span className="text-zinc-500">—</span>
+  if (!tags || tags.length === 0) return <span style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)', fontSize: 11 }}>—</span>
   return (
-    <div className="flex flex-wrap gap-1">
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
       {tags.map((t) => (
         <span
           key={t}
-          className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+          style={{ display: 'inline-flex', alignItems: 'center', padding: '1px 6px', borderRadius: 4, fontSize: 10, fontFamily: 'var(--font-mono)', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)' }}
         >
           {t}
         </span>
@@ -132,8 +123,6 @@ export default async function LineagePage({
     .eq('dest_has_net_egress', true)
     .gte('created_at', sevenDaysAgo)
 
-  const card = 'bg-white dark:bg-zinc-900 rounded-lg border border-border'
-
   const sessionChain = sessionFilter && flows.length > 0 ? buildSessionChain(flows) : null
 
   // Build current-filter href helpers for pagination links.
@@ -203,7 +192,7 @@ export default async function LineagePage({
 
       {/* ── Session chain ─────────────────────────────────────────────────── */}
       {sessionChain && sessionChain.length > 1 && (
-        <div className={`${card} px-4 py-3 mb-4`}>
+        <div style={{ ...CARD, padding: '12px 16px', marginBottom: 16 }}>
           <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wider font-medium">Session traversal</p>
           <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs">
             {sessionChain.map((h, i) => (
@@ -218,7 +207,7 @@ export default async function LineagePage({
 
       {/* ── Empty state ────────────────────────────────────────────────────── */}
       {flows.length === 0 ? (
-        <div className={`${card} p-12 flex flex-col items-center text-center`}>
+        <div style={{ ...CARD, padding: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           <p className="text-base font-medium mb-2">
             {egressOnly ? 'No net-egress flows found.' : sessionFilter ? 'No flows in this session.' : 'No lineage recorded yet.'}
           </p>
@@ -239,10 +228,10 @@ export default async function LineagePage({
         </div>
       ) : (
         <>
-          <div className={`${card} overflow-x-auto`}>
+          <div style={{ ...CARD, overflowX: 'auto' }}>
             <table className="w-full text-sm">
-              <thead className="text-left border-b border-border">
-                <tr className="text-xs text-muted-foreground uppercase tracking-wider">
+              <thead style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                <tr style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
                   <th className="px-4 py-3 font-medium">Time</th>
                   <th className="px-4 py-3 font-medium">Flow</th>
                   <th className="px-4 py-3 font-medium">Session</th>
@@ -253,7 +242,7 @@ export default async function LineagePage({
               </thead>
               <tbody>
                 {flows.map((f) => (
-                  <tr key={f.id} className="border-b border-border last:border-0">
+                  <tr key={f.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap text-xs" title={f.created_at}>
                       {relativeTime(f.created_at)}
                     </td>

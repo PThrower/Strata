@@ -146,7 +146,7 @@ export default function PoliciesClient({ initialPolicies }: { initialPolicies: P
     }
   }, [])
 
-  const card = 'bg-white dark:bg-zinc-900 rounded-lg border border-border'
+  const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }
   const btnBase = 'text-xs px-3 py-1.5 rounded-md border transition-colors disabled:opacity-50'
   const btnPrimary = `${btnBase} bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700`
   const btnGhost   = `${btnBase} bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 text-muted-foreground hover:text-foreground`
@@ -241,7 +241,7 @@ export default function PoliciesClient({ initialPolicies }: { initialPolicies: P
 
       {/* ── Create / Edit Form ───────────────────────────────────────────────── */}
       {showForm && (
-        <div className={`${card} p-6 mb-6`}>
+        <div style={{ ...CARD, padding: 24, marginBottom: 24 }}>
           <h2 className="text-sm font-medium mb-4">{editId ? 'Edit Rule' : 'New Rule'}</h2>
           <div className="space-y-4">
             {/* Name */}
@@ -373,7 +373,7 @@ export default function PoliciesClient({ initialPolicies }: { initialPolicies: P
 
       {/* ── Empty State ──────────────────────────────────────────────────────── */}
       {policies.length === 0 && !showForm ? (
-        <div className={`${card} p-12 flex flex-col items-center text-center`}>
+        <div style={{ ...CARD, padding: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           <p className="text-base font-medium mb-2">No policies defined.</p>
           <p className="text-sm text-muted-foreground mb-6">Your agents can connect to any server. Create a rule to restrict access.</p>
           <div className="flex flex-wrap gap-3 justify-center">
@@ -386,7 +386,7 @@ export default function PoliciesClient({ initialPolicies }: { initialPolicies: P
           </div>
         </div>
       ) : policies.length > 0 ? (
-        <div className={`${card} overflow-x-auto`}>
+        <div style={{ ...CARD, overflowX: 'auto' }}>
           <table className="w-full text-sm">
             <thead className="text-left border-b border-border">
               <tr className="text-xs text-muted-foreground uppercase tracking-wider">

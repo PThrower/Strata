@@ -51,7 +51,7 @@ export default async function SubmissionsPage() {
 
   const submissions = (rows ?? []) as Submission[]
 
-  const card = 'bg-white dark:bg-zinc-900 rounded-lg border border-border'
+  const CARD = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto' }}>
@@ -67,7 +67,7 @@ export default async function SubmissionsPage() {
       </div>
 
       {submissions.length === 0 ? (
-        <div className={`${card} p-12 flex flex-col items-center text-center`}>
+        <div style={{ ...CARD, padding: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           <p className="text-base font-medium mb-2">You haven&apos;t submitted any content yet.</p>
           <p className="text-sm text-muted-foreground mb-6">
             Share an integration, tip, or news item with the community.
@@ -77,7 +77,7 @@ export default async function SubmissionsPage() {
           </Link>
         </div>
       ) : (
-        <div className={card}>
+        <div style={{ ...CARD, overflowX: 'auto' }}>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-xs text-muted-foreground">

@@ -132,7 +132,7 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
     setTimeout(() => setJwtCopied(false), 2000)
   }
 
-  const card = 'bg-white dark:bg-zinc-900 rounded-lg border border-border'
+  const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }
 
   return (
     <>
@@ -148,7 +148,7 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
 
       {/* ── Create form ──────────────────────────────────────────────────────── */}
       {showCreate && (
-        <div className={`${card} p-6 mb-6`}>
+        <div style={{ ...CARD, padding: 24, marginBottom: 24 }}>
           <h2 className="text-sm font-medium mb-4">New Agent Identity</h2>
           <div className="space-y-4">
             {/* Name */}
@@ -225,7 +225,7 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
 
       {/* ── Empty state ──────────────────────────────────────────────────────── */}
       {agents.length === 0 && !showCreate ? (
-        <div className={`${card} p-12 flex flex-col items-center text-center`}>
+        <div style={{ ...CARD, padding: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           <p className="text-base font-medium mb-2">No agent identities yet.</p>
           <p className="text-sm text-muted-foreground mb-6">
             Create an identity to issue a cryptographic credential for your agent.
@@ -235,7 +235,7 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
           </button>
         </div>
       ) : agents.length > 0 ? (
-        <div className={`${card} overflow-x-auto`}>
+        <div style={{ ...CARD, overflowX: 'auto' }}>
           <table className="w-full text-sm">
             <thead className="text-left border-b border-border">
               <tr className="text-xs text-muted-foreground uppercase tracking-wider">

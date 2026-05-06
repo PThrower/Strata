@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server'
 import type { RiskLevel } from '@/lib/risk'
+import { RiskBadge } from '../_components/RiskBadge'
 
 const PAGE_SIZE = 25
 
@@ -43,37 +44,26 @@ function shortServer(url: string | null): string {
   }
 }
 
-const RISK_STYLES: Record<RiskLevel, string> = {
-  low:      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
-  medium:   'bg-amber-100   text-amber-700   dark:bg-amber-900/40   dark:text-amber-400',
-  high:     'bg-red-100     text-red-700     dark:bg-red-900/40     dark:text-red-400',
-  critical: 'bg-red-100     text-red-700     dark:bg-red-900/50     dark:text-red-300 font-bold ring-1 ring-red-500/40',
-  unknown:  'bg-zinc-100    text-zinc-600    dark:bg-zinc-800       dark:text-zinc-400',
-}
-
-function RiskBadge({ level }: { level: RiskLevel | null }) {
-  const r: RiskLevel = level ?? 'unknown'
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${RISK_STYLES[r]}`}>
-      {r}
-    </span>
-  )
-}
-
 function FlagChips({ flags }: { flags: string[] | null }) {
-  if (!flags || flags.length === 0) return <span className="text-zinc-500">—</span>
+  if (!flags || flags.length === 0) return <span style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)', fontSize: 11 }}>—</span>
   return (
-    <div className="flex flex-wrap gap-1">
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
       {flags.map((f) => (
         <span
           key={f}
-          className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+          style={{ display: 'inline-flex', alignItems: 'center', padding: '1px 6px', borderRadius: 4, fontSize: 10, fontFamily: 'var(--font-mono)', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)' }}
         >
           {f}
         </span>
       ))}
     </div>
   )
+}
+
+const CARD: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.03)',
+  border: '1px solid rgba(255,255,255,0.07)',
+  borderRadius: 12,
 }
 
 export default async function LedgerPage({
@@ -105,8 +95,6 @@ export default async function LedgerPage({
   const rows = (data ?? []) as LedgerRow[]
   const total = count ?? 0
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
-  const card = 'bg-white dark:bg-zinc-900 rounded-lg border border-border'
-
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
       <div className="flex items-start justify-between mb-8">
@@ -135,7 +123,7 @@ export default async function LedgerPage({
       </div>
 
       {rows.length === 0 ? (
-        <div className={`${card} p-12 flex flex-col items-center text-center`}>
+        <div style={{ ...CARD, padding: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           <p className="text-base font-medium mb-2">No activity logged yet.</p>
           <p className="text-sm text-muted-foreground mb-6">
             Make your first API call to see it here.
@@ -146,10 +134,10 @@ export default async function LedgerPage({
         </div>
       ) : (
         <>
-          <div className={`${card} overflow-x-auto`}>
+          <div style={{ ...CARD, overflowX: 'auto' }}>
             <table className="w-full text-sm">
-              <thead className="text-left border-b border-border">
-                <tr className="text-xs text-muted-foreground uppercase tracking-wider">
+              <thead style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                <tr style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
                   <th className="px-4 py-3 font-medium">Time</th>
                   <th className="px-4 py-3 font-medium">Tool</th>
                   <th className="px-4 py-3 font-medium">Server</th>
@@ -160,7 +148,7 @@ export default async function LedgerPage({
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.id} className="border-b border-border last:border-0">
+                  <tr key={r.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap" title={r.created_at}>
                       {relativeTime(r.created_at)}
                     </td>

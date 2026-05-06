@@ -3,6 +3,14 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 
+import { RiskBadge } from '../../_components/RiskBadge'
+
+const CARD: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.03)',
+  border: '1px solid rgba(255,255,255,0.07)',
+  borderRadius: 12,
+}
+
 export interface AnomalyEvent {
   id:                   string
   event_type:           'volume_spike' | 'high_risk_surge' | 'net_egress_surge'
@@ -27,12 +35,6 @@ const EVENT_LABELS: Record<string, string> = {
   net_egress_surge: '↗ Net-egress surge',
 }
 
-const SEV_STYLES: Record<string, string> = {
-  critical: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 font-bold ring-1 ring-red-500/40',
-  high:     'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
-  medium:   'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
-  low:      'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
-}
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -93,7 +95,6 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
     })
   }
 
-  const card    = 'bg-white dark:bg-zinc-900 rounded-lg border border-border'
   const tabBase = 'px-3 py-1.5 text-xs rounded-md border transition-colors'
 
   return (
@@ -106,7 +107,7 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
           { label: 'Critical',       count: critCount,         color: '#ef4444' },
           { label: 'High',           count: highCount,         color: '#f97316' },
         ].map(({ label, count, color }) => (
-          <div key={label} className={`${card} px-4 py-3`}>
+          <div key={label} style={{ ...CARD, padding: '12px 16px' }}>
             <p className="text-xs text-muted-foreground mb-1">{label}</p>
             <p style={{ fontSize: 24, fontWeight: 600, color, fontVariantNumeric: 'tabular-nums' }}>{count}</p>
           </div>
@@ -139,7 +140,7 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
 
       {/* ── Empty state ── */}
       {filtered.length === 0 ? (
-        <div className={`${card} p-12 flex flex-col items-center text-center`}>
+        <div style={{ ...CARD, padding: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           <p className="text-base font-medium mb-2">
             {filter === 'unacknowledged'
               ? 'No unacknowledged anomalies.'
@@ -152,10 +153,10 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
           </p>
         </div>
       ) : (
-        <div className={`${card} overflow-x-auto`}>
+        <div style={{ ...CARD, overflowX: 'auto' }}>
           <table className="w-full text-sm">
-            <thead className="text-left border-b border-border">
-              <tr className="text-xs text-muted-foreground uppercase tracking-wider">
+            <thead style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <tr style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
                 <th className="px-4 py-3 font-medium">Time</th>
                 <th className="px-4 py-3 font-medium">Type</th>
                 <th className="px-4 py-3 font-medium">Severity</th>
@@ -169,7 +170,7 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
               {filtered.map(event => (
                 <tr
                   key={event.id}
-                  className={`border-b border-border last:border-0 ${event.acknowledged ? 'opacity-50' : ''}`}
+                  style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', opacity: event.acknowledged ? 0.5 : 1 }}
                 >
                   <td
                     className="px-4 py-3 text-muted-foreground whitespace-nowrap text-xs"
@@ -178,14 +179,12 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
                     {relativeTime(event.created_at)}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontFamily: 'var(--font-mono)', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.65)' }}>
                       {EVENT_LABELS[event.event_type] ?? event.event_type}
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${SEV_STYLES[event.severity] ?? SEV_STYLES.low}`}>
-                      {event.severity}
-                    </span>
+                    <RiskBadge level={event.severity} />
                   </td>
                   <td className="px-4 py-3 font-mono text-xs font-semibold text-foreground whitespace-nowrap">
                     {event.multiplier.toFixed(1)}×

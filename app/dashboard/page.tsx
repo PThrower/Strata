@@ -2,289 +2,477 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server'
 import { FREE_LIMIT, PRO_LIMIT } from '@/lib/api-auth'
-import { Glass } from '@/components/ui/glass'
 import ApiKeyCard from './_components/api-key-card'
-import UpgradeCTA from './_components/upgrade-cta'
 import { UsageBar } from './_components/UsageBar'
+import { RiskBadge } from './_components/RiskBadge'
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 type DashboardProfile = {
-  id: string
-  api_key: string
-  tier: string
-  calls_used: number
-  calls_reset_at: string | null
-  lifetime_pro: boolean
+  id: string; api_key: string; tier: string
+  calls_used: number; calls_reset_at: string | null; lifetime_pro: boolean
 }
 
-type ApiRequest = {
-  id: string
-  tool: string
-  ecosystem: string
-  status_code: number
-  created_at: string
+type LedgerRow = {
+  id: string; tool_called: string; server_url: string | null
+  risk_level: string | null; created_at: string
 }
 
-function formatResetDate(iso: string | null): string {
-  if (!iso) return 'N/A'
-  return new Date(iso).toLocaleDateString('en-US', {
-    month: 'long', day: 'numeric', year: 'numeric',
-  })
+type ThreatRow = {
+  id: string; event_type: string; severity: string
+  server_url: string | null; server_name: string | null
+  detail: string | null; created_at: string
 }
 
-function formatRequestTime(iso: string): string {
-  return new Date(iso).toLocaleString('en-US', {
-    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-  })
+type PolicyRow = {
+  id: string; name: string; action: string
+  match_capability_flags: string[] | null
+  match_risk_level_gte: string | null
+  match_tool_names: string[] | null
 }
 
-const eyebrow: React.CSSProperties = {
-  fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 500,
-  letterSpacing: '0.15em', textTransform: 'uppercase',
-  color: 'var(--ink-faint)', margin: '0 0 8px',
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const s = Math.floor(diff / 1000)
+  if (s < 60)  return `${s}s ago`
+  const m = Math.floor(s / 60)
+  if (m < 60)  return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24)  return `${h}h ago`
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
+
+function safeHostname(url: string | null): string {
+  if (!url) return '—'
+  try { return new URL(url).hostname } catch { return url }
+}
+
+function policyCondition(p: PolicyRow): string {
+  const parts: string[] = []
+  if (p.match_capability_flags?.length) parts.push(p.match_capability_flags.slice(0, 2).join(', '))
+  if (p.match_risk_level_gte) parts.push(`risk ≥ ${p.match_risk_level_gte}`)
+  if (p.match_tool_names?.length) parts.push(`tool: ${p.match_tool_names[0]}`)
+  return parts.join(' · ') || '(any)'
+}
+
+const THREAT_LABELS: Record<string, string> = {
+  quarantine_added:      '⛔ Quarantined',
+  quarantine_removed:    '✓ Unquarantined',
+  capability_flag_added: '🚩 Flag added',
+  score_critical_drop:   '📉 Score critical',
+  score_significant_drop:'📉 Score drop',
+  injection_detected:    '💉 Injection',
+}
+
+// ── Chip component ────────────────────────────────────────────────────────────
+
+const CHIP_BASE: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+  padding: '4px 12px', borderRadius: 6,
+  fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 400,
+  textDecoration: 'none', whiteSpace: 'nowrap', border: '1px solid',
+  cursor: 'pointer',
+}
+
+const CHIP_ZINC: React.CSSProperties = {
+  ...CHIP_BASE,
+  background: 'rgba(255,255,255,0.05)',
+  borderColor: 'rgba(255,255,255,0.10)',
+  color: 'rgba(255,255,255,0.55)',
+}
+const CHIP_EMERALD: React.CSSProperties = {
+  ...CHIP_BASE,
+  background: 'rgba(0,196,114,0.08)',
+  borderColor: 'rgba(0,196,114,0.25)',
+  color: '#00c472',
+}
+const CHIP_AMBER: React.CSSProperties = {
+  ...CHIP_BASE,
+  background: 'rgba(249,115,22,0.10)',
+  borderColor: 'rgba(249,115,22,0.30)',
+  color: '#f97316',
+}
+const CHIP_RED: React.CSSProperties = {
+  ...CHIP_BASE,
+  background: 'rgba(239,68,68,0.10)',
+  borderColor: 'rgba(239,68,68,0.30)',
+  color: '#ef4444',
+}
+
+const CARD: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.03)',
+  border: '1px solid rgba(255,255,255,0.07)',
+  borderRadius: 12, padding: 16,
+}
+
+const COL_LABEL: React.CSSProperties = {
+  fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 500,
+  letterSpacing: '0.18em', textTransform: 'uppercase',
+  color: 'rgba(255,255,255,0.35)', marginBottom: 12,
+}
+
+const SEV_DOT: Record<string, string> = {
+  critical: '#ef4444', high: '#f97316', medium: '#f59e0b', low: '#00c472',
+}
+
+const RISK_DOT: Record<string, string> = {
+  critical: '#ef4444', high: '#f97316', medium: '#f59e0b', low: '#00c472', unknown: 'rgba(255,255,255,0.25)',
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
   const userClient = await createUserClient()
   const { data: { user } } = await userClient.auth.getUser()
   if (!user) redirect('/login')
 
-  const serviceClient = createServiceRoleClient()
+  const sb = createServiceRoleClient()
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString()
 
-  const { data: profile } = await serviceClient
-    .from('profiles')
-    .select('id, api_key, tier, calls_used, calls_reset_at, lifetime_pro')
-    .eq('id', user.id)
-    .maybeSingle<DashboardProfile>()
+  // ── Round 1: independent queries ─────────────────────────────────────────
 
+  const [
+    { data: profileRow },
+    { count: serverCount },
+    { data: urlRows },
+    { count: anomalyCount },
+    { count: agentCount },
+    { data: recentPolicies, count: policyCount },
+    { data: recentLedger },
+  ] = await Promise.all([
+    sb.from('profiles')
+      .select('id, api_key, tier, calls_used, calls_reset_at, lifetime_pro')
+      .eq('id', user.id)
+      .maybeSingle<DashboardProfile>(),
+    sb.from('mcp_servers')
+      .select('id', { count: 'exact', head: true })
+      .eq('is_quarantined', false),
+    sb.from('agent_activity_ledger')
+      .select('server_url')
+      .eq('profile_id', user.id)
+      .not('server_url', 'is', null),
+    sb.from('anomaly_events')
+      .select('id', { count: 'exact', head: true })
+      .eq('profile_id', user.id)
+      .eq('acknowledged', false),
+    sb.from('agent_identities')
+      .select('id', { count: 'exact', head: true })
+      .eq('profile_id', user.id)
+      .is('revoked_at', null),
+    sb.from('policies')
+      .select('id, name, action, match_capability_flags, match_risk_level_gte, match_tool_names', { count: 'exact' })
+      .eq('profile_id', user.id)
+      .eq('enabled', true)
+      .order('priority', { ascending: true })
+      .limit(5),
+    sb.from('agent_activity_ledger')
+      .select('id, tool_called, server_url, risk_level, created_at')
+      .eq('profile_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5),
+  ])
+
+  const profile = profileRow
   if (!profile) redirect('/login')
 
-  const { data: recentRequests } = await serviceClient
-    .from('api_requests')
-    .select('id, tool, ecosystem, status_code, created_at')
-    .eq('api_key', profile.api_key)
-    .order('created_at', { ascending: false })
-    .limit(10)
+  const connectedUrls = [...new Set(
+    (urlRows ?? []).map((r: { server_url: string }) => r.server_url).filter(Boolean)
+  )] as string[]
 
-  // ── Anomaly ambient count ─────────────────────────────────────────────────
-  const { count: anomalyCount } = await serviceClient
-    .from('anomaly_events')
-    .select('id', { count: 'exact', head: true })
-    .eq('profile_id', user.id)
-    .eq('acknowledged', false)
+  // ── Round 2: depends on connectedUrls ─────────────────────────────────────
 
-  // ── Threat feed ambient alert ──────────────────────────────────────────────
-  // Count critical/high threats in last 7 days for servers this user has used.
-  const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString()
-  const { data: userServerUrls } = await serviceClient
-    .from('agent_activity_ledger')
-    .select('server_url')
-    .eq('profile_id', user.id)
-    .not('server_url', 'is', null)
-  const urlSet = [...new Set((userServerUrls ?? []).map((r: { server_url: string }) => r.server_url).filter(Boolean))]
-  let threatCount = 0
-  if (urlSet.length > 0) {
-    const { count } = await serviceClient
-      .from('threat_feed')
-      .select('id', { count: 'exact', head: true })
-      .in('server_url', urlSet)
-      .in('severity', ['critical', 'high'])
-      .gte('created_at', sevenDaysAgo)
-    threatCount = count ?? 0
-  }
+  const [
+    { data: recentThreats },
+    { count: threatCount },
+    { count: cbCount },
+  ] = await Promise.all([
+    connectedUrls.length > 0
+      ? sb.from('threat_feed')
+          .select('id, event_type, severity, server_url, server_name, detail, created_at')
+          .in('server_url', connectedUrls)
+          .in('severity', ['critical', 'high'])
+          .gte('created_at', sevenDaysAgo)
+          .order('created_at', { ascending: false })
+          .limit(3)
+      : Promise.resolve({ data: [], count: 0, error: null }),
+    connectedUrls.length > 0
+      ? sb.from('threat_feed')
+          .select('id', { count: 'exact', head: true })
+          .in('server_url', connectedUrls)
+          .in('severity', ['critical', 'high'])
+          .gte('created_at', sevenDaysAgo)
+      : Promise.resolve({ data: null, count: 0, error: null }),
+    connectedUrls.length > 0
+      ? sb.from('mcp_servers')
+          .select('id', { count: 'exact', head: true })
+          .eq('circuit_broken', true)
+          .in('url', connectedUrls)
+      : Promise.resolve({ data: null, count: 0, error: null }),
+  ])
 
-  const limit    = profile.tier === 'pro' ? PRO_LIMIT : FREE_LIMIT
-  const pct      = Math.min((profile.calls_used / limit) * 100, 100)
-  const resetDate = formatResetDate(profile.calls_reset_at)
-  const requests  = (recentRequests ?? []) as ApiRequest[]
+  // ── Derived values ────────────────────────────────────────────────────────
+
+  const limit     = profile.tier === 'pro' ? PRO_LIMIT : FREE_LIMIT
+  const pct       = Math.min((profile.calls_used / limit) * 100, 100)
+  const resetDate = profile.calls_reset_at
+    ? new Date(profile.calls_reset_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : 'N/A'
+
+  const threats  = (recentThreats ?? []) as ThreatRow[]
+  const policies = (recentPolicies ?? []) as PolicyRow[]
+  const ledger   = (recentLedger ?? []) as LedgerRow[]
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 style={{
-        fontFamily: 'var(--font-serif)', fontSize: 26, fontWeight: 500,
-        letterSpacing: '-0.01em', color: 'var(--ink)', margin: '0 0 24px',
-      }}>
-        Overview
-      </h1>
+    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
 
-      {/* ── Anomaly alert banner ── */}
-      {(anomalyCount ?? 0) > 0 && (
-        <div
-          className="rounded-lg px-4 py-3 mb-3 flex items-center justify-between gap-4"
-          style={{ background: 'rgba(249,115,22,0.10)', border: '1px solid rgba(249,115,22,0.30)' }}
-        >
-          <div className="flex items-center gap-2">
-            <span style={{ color: '#f97316' }}>⚡</span>
-            <p className="text-sm" style={{ color: '#fed7aa' }}>
-              <strong>{anomalyCount}</strong> unacknowledged behavioral{' '}
-              {anomalyCount === 1 ? 'anomaly' : 'anomalies'} detected in your agent activity.
-            </p>
-          </div>
-          <Link href="/dashboard/anomalies"
-            className="text-xs px-3 py-1.5 rounded-md shrink-0"
-            style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.40)', color: '#fdba74' }}>
-            View anomalies →
-          </Link>
-        </div>
-      )}
-
-      {/* ── Threat alert banner ── */}
-      {threatCount > 0 && (
-        <div
-          className="rounded-lg px-4 py-3 mb-5 flex items-center justify-between gap-4"
-          style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)' }}
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-red-400">⚠</span>
-            <p className="text-sm text-red-300">
-              <strong>{threatCount}</strong> server{threatCount === 1 ? '' : 's'} you&apos;ve connected to
-              {threatCount === 1 ? ' has' : ' have'} a new critical or high threat in the last 7 days.
-            </p>
-          </div>
-          <Link href="/dashboard/threats" className="text-xs px-3 py-1.5 rounded-md shrink-0"
-            style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.40)', color: '#fca5a5' }}>
-            View threats →
-          </Link>
-        </div>
-      )}
-
-      {/* ── Stat cards ── */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <Glass shimmer className="dash-stagger-card dash-card-hover" data-astro-anchor="stat-calls" style={{ padding: 16, animationDelay: '0ms' }}>
-          <p style={eyebrow}>api calls this month</p>
-          <p style={{ fontSize: 20, fontWeight: 600, color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
-            {profile.calls_used.toLocaleString()}{' '}
-            <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--ink-muted)' }}>
-              / {limit.toLocaleString()}
-            </span>
-          </p>
-        </Glass>
-
-        <Glass shimmer className="dash-stagger-card dash-card-hover" data-astro-anchor="stat-tier" style={{ padding: 16, animationDelay: '60ms' }}>
-          <p style={eyebrow}>current tier</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center',
-              padding: '2px 10px', borderRadius: 999,
-              fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 500,
-              background: profile.tier === 'pro'
-                ? 'rgba(0,196,114,0.12)'
-                : 'rgba(255,255,255,0.08)',
-              color: profile.tier === 'pro' ? '#00c472' : 'var(--ink-muted)',
-            }}>
-              {profile.tier === 'pro' ? 'Pro' : 'Free'}
-            </span>
-            {profile.lifetime_pro && (
-              <span style={{
-                display: 'inline-flex', alignItems: 'center',
-                padding: '2px 10px', borderRadius: 999,
-                fontSize: 12, fontFamily: 'var(--font-mono)', fontWeight: 500,
-                background: 'rgba(0,196,114,0.10)',
-                color: '#00c472',
-              }}>
-                Founding Member
-              </span>
-            )}
-          </div>
-        </Glass>
+      {/* ── ZONE A: Status bar ── */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+        <Link href="/dashboard" style={CHIP_ZINC}>
+          <span>Servers</span>
+          <strong>{(serverCount ?? 2179).toLocaleString()}</strong>
+        </Link>
+        <Link href="/dashboard/agents" style={CHIP_ZINC}>
+          <span>Agents</span>
+          <strong>{agentCount ?? 0}</strong>
+        </Link>
+        <Link href="/dashboard/policies" style={CHIP_ZINC}>
+          <span>Policies</span>
+          <strong>{policyCount ?? 0}</strong>
+        </Link>
+        <Link href="/dashboard/threats" style={(threatCount ?? 0) > 0 ? CHIP_RED : CHIP_EMERALD}>
+          <span>Threats 7d</span>
+          <strong>{threatCount ?? 0}</strong>
+        </Link>
+        <Link href="/dashboard/anomalies" style={(anomalyCount ?? 0) > 0 ? CHIP_AMBER : CHIP_EMERALD}>
+          <span>Anomalies</span>
+          <strong>{anomalyCount ?? 0}</strong>
+        </Link>
+        <Link href="/dashboard/circuit-breakers" style={(cbCount ?? 0) > 0 ? CHIP_RED : CHIP_EMERALD}>
+          <span>Breakers</span>
+          <strong>{cbCount ?? 0}</strong>
+        </Link>
       </div>
 
-      {/* ── Usage bar ── */}
-      <Glass className="dash-stagger-card dash-card-hover" data-astro-anchor="usage-bar" style={{ padding: 16, marginBottom: 16, animationDelay: '120ms' }}>
-        <UsageBar pct={pct} resetDate={resetDate} />
-      </Glass>
+      {/* ── ZONE B: Three column grid ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 14 }} className="hud-grid">
+        <style>{`@media(max-width:900px){.hud-grid{grid-template-columns:1fr!important}}`}</style>
 
-      {/* ── API Key ── */}
-      <Glass className="dash-stagger-card dash-card-hover" style={{ padding: 16, marginBottom: 16, animationDelay: '180ms' }}>
-        <p style={{ ...eyebrow, marginBottom: 12 }}>api key</p>
-        <ApiKeyCard apiKey={profile.api_key} />
-      </Glass>
+        {/* Column 1: Threat Intelligence */}
+        <div style={CARD}>
+          <p style={COL_LABEL}>Threat Intelligence</p>
 
-      {/* ── Upgrade CTA (free tier only) ── */}
-      {profile.tier === 'free' && (
-        <Glass className="dash-stagger-card dash-card-hover" style={{ padding: 16, marginBottom: 16, animationDelay: '240ms' }}>
-          <UpgradeCTA />
-        </Glass>
-      )}
-
-      {/* ── Submit MCP ── */}
-      <Glass className="dash-stagger-card dash-card-hover" data-astro-anchor="submit-mcp" style={{ padding: 16, marginBottom: 16, animationDelay: '240ms' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-          <div>
-            <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)', marginBottom: 4 }}>
-              Submit an MCP server
+          {/* Recent threats */}
+          {threats.length === 0 ? (
+            <p style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: '#00c472', marginBottom: 12 }}>
+              ✓ No recent threats
             </p>
-            <p style={{ fontSize: 12, color: 'var(--ink-muted)' }}>
-              Add your server directly to the Strata directory — no waiting for awesome-mcp-servers.
-            </p>
+          ) : (
+            <div style={{ marginBottom: 12 }}>
+              {threats.map(t => (
+                <div key={t.id} style={{
+                  display: 'flex', alignItems: 'flex-start', gap: 8,
+                  paddingBottom: 8, marginBottom: 8,
+                  borderBottom: '1px solid rgba(255,255,255,0.05)',
+                }}>
+                  <span style={{
+                    width: 6, height: 6, borderRadius: '50%', flexShrink: 0, marginTop: 4,
+                    background: SEV_DOT[t.severity] ?? '#6b7280',
+                  }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.75)', marginBottom: 2 }}>
+                      {THREAT_LABELS[t.event_type] ?? t.event_type}
+                    </p>
+                    <p style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {safeHostname(t.server_url)} · {relativeTime(t.created_at)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              <Link href="/dashboard/threats" style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#00c472', textDecoration: 'none' }}>
+                View all →
+              </Link>
+            </div>
+          )}
+
+          {/* Anomalies */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, marginTop: 4 }}>
+            {(anomalyCount ?? 0) > 0 ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <p style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: '#f97316' }}>
+                  ⚡ {anomalyCount} unacknowledged
+                </p>
+                <Link href="/dashboard/anomalies" style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#f97316', textDecoration: 'none' }}>
+                  View →
+                </Link>
+              </div>
+            ) : (
+              <p style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: '#00c472' }}>✓ No anomalies</p>
+            )}
           </div>
+
+          {/* Circuit breakers */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, marginTop: 10 }}>
+            {(cbCount ?? 0) > 0 ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <p style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: '#ef4444' }}>
+                  🔴 {cbCount} breaker{cbCount === 1 ? '' : 's'} tripped
+                </p>
+                <Link href="/dashboard/circuit-breakers" style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#ef4444', textDecoration: 'none' }}>
+                  View →
+                </Link>
+              </div>
+            ) : (
+              <p style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: '#00c472' }}>✓ No breakers tripped</p>
+            )}
+          </div>
+        </div>
+
+        {/* Column 2: Agent Activity */}
+        <div style={CARD}>
+          <p style={COL_LABEL}>Agent Activity</p>
+
+          {/* API usage */}
+          <div style={{ marginBottom: 14 }}>
+            <UsageBar pct={pct} resetDate={resetDate} />
+          </div>
+
+          {/* Recent ledger */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, marginBottom: 10 }}>
+            {ledger.length === 0 ? (
+              <p style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.30)', marginBottom: 8 }}>
+                No activity yet
+              </p>
+            ) : (
+              <div>
+                {ledger.map(row => (
+                  <div key={row.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    paddingBottom: 6, marginBottom: 6,
+                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                  }}>
+                    <span style={{
+                      width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                      background: RISK_DOT[row.risk_level ?? 'unknown'] ?? RISK_DOT.unknown,
+                    }} />
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'rgba(255,255,255,0.65)', flex: '0 0 auto', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {row.tool_called}
+                    </span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(255,255,255,0.30)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {safeHostname(row.server_url)}
+                    </span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(255,255,255,0.25)', flexShrink: 0 }}>
+                      {relativeTime(row.created_at)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)' }}>
+                {agentCount ?? 0} active agent{agentCount === 1 ? '' : 's'}
+              </span>
+              <Link href="/dashboard/ledger" style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#00c472', textDecoration: 'none' }}>
+                View ledger →
+              </Link>
+            </div>
+          </div>
+
+          {/* API key */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10 }}>
+            <p style={{ ...COL_LABEL, marginBottom: 8 }}>API key</p>
+            <ApiKeyCard apiKey={profile.api_key} />
+          </div>
+        </div>
+
+        {/* Column 3: Policy Status */}
+        <div style={CARD}>
+          <p style={COL_LABEL}>Policy Status</p>
+
+          {policies.length === 0 ? (
+            <>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.40)', lineHeight: 1.6, marginBottom: 12 }}>
+                No policies yet. Create rules to enforce safe behavior — block shell_exec, gate high-risk servers, enforce time windows.
+              </p>
+              <Link href="/dashboard/policies" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+                fontFamily: 'var(--font-mono)', fontSize: 12, color: '#00c472', textDecoration: 'none',
+              }}>
+                + Create policy →
+              </Link>
+            </>
+          ) : (
+            <>
+              {policies.map(p => (
+                <div key={p.id} style={{
+                  display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8,
+                  paddingBottom: 8, marginBottom: 8,
+                  borderBottom: '1px solid rgba(255,255,255,0.05)',
+                }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'rgba(255,255,255,0.75)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {p.name}
+                    </p>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>
+                      {policyCondition(p)}
+                    </p>
+                  </div>
+                  <span style={{
+                    fontFamily: 'var(--font-mono)', fontSize: 10, fontWeight: 600, flexShrink: 0,
+                    padding: '2px 6px', borderRadius: 4,
+                    background: p.action === 'block' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)',
+                    color: p.action === 'block' ? '#ef4444' : '#f59e0b',
+                  }}>
+                    {p.action}
+                  </span>
+                </div>
+              ))}
+              <Link href="/dashboard/policies" style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#00c472', textDecoration: 'none' }}>
+                View all {policyCount} {policyCount === 1 ? 'policy' : 'policies'} →
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* ── ZONE C: Quick actions ── */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {[
+          { label: '+ Create Agent',       href: '/dashboard/agents' },
+          { label: '+ Add Policy',         href: '/dashboard/policies' },
+          { label: 'View Dependency Graph',href: '/dashboard/dependency-graph' },
+          { label: 'Submit MCP Server',    href: '/submit-mcp' },
+        ].map(({ label, href }) => (
           <Link
-            href="/submit-mcp"
+            key={href}
+            href={href}
             style={{
-              flexShrink: 0, fontSize: 12, fontWeight: 500,
-              padding: '6px 14px', borderRadius: 8, textDecoration: 'none',
-              background: 'rgba(0,196,114,0.15)',
-              border: '1px solid rgba(0,196,114,0.25)',
-              color: '#00c472',
+              fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 400,
+              padding: '7px 14px', borderRadius: 8, textDecoration: 'none',
+              border: '1px solid rgba(255,255,255,0.12)',
+              background: 'rgba(255,255,255,0.04)',
+              color: 'rgba(255,255,255,0.65)',
             }}
           >
-            Submit →
+            {label}
           </Link>
-        </div>
-      </Glass>
-
-      {/* ── Recent Requests ── */}
-      <Glass className="dash-stagger-card dash-card-hover" style={{ padding: 16, animationDelay: '300ms' }}>
-        <p style={{ ...eyebrow, marginBottom: 12 }}>recent requests</p>
-        {requests.length === 0 ? (
-          <p style={{ fontSize: 14, color: 'var(--ink-muted)' }}>
-            no api calls yet — check the{' '}
-            <Link href="/docs" style={{ color: 'var(--emerald-glow)' }}>docs</Link>
-            {' '}to get started
-          </p>
-        ) : (
-          <div className="dashboard-table-scroll">
-            <table className="dash-table w-full" style={{ minWidth: 420 }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                  {['time', 'tool', 'ecosystem', 'status'].map(col => (
-                    <th key={col} style={{
-                      textAlign: 'left', paddingBottom: 8,
-                      fontFamily: 'var(--font-mono)', fontSize: 9,
-                      fontWeight: 500, letterSpacing: '0.15em',
-                      textTransform: 'uppercase', color: 'var(--ink-faint)',
-                    }}>
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {requests.map((req) => (
-                  <tr key={req.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <td style={{ padding: '8px 0', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--ink-faint)', fontVariantNumeric: 'tabular-nums' }}>
-                      {formatRequestTime(req.created_at)}
-                    </td>
-                    <td style={{ padding: '8px 8px 8px 0', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--ink-soft)' }}>
-                      {req.tool}
-                    </td>
-                    <td style={{ padding: '8px 8px 8px 0', fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--ink-soft)' }}>
-                      {req.ecosystem}
-                    </td>
-                    <td style={{ padding: '8px 0' }}>
-                      <span style={{
-                        fontSize: 12,
-                        color: req.status_code < 400 ? 'var(--emerald-glow)' : '#ef4444',
-                      }}>
-                        ● {req.status_code}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Glass>
+        ))}
+        <a
+          href="/api/compliance/report?format=json&period=90d&standard=soc2"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 400,
+            padding: '7px 14px', borderRadius: 8, textDecoration: 'none',
+            border: '1px solid rgba(255,255,255,0.12)',
+            background: 'rgba(255,255,255,0.04)',
+            color: 'rgba(255,255,255,0.65)',
+          }}
+        >
+          Export SOC 2 ↗
+        </a>
+      </div>
     </div>
   )
 }
