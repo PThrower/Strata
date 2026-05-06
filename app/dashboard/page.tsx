@@ -65,6 +65,13 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(10)
 
+  // ── Anomaly ambient count ─────────────────────────────────────────────────
+  const { count: anomalyCount } = await serviceClient
+    .from('anomaly_events')
+    .select('id', { count: 'exact', head: true })
+    .eq('profile_id', user.id)
+    .eq('acknowledged', false)
+
   // ── Threat feed ambient alert ──────────────────────────────────────────────
   // Count critical/high threats in last 7 days for servers this user has used.
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString()
@@ -98,6 +105,27 @@ export default async function DashboardPage() {
       }}>
         Overview
       </h1>
+
+      {/* ── Anomaly alert banner ── */}
+      {(anomalyCount ?? 0) > 0 && (
+        <div
+          className="rounded-lg px-4 py-3 mb-3 flex items-center justify-between gap-4"
+          style={{ background: 'rgba(249,115,22,0.10)', border: '1px solid rgba(249,115,22,0.30)' }}
+        >
+          <div className="flex items-center gap-2">
+            <span style={{ color: '#f97316' }}>⚡</span>
+            <p className="text-sm" style={{ color: '#fed7aa' }}>
+              <strong>{anomalyCount}</strong> unacknowledged behavioral{' '}
+              {anomalyCount === 1 ? 'anomaly' : 'anomalies'} detected in your agent activity.
+            </p>
+          </div>
+          <Link href="/dashboard/anomalies"
+            className="text-xs px-3 py-1.5 rounded-md shrink-0"
+            style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.40)', color: '#fdba74' }}>
+            View anomalies →
+          </Link>
+        </div>
+      )}
 
       {/* ── Threat alert banner ── */}
       {threatCount > 0 && (

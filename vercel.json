@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    { "path": "/api/v1/anomalies/detect", "schedule": "0 * * * *" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
