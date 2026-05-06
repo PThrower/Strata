@@ -294,9 +294,17 @@ function buildReport(
   })).sort((a, b) => b.call_count - a.call_count)
 
   // ── Tamper evidence note ─────────────────────────────────────────────────────
-  const tamperNote = sample.length < rows.length
-    ? `Spot-check of last ${sample.length.toLocaleString()} rows (most recent). Full verification available on request.`
-    : `All ${sample.length.toLocaleString()} rows in period verified.`
+  const sampleSize = sample.length
+  let tamperNote: string
+  if (failed > 0 && verified === 0) {
+    tamperNote = `All ${sampleSize.toLocaleString()} rows in sample have non-matching signatures. Rows written before 2026-05-07 have partial HMAC coverage and will show as failed — this is expected, not tampering. Run verifyLedgerRow() against specific rows of concern.`
+  } else if (failed > 0 && verified > 0) {
+    tamperNote = `Spot-check complete: ${verified.toLocaleString()} verified, ${failed.toLocaleString()} with non-matching signatures (may include pre-2026-05-07 rows with partial HMAC coverage), ${unverified.toLocaleString()} unsigned.`
+  } else if (failed === 0 && unverified === 0) {
+    tamperNote = `All ${verified.toLocaleString()} rows in sample verified — ledger integrity confirmed.`
+  } else {
+    tamperNote = `${verified.toLocaleString()} verified, ${unverified.toLocaleString()} unsigned (rows written before LEDGER_SIGNING_KEY was configured).`
+  }
 
   const tamperEvidence: ComplianceReport['tamper_evidence'] = {
     total_rows:               total,
