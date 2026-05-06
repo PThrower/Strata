@@ -298,7 +298,7 @@ export default function HowItWorksPage() {
               criterion are rejected.
             </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 16 }}>
+            <div className="hiw-inner-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 16 }}>
               {[
                 { title: 'Ecosystem relevance', body: 'Directly relevant to developers using this ecosystem — not passing mentions or tangential content.' },
                 { title: 'Accuracy',             body: 'Not misleading, outdated, or contradicted by official sources.' },
@@ -312,7 +312,7 @@ export default function HowItWorksPage() {
               ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginTop: 14 }}>
+            <div className="hiw-inner-3col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginTop: 14 }}>
               {[
                 { label: 'High confidence', outcome: 'published automatically', bg: 'linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 35%, rgba(95,176,133,0.09) 70%, rgba(95,176,133,0.17) 100%)', text: 'var(--emerald-glow)' },
                 { label: 'Medium confidence', outcome: 'flagged for review',     bg: 'linear-gradient(135deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.06) 35%, rgba(245,158,11,0.09) 70%, rgba(245,158,11,0.17) 100%)', text: '#f59e0b' },

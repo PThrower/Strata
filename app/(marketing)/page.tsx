@@ -742,7 +742,7 @@ export default async function LandingPage() {
               <span aria-hidden="true" style={{ width: 24, height: 1, background: 'rgba(255,255,255,0.25)', display: 'inline-block' }} />
             </p>
 
-            <h2 style={{
+            <h2 className="community-heading" style={{
               fontFamily: 'var(--font-serif)', fontSize: 48, fontWeight: 500,
               letterSpacing: '-0.025em', lineHeight: 1.08,
               color: 'var(--ink)', margin: '0 0 22px',
@@ -799,21 +799,21 @@ export default async function LandingPage() {
         borderTop: '1px solid var(--hair)', borderBottom: '1px solid var(--hair)',
         padding: '64px 0', textAlign: 'center',
       }}>
-        <p style={{
+        <p className="slogan-block-p" style={{
           fontFamily: 'var(--font-serif)', fontWeight: 500, fontSize: 56,
           lineHeight: 1.02, letterSpacing: '-0.025em', margin: '0 0 4px',
           color: 'var(--ink)',
         }}>
           Know what&rsquo;s connected.
         </p>
-        <p style={{
+        <p className="slogan-block-p" style={{
           fontFamily: 'var(--font-serif)', fontWeight: 500, fontSize: 56,
           lineHeight: 1.02, letterSpacing: '-0.025em', margin: '0 0 4px',
           fontStyle: 'italic', color: '#00c472',
         }}>
           Block what&rsquo;s dangerous.
         </p>
-        <p style={{
+        <p className="slogan-block-p" style={{
           fontFamily: 'var(--font-serif)', fontWeight: 500, fontSize: 56,
           lineHeight: 1.02, letterSpacing: '-0.025em', margin: 0,
           color: 'var(--ink)',

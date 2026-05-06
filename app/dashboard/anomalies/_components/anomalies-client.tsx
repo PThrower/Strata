@@ -104,7 +104,7 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
   return (
     <>
       {/* ── Summary cards ── */}
-      <div className="grid grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         {[
           { label: 'Total',          count: events.length,     color: 'var(--foreground)' },
           { label: 'Unacknowledged', count: unackedCount,      color: '#f97316' },

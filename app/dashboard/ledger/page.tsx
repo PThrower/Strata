@@ -93,7 +93,7 @@ export default async function LedgerPage({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-start justify-between mb-8 page-header-flex">
         <div>
           <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '44px', fontWeight: 400, letterSpacing: '-0.022em', color: '#ffffff', margin: '0 0 8px' }}>Activity Ledger</h1>
           <p className="text-sm text-muted-foreground">

@@ -143,7 +143,7 @@ export default async function LineagePage({
       {/* ── Risk banner ────────────────────────────────────────────────────── */}
       {(egressCount ?? 0) > 0 && !egressOnly && !sessionFilter && (
         <div
-          className="rounded-lg px-4 py-3 mb-5 flex items-center justify-between gap-4"
+          className="rounded-lg px-4 py-3 mb-5 flex flex-wrap items-center justify-between gap-4"
           style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)' }}
         >
           <div className="flex items-center gap-2">
@@ -164,7 +164,7 @@ export default async function LineagePage({
       )}
 
       {/* ── Filter bar ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 mb-4 text-sm">
+      <div className="flex items-center gap-3 mb-4 text-sm filter-tab-row">
         <Link
           href="/dashboard/lineage"
           className={`px-3 py-1.5 rounded-md border transition-colors ${!egressOnly && !sessionFilter ? 'border-border bg-zinc-100 dark:bg-zinc-800 font-medium' : 'border-transparent text-muted-foreground hover:text-foreground'}`}

@@ -502,7 +502,9 @@ export default function DependencyGraphClient({
             <DataFlowsSection edges={graph.edges} />
           </div>
           {selectedNode && (
-            <NodeDetailPanel node={selectedNode} edges={graph.edges} onClose={() => setSelectedUrl(null)} />
+            <div className="dep-graph-panel-wrapper">
+              <NodeDetailPanel node={selectedNode} edges={graph.edges} onClose={() => setSelectedUrl(null)} />
+            </div>
           )}
         </div>
       )}
