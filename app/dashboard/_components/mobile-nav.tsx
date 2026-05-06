@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { label: 'Ledger',      href: '/dashboard/ledger' },
   { label: 'Lineage',     href: '/dashboard/lineage' },
   { label: 'Agents',      href: '/dashboard/agents' },
+  { label: 'Policies',    href: '/dashboard/policies' },
   { label: 'Submit',      href: '/dashboard/submit' },
   { label: 'Submissions', href: '/dashboard/submissions' },
   { label: 'Submit MCP',  href: '/submit-mcp' },
