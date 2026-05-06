@@ -97,6 +97,57 @@ export async function POST(req: Request) {
     (args) => handleToolCall('find_mcp_servers', args as Record<string, unknown>, req),
   )
 
+  server.registerTool(
+    'verify_payment_endpoint',
+    {
+      description: TOOL_DEFINITIONS[6].description,
+      inputSchema: {
+        url: z.string().describe("The full https:// URL of the payment endpoint to verify. Must return HTTP 402 with x402 payment details. Example: 'https://api.example.com/premium-data'"),
+      },
+    },
+    (args) => handleToolCall('verify_payment_endpoint', args as Record<string, unknown>, req),
+  )
+
+  server.registerTool(
+    'track_data_flow',
+    {
+      description: TOOL_DEFINITIONS[7].description,
+      inputSchema: {
+        source_server: z.string().describe('https:// URL of the server data was READ from.'),
+        dest_server: z.string().describe('https:// URL of the server data was SENT to.'),
+        session_id: z.string().optional().describe('Optional. Opaque run/trace ID that groups related flows together (e.g. a LangChain run_id or your own UUID). All flows sharing a session_id appear as one agent run in the dashboard.'),
+        data_tags: z.array(z.string()).optional().describe("Optional. Classify what kind of data moved. Allowed values: 'pii', 'credentials', 'financial', 'internal'. Raises the risk level when combined with net_egress on the destination."),
+        source_tool: z.string().optional().describe('Optional. Name of the tool called on the source server.'),
+        dest_tool: z.string().optional().describe('Optional. Name of the tool called on the destination server.'),
+      },
+    },
+    (args) => handleToolCall('track_data_flow', args as Record<string, unknown>, req),
+  )
+
+  server.registerTool(
+    'verify_agent_credential',
+    {
+      description: TOOL_DEFINITIONS[8].description,
+      inputSchema: {
+        credential: z.string().describe('The JWT presented by the agent in its Authorization: Bearer header.'),
+      },
+    },
+    (args) => handleToolCall('verify_agent_credential', args as Record<string, unknown>, req),
+  )
+
+  server.registerTool(
+    'get_threat_feed',
+    {
+      description: TOOL_DEFINITIONS[9].description,
+      inputSchema: {
+        since: z.string().optional().describe('Optional ISO 8601 date. Return events after this timestamp. Default: last 7 days.'),
+        affected_only: z.boolean().optional().describe('Optional. If true, return only events for servers you have connected to (based on your activity ledger). Default: false.'),
+        severity: z.string().optional().describe("Optional. Filter by severity: 'critical', 'high', 'medium', or 'low'."),
+      },
+    },
+    (args) => handleToolCall('get_threat_feed', args as Record<string, unknown>, req),
+  )
+
   for (const resource of RESOURCES) {
     server.registerResource(
       resource.name,
