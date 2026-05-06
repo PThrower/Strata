@@ -185,6 +185,7 @@ async function main() {
           capabilityFlags: analysis.capabilityFlags,
           toolInjectionMax: injection.maxScore,
           hasHostedEndpoint: analysis.hostedEndpointHint !== null,
+          dangerousToolCount: null,
           probeStatus: null, probeLatencyMs: null,
           probeDriftFromStatic: null, schemaErrors: null,
         })

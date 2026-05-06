@@ -13,6 +13,7 @@ import { getServiceClient } from './refresh/writer'
 import { scanToolDescriptions } from './refresh/runtime-tool-injection'
 import { computeRuntimeScore, type RuntimeSignals } from './refresh/runtime-score'
 import { probeMcpEndpoint, type CapabilityFlag } from '../lib/mcp-probe'
+import { scoreTools, countDangerousTools, toToolScoresPayload } from './refresh/runtime-tool-score'
 
 const BOLD   = '\x1b[1m'
 const DIM    = '\x1b[2m'
@@ -99,6 +100,14 @@ async function main() {
 
     const newInjectionMax = Math.max(injection.maxScore, row.tool_injection_max ?? 0)
 
+    // ── Per-tool scoring from live probe data (when tools were observed) ───
+    // Only compute when probe succeeded and returned tool descriptions; otherwise
+    // preserve whatever tool_scores static analysis already stored.
+    const probeToolScores = probe.status === 'ok' && probe.toolDescriptions.length > 0
+      ? scoreTools(probe.toolDescriptions)
+      : null
+    const probeDangerousCount = probeToolScores ? countDangerousTools(probeToolScores) : null
+
     // ── Re-score with live probe signals ──────────────────────────────────
     const signals: RuntimeSignals = {
       toolCount:            probe.toolCount ?? row.tool_count,
@@ -106,6 +115,7 @@ async function main() {
       capabilityFlags:      mergedFlags,
       toolInjectionMax:     newInjectionMax > 0 ? newInjectionMax : null,
       hasHostedEndpoint:    true,
+      dangerousToolCount:   probeDangerousCount,
       probeStatus:          probe.status,
       probeLatencyMs:       probe.latencyMs,
       probeDriftFromStatic: probe.driftFromStatic,
@@ -144,6 +154,11 @@ async function main() {
     // Propagate newly-discovered capability flags
     if (mergedFlags.length > (row.capability_flags ?? []).length) {
       updatePayload.capability_flags = mergedFlags
+    }
+
+    // Store per-tool scores from live probe (only when probe returned tool data)
+    if (probeToolScores) {
+      updatePayload.tool_scores = toToolScoresPayload(probeToolScores)
     }
 
     // Quarantine on injection (same safety semantics as runtime backfill)

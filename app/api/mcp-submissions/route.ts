@@ -189,6 +189,7 @@ export async function POST(req: NextRequest) {
     capabilityFlags: staticAnalysis.capabilityFlags,
     toolInjectionMax: toolInjection.maxScore,
     hasHostedEndpoint: staticAnalysis.hostedEndpointHint !== null,
+    dangerousToolCount: null,
     probeStatus: null, probeLatencyMs: null,
     probeDriftFromStatic: null, schemaErrors: null,
   })

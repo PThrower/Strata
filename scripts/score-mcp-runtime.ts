@@ -15,6 +15,7 @@ import { parseGitHubUrl, RateLimiter } from './refresh/github-security'
 import { analyzeRepoStatic } from './refresh/runtime-static'
 import { scanToolDescriptions } from './refresh/runtime-tool-injection'
 import { computeRuntimeScore, type RuntimeSignals } from './refresh/runtime-score'
+import { scoreTools, countDangerousTools, toToolScoresPayload } from './refresh/runtime-tool-score'
 
 const BOLD   = '\x1b[1m'
 const DIM    = '\x1b[2m'
@@ -128,6 +129,10 @@ async function main() {
       // Tool-description injection scan (only if we extracted any)
       const injection = await scanToolDescriptions(analysis.toolDescriptions, anthropic)
 
+      // Per-tool scoring (description-derived; complements server-level source analysis)
+      const toolScores    = scoreTools(analysis.toolDescriptions)
+      const dangerousCount = countDangerousTools(toolScores)
+
       const probe = probeMap.get(row.id) ?? null
       const signals: RuntimeSignals = {
         toolCount: analysis.toolDescriptions.length > 0 ? analysis.toolDescriptions.length : null,
@@ -135,6 +140,7 @@ async function main() {
         capabilityFlags: analysis.capabilityFlags,
         toolInjectionMax: injection.maxScore,
         hasHostedEndpoint: analysis.hostedEndpointHint !== null,
+        dangerousToolCount: dangerousCount > 0 ? dangerousCount : null,
         probeStatus:          probe ? (probe.status as RuntimeSignals['probeStatus']) : null,
         probeLatencyMs:       probe?.latency_ms        ?? null,
         probeDriftFromStatic: probe?.drift_from_static ?? null,
@@ -154,6 +160,7 @@ async function main() {
         tool_count:           analysis.toolDescriptions.length || null,
         tool_names:           analysis.toolNames.length > 0 ? analysis.toolNames : null,
         tool_injection_max:   injection.maxScore || null,
+        tool_scores:          toToolScoresPayload(toolScores),
         hosted_endpoint:      analysis.hostedEndpointHint,
         endpoint_source:      analysis.endpointSource,
         npm_package:          analysis.npmPackage,

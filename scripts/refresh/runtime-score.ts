@@ -16,6 +16,8 @@ export interface RuntimeSignals {
   capabilityFlags: CapabilityFlag[]
   toolInjectionMax: number | null
   hasHostedEndpoint: boolean
+  // Per-tool breakdown (Phase 1 Item 2) — informational only, does not affect score formula.
+  dangerousToolCount: number | null   // count of tools with risk >= medium
   // Probe (Phase 3) — null in Phase 1
   probeStatus: 'ok' | 'timeout' | 'opted_out' | 'error_transport' | 'error_protocol' | 'error_auth_required' | 'error_invalid_url' | null
   probeLatencyMs: number | null
@@ -32,6 +34,7 @@ export interface RuntimeScoreResult {
     injection: number
     probe: number
     hosted: number
+    dangerousToolCount: number | null  // informational — not part of score formula
   }
 }
 
@@ -94,6 +97,6 @@ export function computeRuntimeScore(s: RuntimeSignals): RuntimeScoreResult {
 
   return {
     score,
-    components: { base: BASE, tools, caps, injection, probe, hosted },
+    components: { base: BASE, tools, caps, injection, probe, hosted, dangerousToolCount: s.dangerousToolCount ?? null },
   }
 }
