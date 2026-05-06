@@ -6,6 +6,8 @@
 [![GitHub Action](https://img.shields.io/badge/GitHub%20Action-v1-blue)](https://github.com/marketplace/actions/strata-mcp-security-check)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+[![Strata MCP server](https://glama.ai/mcp/servers/PThrower/Strata/badges/card.svg)](https://glama.ai/mcp/servers/PThrower/Strata)
+
 Security scoring, agent identity, payment verification, data lineage, policy enforcement, and compliance reporting for AI agents and MCP servers.
 
 ---
