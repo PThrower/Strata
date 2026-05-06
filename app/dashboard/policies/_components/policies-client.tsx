@@ -146,7 +146,7 @@ export default function PoliciesClient({ initialPolicies }: { initialPolicies: P
     }
   }, [])
 
-  const CARD: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--hair)', borderRadius: 12 }
+  const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(16px) saturate(1.5)', WebkitBackdropFilter: 'blur(16px) saturate(1.5)', border: '1px solid rgba(255,255,255,0.09)', borderTopColor: 'rgba(255,255,255,0.15)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.25)', borderRadius: 12 }
   const btnBase = 'text-xs px-3 py-1.5 rounded-md border transition-colors disabled:opacity-50'
   const btnPrimary = `${btnBase} bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700`
   const btnGhost   = `${btnBase} bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 text-muted-foreground hover:text-foreground`

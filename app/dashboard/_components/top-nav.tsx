@@ -60,10 +60,11 @@ export function TopNav({ email, isAdmin }: TopNavProps) {
         position: 'sticky', top: 0, zIndex: 40,
         height: 64, display: 'flex', alignItems: 'center',
         padding: '0 20px', gap: 0, flexShrink: 0,
-        background: 'rgba(5,6,13,0.92)',
-        borderBottom: '1px solid var(--hair)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        background: 'rgba(5,6,13,0.80)',
+        borderBottom: '1px solid rgba(255,255,255,0.09)',
+        backdropFilter: 'blur(20px) saturate(1.6)',
+        WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
+        boxShadow: 'inset 0 -1px 0 rgba(255,255,255,0.04)',
       }}>
         {/* Brand */}
         <Link

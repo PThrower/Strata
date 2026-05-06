@@ -36,12 +36,19 @@ export default function NodeDetailPanel({ node, edges, onClose }: Props) {
   const inFlows  = edges.filter(e => e.dest_url   === node.url)
   const outFlows = edges.filter(e => e.source_url === node.url)
 
-  const card = 'bg-white dark:bg-zinc-900 rounded-lg border border-border'
+  const PANEL: React.CSSProperties = {
+    background: 'rgba(5,6,13,0.88)',
+    backdropFilter: 'blur(24px) saturate(1.6)',
+    WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
+    border: '1px solid rgba(255,255,255,0.09)',
+    borderTopColor: 'rgba(255,255,255,0.16)',
+    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07), 0 16px 48px rgba(0,0,0,0.40)',
+    borderRadius: 14,
+  }
 
   return (
     <div
-      className={`${card} p-4`}
-      style={{ width: 320, flexShrink: 0, maxHeight: 580, overflowY: 'auto' }}
+      style={{ ...PANEL, padding: 16, width: 320, flexShrink: 0, maxHeight: 580, overflowY: 'auto' }}
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-3">

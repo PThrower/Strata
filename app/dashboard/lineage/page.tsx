@@ -37,11 +37,7 @@ function relativeTime(iso: string): string {
   return d < 30 ? `${d}d ago` : new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-const CARD: React.CSSProperties = {
-  background: 'var(--surface)',
-  border: '1px solid var(--hair)',
-  borderRadius: 12,
-}
+const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(16px) saturate(1.5)', WebkitBackdropFilter: 'blur(16px) saturate(1.5)', border: '1px solid rgba(255,255,255,0.09)', borderTopColor: 'rgba(255,255,255,0.15)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.25)', borderRadius: 12 }
 
 function TagChips({ tags }: { tags: string[] | null }) {
   if (!tags || tags.length === 0) return <span style={{ color: 'var(--ink-faint)', fontFamily: 'var(--font-mono)', fontSize: 11 }}>—</span>
