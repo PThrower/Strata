@@ -199,6 +199,11 @@ GITHUB_TOKEN             # optional; 5,000/hr vs 60/hr for scoring scripts
 ADMIN_EMAIL
 AUDIT_HASH_PEPPER        # HMAC pepper for api_query_log IP hashing
 LEDGER_SIGNING_KEY       # HMAC-SHA256 for agent_activity_ledger. Generate: openssl rand -hex 32
+CRON_SECRET              # Secures GET /api/v1/anomalies/detect (called by Vercel hourly cron).
+                         # Generate: openssl rand -hex 32. Set in Vercel env vars.
+                         # Vercel cron sends automatically: Authorization: Bearer ${CRON_SECRET}
+                         # Manual triggers send:           X-Cron-Secret: ${CRON_SECRET}
+                         # Both are accepted (constant-time comparison). Returns 401 if missing or wrong.
 STRATA_AGENT_SIGNING_KEY # Ed25519 private key (PKCS#8 PEM). Generate:
                          #   openssl genpkey -algorithm Ed25519 | tee strata-agent-private.pem
 STRATA_AGENT_PUBLIC_KEY  # Matching SubjectPublicKeyInfo PEM.
