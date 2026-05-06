@@ -1234,3 +1234,34 @@ body {
 }
 .larry-flying svg { animation: larry-flight-bob   1.2s ease-in-out infinite; }
 .larry-idle   svg { animation: larry-idle-shuffle 3.0s ease-in-out infinite; }
+
+/* ─── Auth pages — always-dark input and form styles ─────────────────────── */
+.auth-input {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 150ms, box-shadow 150ms;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+}
+.auth-input:focus {
+  border-color: #00c472;
+  box-shadow: 0 0 0 3px rgba(0, 196, 114, 0.15);
+}
+.auth-input::placeholder {
+  color: rgba(255, 255, 255, 0.40);
+}
+/* Autofill fix — browsers override input bg with blue/yellow on autofill */
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #0d1120 inset;
+  -webkit-text-fill-color: #ffffff;
+  caret-color: #ffffff;
+}
