@@ -15,6 +15,7 @@ import {
 import { serverTiming } from '@/lib/server-timing'
 import { writeLedgerEntry } from '@/lib/ledger'
 import type { RiskLevel } from '@/lib/risk'
+import { evaluatePolicy } from '@/lib/policy-engine'
 
 const TOOL = 'mcp-verify'
 
@@ -92,6 +93,25 @@ export async function GET(request: NextRequest) {
 
   const body = buildVerifyResult(row)
 
+  // Advisory policy verdict — authenticated callers only.
+  // Does NOT block the response; agents decide what to do with policy_verdict.
+  let policyVerdict: { allowed: boolean; rule_name: string | null; reason: string | null } | undefined
+  if (auth.mode === 'auth' && row) {
+    const decision = await evaluatePolicy(auth.supabase, {
+      profileId:              auth.profile.id,
+      agentId:                request.headers.get('x-agent-id'),
+      toolName:               'mcp-verify',
+      serverCapabilityFlags:  row.capability_flags ?? [],
+      serverRiskLevel:        body.risk_level as string,
+      serverUrl:              row.url ?? null,
+    })
+    policyVerdict = decision.allowed
+      ? { allowed: true,  rule_name: null, reason: null }
+      : { allowed: false, rule_name: decision.rule_name, reason: decision.reason }
+  }
+
+  const responseBody = policyVerdict !== undefined ? { ...body, policy_verdict: policyVerdict } : body
+
   // Log every call, including anon, so /verify usage shows up in dashboards.
   // Anon traffic is bucketed under a sentinel "anon" key so per-user
   // analytics still work for authenticated callers.
@@ -126,7 +146,7 @@ export async function GET(request: NextRequest) {
     durationMs: Date.now() - t0,
   })
 
-  return Response.json(body, {
+  return Response.json(responseBody, {
     headers: { ...rateLimitHeaders(auth), 'Server-Timing': serverTiming(t0) },
   })
 }

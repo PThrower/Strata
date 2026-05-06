@@ -6,6 +6,7 @@ import { freshnessEnvelope } from './freshness'
 import { verifyX402Endpoint } from './x402-verifier'
 import { verifyCredential, isCredentialError } from './agent-credentials'
 import { computeLineageRisk, VALID_DATA_TAGS } from './lineage'
+import { evaluatePolicy } from './policy-engine'
 
 export type MCPToolResult = CallToolResult
 
@@ -254,6 +255,27 @@ export async function handleToolCall(
   }
 
   const { profile, supabase } = auth
+
+  // ── Policy enforcement ────────────────────────────────────────────────────
+  // Evaluate before any tool branch. Fails open on DB errors.
+  // Server signals (capability flags, risk) are unavailable pre-execution for most
+  // tools; tool-name and time-window rules apply universally here.
+  const agentIdHeader = (req.headers as Headers).get('x-agent-id')
+  const serverUrl = typeof args.url === 'string' ? args.url
+    : typeof args.source_server === 'string' ? args.source_server
+    : typeof args.dest_server   === 'string' ? args.dest_server
+    : null
+  const policyDecision = await evaluatePolicy(supabase, {
+    profileId:  profile.id,
+    agentId:    agentIdHeader,
+    toolName:   name,
+    serverUrl,
+  })
+  if (!policyDecision.allowed) {
+    void logApiRequest(supabase, { apiKey: profile.api_key, tool: name, ecosystem: 'policy', statusCode: 403 })
+    return { content: [{ type: 'text', text: `Policy blocked: ${policyDecision.reason}` }], isError: true }
+  }
+  // ── End policy enforcement ────────────────────────────────────────────────
 
   const err = (msg: string, statusCode = 400): MCPToolResult => {
     void logQueryAudit(supabase, {

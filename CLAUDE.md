@@ -217,6 +217,26 @@ Explicit agent-declared data flows: "I read from Server A and sent it to Server 
 - **Dashboard** `/dashboard/lineage` — flow table with source→dest arrow, session filter (click a session_id), egress-only filter, session chain header (Server A → B → C), and a 7-day risk banner when net-egress flows are present.
 - **`session_id` contract**: caller-supplied, opaque string. Strata does not issue session IDs — pass a LangChain `run_id`, LlamaIndex trace ID, or any UUID your application generates. Sessions are just a `GROUP BY session_id` — no session table.
 
+### Policy Engine
+
+Per-profile rules that govern agent behavior. Enforced at the Strata layer before any MCP tool call executes.
+
+- **Table** `policies` — `name`, `action` (`block`|`warn`), `enabled`, conditions (`match_capability_flags text[]`, `match_risk_level_gte text`, `match_tool_names text[]`, `match_server_url_glob text` [v2], `time_start_hour`/`time_end_hour` smallint UTC), `agent_id` (NULL = all agents), `priority` (1–1000, lower = evaluated first). RLS: owner-read, service-role-write. At least one condition required (DB CHECK).
+- **Library** `lib/policy-engine.ts` — `evaluatePolicy(supabase, ctx): Promise<PolicyDecision>`. Per-instance 30s cache keyed by `profile_id`. `invalidatePolicyCache(profileId)` called by mutation routes. Fails open on DB errors — policy failures must never silently block legitimate traffic.
+- **Evaluation semantics**: all non-null conditions on a row are ANDed. Rules ordered by `priority ASC`. First `block` returns immediately (`{ allowed: false, rule_id, rule_name, reason }`). All `warn` matches are collected and returned with `{ allowed: true, warnings[] }`. Default when no rule matches: allow.
+- **Risk ordering** for `match_risk_level_gte`: `low < medium < high < critical`.
+- **Time window**: wraps midnight when `start_hour > end_hour` (e.g. 23–06 = 11pm to 6am UTC).
+- **Hook points**:
+  1. `lib/mcp-tools.ts:handleToolCall` (after auth, before any tool branch) — hard enforcement. Tool-name rules and time-window rules are most effective here; capability/risk rules fire when a server URL is in the tool args.
+  2. `app/api/v1/mcp/verify/route.ts` (after `buildVerifyResult`) — advisory only, authenticated callers only. Adds `policy_verdict: { allowed, rule_name, reason }` to the response body. Does not block.
+- **Routes** (session cookie auth, matches agents pattern):
+  - `GET /api/v1/policies` — list
+  - `POST /api/v1/policies` — create
+  - `PUT /api/v1/policies/[id]` — full replace
+  - `PATCH /api/v1/policies/[id]` — partial update (primarily `enabled` toggle)
+  - `DELETE /api/v1/policies/[id]` — delete
+- **Dashboard** `/dashboard/policies` — rule table with inline enable/disable toggle, create form with checkbox groups for flags and tool names, time-window hour pickers, agent scope field. Three one-click template buttons on empty state: "Block shell_exec", "Block high risk servers", "No net_egress at night". "Policies" in sidebar between Agents and Submit.
+
 ### Database schema (Supabase Postgres)
 
 Key tables in `supabase/migrations/`:
