@@ -489,7 +489,7 @@ export default async function LandingPage() {
         <TerminalDemo />
       </section>
 
-      {/* ══ Phase 3 — Now Live ══ */}
+      {/* ══ Phases 3 & 4 — Now Live ══ */}
       <section style={{ padding: '72px 0', borderTop: '1px solid var(--hair)' }}>
         <p style={{
           fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500,
@@ -924,7 +924,7 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ══ Phase 3 teaser ══ */}
+      {/* ══ Phase teaser strip ══ */}
       <div style={{
         padding: '28px 0',
         borderTop: '1px solid var(--hair)',
