@@ -10,474 +10,196 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev      # start dev server (Turbopack)
 npm run build    # production build
 npm run lint     # ESLint
-npm run refresh  # run content refresh pipeline (requires .env.local)
+npm run refresh  # run full content refresh pipeline (requires .env.local)
 npm run mcp      # start stdio MCP transport (requires .env.local)
 ```
 
-All scripts require `.env.local` — pass with `--env-file=.env.local`:
+Scripts outside `npm run` need `--env-file=.env.local`:
 
 ```bash
-# Single-ecosystem refresh (faster than full pipeline for testing)
-SLUG=cursor npx tsx --env-file=.env.local scripts/refresh-one.ts
+SLUG=cursor npx tsx --env-file=.env.local scripts/refresh-one.ts  # single-ecosystem refresh for testing
 
-# Backfill scripts (long-running, safe to interrupt and resume)
-npx tsx --env-file=.env.local scripts/score-mcp-security.ts    # GitHub security scores (~82 min, 2179 repos)
-npx tsx --env-file=.env.local scripts/score-mcp-runtime.ts     # runtime scoring (RUNTIME_LIMIT=N to cap)
-npx tsx --env-file=.env.local scripts/scan-mcp-injection.ts    # injection scan backfill (~25 min)
-
-# Maintenance / one-shot scripts
-npx tsx --env-file=.env.local scripts/regen-stale-bp.ts              # regenerate stale best_practices for all ecosystems
-npx tsx --env-file=.env.local scripts/reset-unparseable-runtime.ts   # requeue score=45 default rows for re-scoring
-npx tsx --env-file=.env.local scripts/rescore-runtime-sample.ts      # test runtime scoring on 20 rows
-npx tsx --env-file=.env.local scripts/cleanup-seed-integrations.ts   # delete null-URL seed integrations (already run)
-npx tsx --env-file=.env.local scripts/diagnose-data-quality.ts       # 5-issue DB diagnostic
+# Backfill scripts (long-running, safe to interrupt)
+npx tsx --env-file=.env.local scripts/score-mcp-security.ts   # GitHub security scores
+npx tsx --env-file=.env.local scripts/score-mcp-runtime.ts    # runtime scoring (RUNTIME_LIMIT=N to cap)
+npx tsx --env-file=.env.local scripts/probe-mcp-endpoints.ts  # live HTTP probing (PROBE_LIMIT=N)
+npx tsx --env-file=.env.local scripts/scan-mcp-injection.ts   # injection scan backfill
 
 # Diagnostics
-npx tsx --env-file=.env.local scripts/check-feeds.ts              # health-check all configured RSS feeds
-npx tsx --env-file=.env.local scripts/debug-validation.ts [slug]  # debug validation pipeline for one ecosystem
+npx tsx --env-file=.env.local scripts/check-feeds.ts
+npx tsx --env-file=.env.local scripts/diagnose-data-quality.ts
 ```
 
-There are no tests at this time.
+No tests exist at this time.
 
 ## Architecture
 
-This is a SaaS API platform built on **Next.js 16**, **Supabase** (auth + Postgres), and **Stripe** (subscriptions). It exposes AI ecosystem intelligence (best practices, news, integrations) via both a REST API (`/api/v1/*`) and an MCP server (`/mcp`).
+Next.js 16 + Supabase (auth + Postgres) + Stripe. Exposes AI ecosystem intelligence and MCP server trust signals via REST API (`/api/v1/*`) and a native MCP server (`/mcp`).
 
-### Auth model — two distinct surfaces
+### Two auth surfaces — pick the right client
 
-| Surface | Auth mechanism | Supabase client |
+| Surface | Mechanism | Client |
 |---|---|---|
-| Dashboard / user UI | Supabase session cookie | `createUserClient()` |
-| Public API (`/api/v1/*`) and MCP | `X-API-Key` or `Authorization: Bearer` header | `createServiceRoleClient()` |
+| Dashboard UI | Supabase session cookie | `createUserClient()` |
+| `/api/v1/*` and `/mcp` | `X-API-Key` or `Authorization: Bearer` | `createServiceRoleClient()` |
 
-`lib/supabase-server.ts` exports both factories. `createServiceRoleClient()` bypasses RLS and is used everywhere the caller is already trusted (API key routes, Stripe webhooks). Never use it for user-initiated requests without validating identity first.
+`createServiceRoleClient()` bypasses RLS — only use it after verifying identity. Both factories are in `lib/supabase-server.ts`. The dashboard page intentionally uses both: `createUserClient()` to verify session, `createServiceRoleClient()` for reads RLS would block.
 
-The dashboard page uses **both** clients intentionally: `createUserClient()` to verify the session, then `createServiceRoleClient()` for profile and `api_requests` reads (RLS would block `api_requests` for non-owners).
+### `proxy.ts` — the edge gateway (not `middleware.ts`)
 
-### Edge security gateway — `proxy.ts`
+Next.js 16 deprecated the `middleware` convention. This project uses `proxy.ts` instead. Adding a `middleware.ts` has no effect. The file avoids `@supabase/ssr` to prevent a Turbopack deadlock.
 
-`proxy.ts` (exported as `proxy`) is the single edge gateway for the entire app. It is **not** named `middleware.ts` — Next.js 16 deprecated the `middleware` convention; only one `proxy.ts` is supported per project, and adding `middleware.ts` is silently ignored. The file also avoids importing `@supabase/ssr` to stay clear of a Turbopack deadlock.
+Responsibilities in order: scanner-path 404s → path-traversal 400s → per-IP rate limiting (100/min API, 30/min MCP) + scanner UA blocks + Content-Length pre-check → dashboard session redirect → security headers on all responses.
 
-Responsibilities (in order):
+Rate limiter is in-memory per Lambda instance — not globally strict. `vercel.json` adds HSTS + `Cache-Control: no-store` on API/MCP routes at the CDN layer.
 
-1. **Scanner-path block** — returns 404 for `/.env`, `/wp-admin`, `/.git/config`, `/phpinfo.php`, `/admin.php`, etc. Looks like a normal miss to attackers.
-2. **Path-traversal block** — rejects `..`, `%2e%2e`, `%252e` in pathname with 400.
-3. **For `/api/*` and `/mcp`:**
-   - Rejects empty / over-long User-Agent (400)
-   - Blocks mass-scanner UAs (`nuclei`, `sqlmap`, `nikto`, `masscan`, `zgrab`, `acunetix`, `nessus`, `gobuster`, `dirb`, `wpscan`, `wfuzz`, `metasploit`, `qualys`, `openvas`, `libwww-perl`, `burpcollab`) with 403
-   - **Per-IP sliding-window rate limit**: 100/min for `/api/*`, 30/min for `/mcp`. Buckets keyed `<ip>|<family>` so an MCP burst doesn't starve API.
-   - Content-Length pre-check: 413 for >100 KB (api) / >50 KB (mcp) before the route runs
-4. **Dashboard session guard** — redirect to `/login` if no Supabase auth cookie. Optimistic check (cookie presence, not signature); routes inside `/dashboard` re-verify with `createUserClient()`.
-5. **Security headers** — applied to every response: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`.
+### API auth helpers (`lib/api-auth.ts`)
 
-**Rate-limiter scope**: in-memory `Map<key, timestamps[]>` per Lambda instance. Vercel's Fluid Compute may run several instances, so a per-IP limit can drift proportionally to instance count. Vercel's edge DDoS protection handles the volumetric layer. Migrate to Upstash Redis for strict global enforcement.
+**`authenticateRequest(req)`** — use for authenticated-only routes. Calls `consume_api_call` RPC (atomic: validates key, rolls monthly window, increments counter). Returns `{ ok, profile, supabase }`.
 
-`vercel.json` adds the same security headers + HSTS at the CDN level for defense-in-depth, plus `Cache-Control: no-store` on `/api/*` and `/mcp(.*)`.
+**`authenticateOrAnon(req)`** — use for routes accepting both auth and anonymous. Anon callers get a 10 req/hr IP bucket. Returns `{ ok, mode: 'auth'|'anon', ... }`.
 
-`lib/security.ts` exposes `readBoundedJson<T>(request, maxBytes)` for chunked-encoding protection — used by `POST /verify-bulk` to catch requests without a `Content-Length` header.
+After auth: call `checkEcosystemAccess()` (resolves ecosystem aliases, gates pro-only), `logApiRequest()`, `logQueryAudit()`.
 
-`lib/server-timing.ts` exposes `serverTiming(t0)` — every `/api/v1/*` route attaches `Server-Timing: total;dur=Nms` to its response for latency monitoring.
+`checkEcosystemAccess()` always returns a canonical slug — never use the caller-supplied slug for subsequent DB queries.
 
-### Public API pipeline (`lib/api-auth.ts`)
+### MCP tools (`lib/mcp-tools.ts`)
 
-Two auth flows coexist. Use the right one per route:
+Nine tools registered in both the HTTP route and stdio script: `get_best_practices`, `get_latest_news`, `get_top_integrations`, `search_ecosystem`, `list_ecosystems`, `find_mcp_servers`, `verify_payment_endpoint`, `verify_agent_credential`, `track_data_flow`, `get_threat_feed`.
 
-**`authenticateRequest(req)`** — authenticated-only routes (`POST /verify-bulk`, etc.):
-1. Reads `X-API-Key` or `Authorization: Bearer sk_...` header
-2. Calls `consume_api_call` RPC (atomic: validates key, rolls monthly window, enforces limits, increments counter)
-3. Returns `{ ok: true, profile, supabase }` or `{ ok: false, response }`
+**Policy enforcement hook**: `handleToolCall` evaluates `evaluatePolicy()` immediately after auth, before any tool branch. This is the single enforcement point for the Policy Engine.
 
-**`authenticateOrAnon(req)`** — routes that accept both authenticated and anonymous callers (`GET /mcp/verify`, `GET /mcp-servers`):
-- Header present → same auth flow as above, returns `{ ok: true, mode: 'auth', profile, supabase }`
-- Header absent → in-memory IP token bucket (10 req/hr per IP, per-process), returns `{ ok: true, mode: 'anon', ip, remaining, resetAt }`
-- Returns `{ ok: false, response }` on rate limit or invalid key
+**Circuit breaker enforcement model**: Circuit breakers are advisory in `handleToolCall` — Strata surfaces `circuit_broken: true` in `mcp/verify` responses and `find_mcp_servers` results; agents enforce by not connecting. Hard blocking at the MCP tool layer is not implemented because Strata tools do not directly invoke external MCP servers. Known limitation: `find_mcp_servers` with `exclude_circuit_broken=true` ignores per-profile resets — it filters on the global `circuit_broken` flag only, erring on the side of safety. A future fix should honour per-profile bypasses from `circuit_breaker_resets`.
 
-Use `rateLimitHeaders(auth)` to get the `X-RateLimit-*` headers to attach to every response from anon-capable routes.
+All tool results strip quarantined items. MCP auth (`lib/mcp-auth.ts`) accepts both `X-API-Key` and `Authorization: Bearer`.
 
-After auth, routes call `checkEcosystemAccess()` to gate pro-only ecosystems, then `logApiRequest()` to write to `api_requests`, then `logQueryAudit()` to write a full query audit record (params, result IDs, latency, client IP) to `api_query_log`. Anonymous callers are logged under sentinel key `'anon'` — the column is plain text with no FK, so this is schema-safe. MCP tool calls go through the same helpers in `lib/mcp-tools.ts`.
+### SSRF protection (`lib/ssrf-guard.ts`)
 
-`checkEcosystemAccess()` resolves **aliases**: e.g. `claude-code` → `claudecode`, `together-ai` → `togetherai`. Aliases are stored in the `aliases text[]` column on the `ecosystems` table. Always return `access.slug` (the canonical slug) for subsequent DB queries — not the caller-supplied slug.
-
-### Public API routes (`app/api/v1/`)
-
-| Route | Auth | Description |
-|---|---|---|
-| `GET /mcp/verify` | anon or key | Single MCP server lookup by `?url=`, `?npm=`, or `?endpoint=`. **Bypasses quarantine filter** — this is the only endpoint that surfaces `is_quarantined=true` rows, because the entire point is to warn callers about dangerous servers. |
-| `POST /mcp/verify-bulk` | key required | Batch lookup, up to 50 identifiers. Body: `{ identifiers: [{url?} | {npm?} | {endpoint?}][] }`. Charges `ceil(N/10)` API calls; reports via `X-Strata-Calls-Charged` header. Uses 3 parallel `IN` queries (one per identifier type) for ≤3 DB round trips regardless of N. |
-| `GET /mcp-servers` | anon or key | Semantic search over MCP directory. Returns `runtime_score`, `capability_flags`, `hosted_endpoint`, `tool_count`, `runtime_freshness`. Accepts `min_runtime_score`, `exclude_capability_flags` (comma-separated), `require_hosted` filters. |
-| `GET /ecosystems/[slug]/brief` | key required | Composite: best practices + news + integrations in one round trip. Three parallel Supabase queries. |
-| `GET /best-practices` | key required | Best practices for an ecosystem. |
-| `GET /news` | key required | News items for an ecosystem. |
-| `GET /integrations` | key required | Integration items for an ecosystem. |
-| `GET /search` | key required | Full-text search over content items. |
+`assertPublicHttpsUrl(url)` — call before any outbound fetch to user-supplied URLs. Blocks private IPv4/IPv6 ranges, `*.internal` hostnames, cloud metadata endpoints. Used in `lib/x402-verifier.ts` and `lib/mcp-probe.ts`. Any new route that fetches user-supplied URLs must call this first.
 
 ### Risk computation (`lib/risk.ts`)
 
-Pure `computeRiskLevel(row: RiskInput)` that returns `{ level: RiskLevel, reasons: string[], trusted: boolean }`. Hierarchy (conservative — stops at first match):
+`computeRiskLevel(row)` → `{ level, reasons, trusted }`. Conservative hierarchy: quarantined or score < 20 → critical; `shell_exec`/`dynamic_eval` → high; `fs_write`/`arbitrary_sql` → medium; else low.
 
-1. `is_quarantined = true` OR `security_score < 20` → **critical**, `trusted: false`
-2. `capability_flags` includes `shell_exec` or `dynamic_eval` → **high**, `trusted: false`
-3. `capability_flags` includes `fs_write` or `arbitrary_sql` → **medium**, `trusted: false`
-4. Otherwise → **low**, `trusted: true`
+**The SDK ships an identical copy at `packages/sdk/src/risk.ts`.** Any change to risk logic must update both files in the same commit.
 
-This is the **server-authoritative** risk signal. The `@strata-ai/sdk` ships an identical copy at `packages/sdk/src/risk.ts` so server and client never disagree. Do not change one without updating the other.
+### Policy Engine (`lib/policy-engine.ts`)
 
-### Verify shared helpers (`lib/mcp-verify-shared.ts`)
+`evaluatePolicy(supabase, ctx)` evaluates per-profile rules against a tool call context. Per-instance 30s cache keyed by `profile_id`. Call `invalidatePolicyCache(profileId)` after any policy mutation. Fails open on DB errors — a policy DB failure must never block legitimate traffic.
 
-Shared between `/mcp/verify` and `/mcp/verify-bulk`:
-- `McpRow` interface + `VERIFY_SELECT_COLUMNS` constant — single source of truth for which columns to pull
-- `normalizeGitHubUrl(input)` — returns `[canonical, canonical.git]` candidates for `.in('url', ...)` lookups. Lowercases owner/repo path segments (GitHub is case-insensitive; our DB stores lowercase).
-- `freshnessBucket(iso)` — maps `runtime_updated_at` to `'fresh' | 'aging' | 'stale' | 'unknown'`
-- `buildVerifyResult(row | null)` — constructs the full `VerifyResult` JSON shape, including risk assessment
+Conditions are ANDed. Rules run in `priority ASC`. First `block` wins; `warn` matches accumulate. `/api/v1/mcp/verify` adds an advisory `policy_verdict` field for authenticated callers but never blocks.
 
-### MCP server (`app/mcp/route.ts`)
+### Agent Activity Ledger (`lib/ledger.ts`)
 
-HTTP MCP endpoint using `WebStandardStreamableHTTPServerTransport`. `GET /mcp` returns a JSON capability manifest (tools, prompts, resources). `POST /mcp` handles tool calls. Auth flows through `lib/mcp-auth.ts` (accepts both `X-API-Key` and `Authorization: Bearer` headers). A stdio transport variant lives at `scripts/mcp-stdio.ts` (`npm run mcp`).
+`writeLedgerEntry(entry)` — HMAC-SHA256 signed using `LEDGER_SIGNING_KEY` over all persisted columns (canonical JSON, sorted keys). `verifyLedgerRow(row)` recomputes and compares. Rows before 2026-05-07 used a narrower HMAC input — they return false and should be treated as "unverifiable (pre-fix)", not tampered.
 
-`lib/mcp-tools.ts` exports three things, all registered identically in both the HTTP route and the stdio script:
+### Threat Feed (`threat_feed` table)
 
-- **`TOOL_DEFINITIONS` / `handleToolCall`** — six tools: `get_best_practices`, `get_latest_news`, `get_top_integrations`, `search_ecosystem`, `list_ecosystems`, `find_mcp_servers`.
-- **`RESOURCES`** — one static resource: `strata://formatting-guide` (plain-text briefing format guide for agents).
-- **`PROMPTS`** — three prompt templates: `ecosystem_briefing`, `cross_ecosystem_compare`, `agent_stack_review`. Each prompt's `arguments` array drives both the MCP argsSchema (Zod) and the `{placeholder}` substitution in its `template` string.
+Written by a Postgres `AFTER UPDATE OF is_quarantined, capability_flags, security_score, injection_risk_score` trigger on `mcp_servers`. Never written by application code. Has RLS enabled with no policies for `anon`/`authenticated` — reads must go through the metered `/api/v1/threats` route (which uses `createServiceRoleClient()` and bypasses RLS). No automated prune — retained indefinitely for compliance.
 
-All tool results include an epistemic notice and freshness envelope (`content_age_hours`, `data_freshness` from `lib/freshness.ts`). Quarantined items (`is_quarantined = true`) are filtered from all tool responses.
+### Data Lineage (`lib/lineage.ts`)
 
-### x402 payment endpoint verification
+`computeLineageRisk(destFlags, dataTags, isDestQuarantined)` — destination-only risk model. The `get_lineage_sessions()` Postgres RPC uses `auth.uid()` internally (no parameter) to prevent lateral access. Call `.rpc('get_lineage_sessions')` with no args from the route.
 
-Trust scoring for autonomous-payment HTTP endpoints. The same scoring rigor that grades MCP servers, applied to x402 endpoints — SSL validity, domain age, payment amount reasonableness, well-formed 402 response.
+### Agent Credentials (`lib/agent-credentials.ts`)
 
-- **Table** `x402_endpoints` — `url` (unique), `domain`, `security_score` (0–100), `is_quarantined`, `payment_amount_usd`, `payment_currency`, `payment_network`, `declared_capability`, `ssl_valid`, `domain_age_days`, `flags text[]`, `raw_402_response jsonb`, `first_seen_at`, `last_checked_at`. RLS: anyone authenticated can SELECT; writes are service-role only.
-- **Route** `GET /api/v1/x402/verify?url=…` — same auth shape as MCP verify (`authenticateOrAnon`); writes one ledger row per call.
-- **MCP tool** `verify_payment_endpoint(url)` — same scoring path, returns the full trust assessment as JSON.
-- **24-hour cache** — repeat calls within the window return the stored row without re-fetching the endpoint.
-
-Scoring (0–100): +20 ssl_valid, up to +25 domain_age_days, up to +15 payment_amount_usd (smaller is safer), +15 well-formed 402, +10 first_seen older than 7 days, +15 if zero flags else −10/flag. Clamped to [0, 100].
-
-Risk levels (conservative early-exit, mirrors `lib/risk.ts`):
-- `critical` — `is_quarantined` OR `security_score < 20`
-- `high`     — flag `ssl_invalid` OR `known_fraud`
-- `medium`   — flag `drain_risk` OR `mismatched_capability`
-- otherwise `low`
-
-Flags written by the verifier (in `lib/x402-verifier.ts`):
-- `unverified_domain` — domain age < 30d or WHOIS unavailable. Always set in v1 (no WHOIS lookup yet — `domain_age_days` is always null).
-- `ssl_invalid`       — fetch threw a TLS cert error.
-- `no_payment_details` — non-402 response, fetch error, timeout (5s), or unparseable 402 body.
-- `drain_risk`        — `payment_amount_usd > 1.00`.
-- `known_fraud`       — domain on a known fraud list. v1 stub: never set.
-- `mismatched_capability` — reserved for a future cross-check between declared and observed capabilities. v1: never set.
-
-### Agent Identity & Credentialing
-
-Per-agent cryptographic identities issued by Strata. MCP servers and x402 endpoints verify the identity before honouring tool calls.
-
-- **Table** `agent_identities` — `agent_id` (`agt_` + 32 hex, unique), `name`, `description`, `capabilities text[]` (e.g. `['mcp:invoke','x402:pay']`), `metadata jsonb`, `expires_at` (default `created_at + 1 year`), `last_verified_at`, `revoked_at`, `revocation_reason`. RLS: owner read-only via `auth.uid() = profile_id`; all writes are service-role only.
-- **Library** `lib/agent-credentials.ts` — `signCredential(identity)` → JWT, `verifyCredential(jwt)` → claims or error, `getJwks()` → JWKS doc. Uses `jose` with EdDSA (Ed25519). Lazy key caching per process.
-- **Customer-facing routes** (Supabase session cookie auth):
-  - `POST /api/v1/agents` — create. Body: `{ name, capabilities?, expires_in_days?, description?, metadata? }`. Returns the JWT in `credential` field **once** — never stored, never re-derivable. Allowed capabilities: `mcp:invoke`, `x402:pay`.
-  - `GET /api/v1/agents` — list owner's identities (no JWTs).
-  - `GET /api/v1/agents/[id]` — single detail (no JWT).
-  - `POST /api/v1/agents/[id]/revoke` — idempotent. Sets `revoked_at` and `revocation_reason`.
-- **Public-facing routes** (no auth, IP-rate-limited):
-  - `GET /.well-known/jwks.json` — JWKS doc with Strata's EdDSA public key. 5-min cache. Lets MCP servers verify JWTs offline.
-  - `POST /api/v1/agents/verify` — body `{ credential }`. Verifies signature, then live revocation check by `jti -> agent_identities.id`. Returns `{ valid, agent_id, profile_id, name, capabilities, expires_at }` or `{ valid: false, error, message }`. Bumps `last_verified_at` fire-and-forget.
-- **MCP tool** `verify_agent_credential(credential)` — same scoring path as `/api/v1/agents/verify`, returns `{ valid, ... }` JSON. Lets MCP servers that already speak Strata MCP check identities without an extra HTTP integration.
-- **Dashboard** `/dashboard/agents` — list / create / revoke. One-time JWT reveal modal after creation (warning + copy button + select-all). Mirror of the Ledger page pattern with the Glass aesthetic on the reveal modal.
-
-JWT shape:
-- Header: `{ alg: 'EdDSA', typ: 'JWT', kid: 'strata-2026-01' }`
-- Claims: `iss=https://strata.dev`, `aud=mcp`, `sub=<agent_id>`, `jti=<agent_identities.id>`, `iat`, `exp`, `profile_id`, `name`, `capabilities[]`
-- Presented as `Authorization: Bearer <jwt>`. Optional `X-Strata-Agent-Id` convenience header mirrors `JWT.sub`.
-
-Verification flow for an MCP server:
-1. Decode header, fetch `/.well-known/jwks.json` (HTTP cached 5 min), pick key matching `kid`.
-2. Verify signature with EdDSA + that public key.
-3. Validate claims: `iss`, `aud`, `exp > now`, small `iat` skew.
-4. (Optional, for writes/payments) `POST /api/v1/agents/verify` for live revocation check; cache ~30s.
-5. Authorize by intersecting required scope with `capabilities[]` (e.g. require `x402:pay` before honouring a paid tool call).
-
-Note: `agent_activity_ledger.agent_id` is intentionally free-form text with no FK to `agent_identities.agent_id` so anonymous and pre-identity ledger rows still work. When an identity is in use, the same `agt_<hex>` value appears in both columns.
-
-### Data Lineage Tracking
-
-Explicit agent-declared data flows: "I read from Server A and sent it to Server B." Risk signals are denormalized at write time so the dashboard never joins `mcp_servers`.
-
-- **Table** `data_lineage_flows` — `profile_id`, `agent_id`, `session_id` (caller-supplied run/trace ID), `source_server_url`, `source_tool`, `source_mcp_server_id` (FK to mcp_servers, resolved at insert), `dest_server_url`, `dest_tool`, `dest_mcp_server_id`, `source_capability_flags text[]`, `dest_capability_flags text[]`, `dest_has_net_egress boolean`, `data_tags text[]` (caller-reported: `pii`, `credentials`, `financial`, `internal`), `risk_level` (computed: low/medium/high/critical), `ledger_entry_ids uuid[]` (optional cross-refs to agent_activity_ledger). RLS: owner-read-only; all writes are service-role only. No append-only trigger (unlike the ledger).
-- **Library** `lib/lineage.ts` — `computeLineageRisk(destFlags, dataTags, isDestQuarantined)` pure function; `shortServerLabel(url)` for display.
-- **Risk model** (destination-only — source taint is a Phase 3 concept):
-  - `critical` — dest quarantined, or dest has `shell_exec`/`dynamic_eval` + data_tags contain `pii`/`credentials`
-  - `high`     — dest has `net_egress` + data_tags contain `pii`/`credentials`
-  - `medium`   — dest has `net_egress`
-  - `low`      — otherwise
-- **Routes** (API key auth, same as all other `/api/v1/*` routes):
-  - `POST /api/v1/lineage` — record a flow. Body: `{ source_server, dest_server, agent_id?, session_id?, source_tool?, dest_tool?, data_tags?, ledger_entry_ids? }`. Resolves both URLs against `mcp_servers` (by `hosted_endpoint` then `url`), computes risk, inserts row.
-  - `GET /api/v1/lineage` — list flows. Params: `session_id`, `agent_id`, `risk_level`, `dest_has_net_egress=true`, `limit` (max 200), `before` (ISO cursor).
-  - `GET /api/v1/lineage/sessions` — distinct sessions with stats (flow count, highest risk, distinct server count, time range). Calls `get_lineage_sessions(profile_id)` Postgres RPC.
-- **MCP tool** `track_data_flow(source_server, dest_server, session_id?, data_tags?)` — records a lineage flow via the MCP interface.
-- **Dashboard** `/dashboard/lineage` — flow table with source→dest arrow, session filter (click a session_id), egress-only filter, session chain header (Server A → B → C), and a 7-day risk banner when net-egress flows are present.
-- **`session_id` contract**: caller-supplied, opaque string. Strata does not issue session IDs — pass a LangChain `run_id`, LlamaIndex trace ID, or any UUID your application generates. Sessions are just a `GROUP BY session_id` — no session table.
-
-### Real-Time Threat Feed
-
-Append-only log of meaningful risk signal changes on mcp_servers. Written by a Postgres trigger; never written by application code. Pruned to 90 days by the refresh pipeline.
-
-- **Table** `threat_feed` — `server_id` (FK to mcp_servers), `server_url`/`server_name` (denormalized), `event_type`, `severity` (critical/high/medium/low), `old_value`/`new_value` (jsonb), `detail` (human-readable), `created_at`. No `profile_id` — global signal table; per-user filtering at query time via `agent_activity_ledger` JOIN.
-- **Trigger** `mcp_servers_threat_trigger` (AFTER UPDATE on mcp_servers) — fires on 6 event types: `quarantine_added` (critical), `quarantine_removed` (medium), `capability_flag_added` (high — dangerous flags only: shell_exec, dynamic_eval, arbitrary_sql, fs_write, secret_read, process_spawn; NOT net_egress), `score_critical_drop` (critical — drop ≥25 AND new < 20), `score_significant_drop` (high — drop ≥25, new ≥ 20), `injection_detected` (critical — injection_risk_score crosses ≥ 6).
-- **Route** `GET /api/v1/threats` — API key auth. Params: `since`, `severity`, `server_id`, `affected_only=true` (filters to caller's connected servers via ledger JOIN), `limit` (max 200), `before` cursor.
-- **MCP tool** `get_threat_feed(since?, affected_only?, severity?)` — registered in `lib/mcp-tools.ts`.
-- **Dashboard** `/dashboard/threats` — feed table with filter tabs (All / Critical+High / My servers). Summary cards for critical/high/my-server counts. "Block this flag" button on `capability_flag_added` rows → links to `/dashboard/policies?prefill=capability_flag&value=<flag>`.
-- **Ambient banner** on `/dashboard` — shows when there are critical/high threats for the user's connected servers in the last 7 days.
-- **90-day prune** — runs in `scripts/refresh/index.ts` alongside the audit-log GC.
-- **policies-client.tsx** — reads `?prefill=capability_flag&value=<flag>` URL params on mount (via `useEffect` + `window.location.search`) and pre-fills the create form. Cleans the URL after reading.
-
-### Compliance Reporting
-
-One-click SOC 2 / ISO 27001 audit evidence packages generated from the Agent Activity Ledger.
-
-- **Route** `GET /api/compliance/report` — session cookie auth (`createUserClient`). Query params: `format=json|csv` (default `json`), `period=30d|90d|1y|custom` (default `90d`), `from`/`to` ISO dates (custom only, max 365-day span), `standard=soc2|iso27001` (default `soc2`). Returns `Content-Disposition: attachment` download.
-- **No new table** — queries existing `agent_activity_ledger`.
-- **Tamper-evidence spot-check**: verifies the last 1,000 rows with `verifyLedgerRow()` from `lib/ledger.ts`. Reports `verified_rows`, `unverified_rows` (null signature — pre-signing era), `failed_rows` (HMAC mismatch). When `LEDGER_SIGNING_KEY` is not set, `signing_key_configured: false` and `signing_key_warning` explain why all rows show as unverified.
-- **JSON report sections**: metadata, tamper_evidence, agent_access, external_systems, risk_posture, tool_breakdown, raw_rows. `parameters` and `response_summary` excluded from raw_rows (business-sensitive; visible in dashboard).
-- **CSV format**: flat rows — id, created_at, agent_id, tool_called, server_url, risk_level, capability_flags (pipe-sep), duration_ms, signature_valid.
-- **Dashboard entry**: two `<a download>` links in the Activity Ledger page header (`/dashboard/ledger`) — no JS required.
-- **PDF deferred to v2** — browser Print → Save as PDF works for now; server-side PDF requires a library.
-- **Pre-fix row note**: rows created before 2026-05-07 were signed with a narrower HMAC input and will return false from `verifyLedgerRow` — treated as "unverifiable (pre-fix)", not "tampered". Covered in report disclaimer.
-
-### Policy Engine
-
-Per-profile rules that govern agent behavior. Enforced at the Strata layer before any MCP tool call executes.
-
-- **Table** `policies` — `name`, `action` (`block`|`warn`), `enabled`, conditions (`match_capability_flags text[]`, `match_risk_level_gte text`, `match_tool_names text[]`, `match_server_url_glob text` [v2], `time_start_hour`/`time_end_hour` smallint UTC), `agent_id` (NULL = all agents), `priority` (1–1000, lower = evaluated first). RLS: owner-read, service-role-write. At least one condition required (DB CHECK).
-- **Library** `lib/policy-engine.ts` — `evaluatePolicy(supabase, ctx): Promise<PolicyDecision>`. Per-instance 30s cache keyed by `profile_id`. `invalidatePolicyCache(profileId)` called by mutation routes. Fails open on DB errors — policy failures must never silently block legitimate traffic.
-- **Evaluation semantics**: all non-null conditions on a row are ANDed. Rules ordered by `priority ASC`. First `block` returns immediately (`{ allowed: false, rule_id, rule_name, reason }`). All `warn` matches are collected and returned with `{ allowed: true, warnings[] }`. Default when no rule matches: allow.
-- **Risk ordering** for `match_risk_level_gte`: `low < medium < high < critical`.
-- **Time window**: wraps midnight when `start_hour > end_hour` (e.g. 23–06 = 11pm to 6am UTC).
-- **Hook points**:
-  1. `lib/mcp-tools.ts:handleToolCall` (after auth, before any tool branch) — hard enforcement. Tool-name rules and time-window rules are most effective here; capability/risk rules fire when a server URL is in the tool args.
-  2. `app/api/v1/mcp/verify/route.ts` (after `buildVerifyResult`) — advisory only, authenticated callers only. Adds `policy_verdict: { allowed, rule_name, reason }` to the response body. Does not block.
-- **Routes** (session cookie auth, matches agents pattern):
-  - `GET /api/v1/policies` — list
-  - `POST /api/v1/policies` — create
-  - `PUT /api/v1/policies/[id]` — full replace
-  - `PATCH /api/v1/policies/[id]` — partial update (primarily `enabled` toggle)
-  - `DELETE /api/v1/policies/[id]` — delete
-- **Dashboard** `/dashboard/policies` — rule table with inline enable/disable toggle, create form with checkbox groups for flags and tool names, time-window hour pickers, agent scope field. Three one-click template buttons on empty state: "Block shell_exec", "Block high risk servers", "No net_egress at night". "Policies" in sidebar between Agents and Submit.
-
-### Database schema (Supabase Postgres)
-
-Key tables in `supabase/migrations/`:
-- **`profiles`** — one row per auth user; holds `api_key` (`sk_` + 32 hex chars), `tier`, `calls_used`, `calls_reset_at`, Stripe IDs, `lifetime_pro boolean`. Auto-created by `handle_new_user()` trigger. `lifetime_pro = true` marks founder accounts (one-time $100 purchase); the webhook uses this to skip downgrade on `customer.subscription.deleted`. `REVOKE UPDATE (lifetime_pro)` from `authenticated` — only the webhook (service role) may set it.
-- **`ecosystems`** — catalog of supported ecosystems; `available_on_free` gates free-tier access (5 core ecosystems: `claude`, `openai`, `gemini`, `langchain`, `ollama`); `aliases text[]` enables slug resolution (e.g. `claude-code` → `claudecode`).
-- **`content_items`** — content records (`best_practices`, `news`, `integrations`) keyed by `ecosystem_slug`. Has `is_quarantined` and `injection_risk_score` safety columns. Source integrations always have a non-null `source_url`; best_practices have `source_url = null` by design (AI-generated).
-- **`api_requests`** — append-only usage log; no RLS, service role only. `api_key` is plain text (no FK) — anonymous traffic is logged under sentinel `'anon'`.
-- **`api_query_log`** — full query audit records (params, result IDs, latency, client IP hashed via HMAC); service role only.
-- **`mcp_servers`** — MCP directory sourced from `awesome-mcp-servers`. Key columns:
-  - `embedding vector(1024)` — Voyage AI semantic search
-  - `security_score` (0–100) — from GitHub signals
-  - `runtime_score` (0–100) — from static analysis + optional live probes
-  - `capability_flags text[]` — e.g. `['shell_exec', 'fs_write', 'net_egress']`
-  - `hosted_endpoint`, `tool_count`, `tool_names`, `runtime_updated_at`, `runtime_status`
-  - `is_quarantined`, `injection_risk_score`
-  - `npm_package`, `pypi_package` — for package-based lookup
-  - Searched via `search_mcp_servers(...)` RPC (v5): `similarity * (0.6 + 0.4 * (0.55*security + 0.45*runtime))` with a hard 0.15 similarity floor — results below this threshold are excluded before ranking to prevent high-scoring but semantically unrelated servers from surfacing.
-- **`mcp_runtime_probes`** — per-probe log for runtime scoring backfill (toolCount, latency, error, etc.)
-
-RLS is on for `profiles`, `ecosystems`, `content_items`. Sensitive `profiles` columns (`tier`, `calls_used`, `api_key`, Stripe IDs) have `REVOKE UPDATE` from `authenticated` — all writes to these must go through service-role routes or webhooks.
-
-Full-text search is implemented as a Postgres RPC: `search_content_items(search_query, filter_ecosystem, filter_category, user_tier)`.
-
-Embeddings use **Voyage AI** (`voyage-3`, 1024 dimensions) via direct HTTP fetch in `lib/embeddings.ts` — no npm package, just `fetch` with `Authorization: Bearer ${VOYAGE_API_KEY}`.
+EdDSA (Ed25519) JWTs via `jose`. Lazy singleton key cache per process. JWT `jti` = `agent_identities.id` — used for live revocation lookups. `agent_activity_ledger.agent_id` has no FK to `agent_identities` intentionally so anonymous rows still work.
 
 ### Content refresh pipeline (`scripts/refresh/`)
 
-`npm run refresh` runs `scripts/refresh/index.ts` — a Node script (not a Next.js route) that populates `content_items`. For each ecosystem in `ecosystems.ts`:
+`npm run refresh` → `scripts/refresh/index.ts`. Per ecosystem: fetch sources → URL dedup → Claude validation (batches of 20) → near-duplicate removal → write to DB. Best practices regenerate unconditionally when stale (3-day threshold), regardless of whether new content was fetched.
 
-1. `fetchAllSources()` — scrapes RSS feeds, GitHub repos, subreddits, and `integrationsRepo` (if set) → raw items
-2. `urlDedup()` — filters items whose `source_url` already exists in the DB
-3. `validateBatch()` — calls Claude (`claude-sonnet-4-6`) in batches of 20 to score relevance, fix titles/bodies, reclassify categories, and **detect injection content**; low-confidence and quarantined items are separated
-4. `dedupeNearDuplicates()` — a second Claude pass to remove near-duplicate stories within the batch
-5. `writeContent()` — inserts validated items in chunks of 50; sets `is_quarantined` flag on flagged items
-6. `bestPracticesAreStale()` — checks if any `best_practices` rows exist newer than 3 days. If stale, always regenerates — BP generation uses a static prompt and is **independent of source fetch results**. Uses Haiku when no new content was written (off-peak), Sonnet otherwise.
+After all ecosystems: `refreshMcpDirectory()` fetches `awesome-mcp-servers`, embeds new entries via Voyage AI, runs injection scan, upserts. Then scores up to 200 new rows.
 
-The BP regen runs unconditionally when stale. The old pattern of gating it on `fetched > 0` was removed — ecosystems with quiet feeds (no RSS, low-activity GitHub) would never regenerate otherwise.
+`scripts/refresh/writer.ts` creates its own Supabase client — it cannot import `lib/supabase-server.ts` because that pulls in `next/headers`.
 
-After ecosystem processing, `refreshMcpDirectory()` runs:
-1. Fetches `awesome-mcp-servers` README, parses entries
-2. Embeds new entries via Voyage AI (batch 20, 500ms delay between batches)
-3. Runs two-layer injection scan on each new entry: Layer 1 regex (`lib/injection-scanner.ts`) + Layer 2 Claude Haiku semantic check
-4. Upserts with `is_quarantined` flag
-5. Scores up to 200 newly-inserted rows via `scripts/refresh/security-score.ts` (3 GitHub API calls per repo, rate-limited to ~80 req/min)
+### MCP server runtime scoring
 
-`writer.ts` creates its own Supabase client directly (cannot import `lib/supabase-server.ts` which pulls in `next/headers`).
+Two independent signals on `mcp_servers`:
+- **Security score** (0–100): GitHub repo signals (stars, commit recency, releases, license, archived/fork penalties)
+- **Runtime score** (0–100): base 50 ± tool count/diversity ± capability flag penalties ± injection penalty ± live probe bonus (+20 max) ± hosted endpoint bonus (+4)
 
-**Ecosystem configuration (`scripts/refresh/ecosystems.ts`)**: Each ecosystem has:
-- `rssFeeds: string[]` — RSS feed URLs
-- `subreddits: string[]` — subreddit names (fetched via Reddit JSON API, filtered to score ≥ 10)
-- `githubRepos: string[]` — `owner/repo` strings for GitHub release fetching
-- `integrationsRepo?: string` — optional GitHub repo whose README is scraped for integration content. The `fetchIntegrations()` function splits the README on `## ` headings and keeps sections whose body includes the ecosystem slug. `claude` uses `punkpeye/awesome-mcp-servers`; `cursor` uses `PatrickJS/awesome-cursorrules`.
-- `bestPracticesPrompt: string` — static prompt for Claude-generated BP items
+`tool_count = null` → -5 "unparsed" penalty → stuck at score 45 until re-scored. Use `scripts/reset-unparseable-runtime.ts` to requeue stuck rows.
 
-**`scripts/refresh-one.ts`** — single-ecosystem refresh for testing. Run as `SLUG=cursor npx tsx --env-file=.env.local scripts/refresh-one.ts`. Useful for testing ecosystem-specific pipeline changes without the full 21-ecosystem run.
+Live probing (`lib/mcp-probe.ts`) POSTs JSON-RPC `initialize` + `tools/list` with a shared 5s `AbortController`. The probe runner (`scripts/probe-mcp-endpoints.ts`) only fires for rows with a non-null `hosted_endpoint`.
 
-### MCP directory & security scoring
+### Key DB constraints
 
-`mcp_servers` is populated from `awesome-mcp-servers` and scored with two independent signals:
+- `profiles`: sensitive columns (`tier`, `calls_used`, `api_key`, Stripe IDs) have `REVOKE UPDATE` from `authenticated` — writes only through service-role routes.
+- `agent_identities`: RLS owner-read, no writes from `authenticated`.
+- `policies`: DB CHECK requires at least one condition; time-window fields must be set as a pair.
+- `threat_feed`: RLS enabled, no `authenticated` policies, `REVOKE ALL` from `anon`/`authenticated`.
+- `agent_activity_ledger`: append-only enforced by Postgres triggers (block UPDATE and DELETE).
+- `data_lineage_flows`: the `get_lineage_sessions()` RPC uses `auth.uid()` internally — call with no arguments.
 
-**Security score (0–100)** — from GitHub static signals:
-- Stars (log-scale, max +25), last commit age (±15), release discipline (+10), license permissiveness (±10), archived/fork penalties (-25/-10)
-- Backfill: `npx tsx --env-file=.env.local scripts/score-mcp-security.ts` — resumable via `score_updated_at`; re-run for `error_rate_limited` rows. `error_transient` rows are **not** retried (dead repos — treat as permanent).
+### Embeddings
 
-**Runtime score (0–100)** — from static source analysis + optional live probes:
-- Base score 50. Adjustments: `toolPoints` (-5 to +8 by tool count/diversity), `capabilityPenalty` (up to -71 for shell_exec, dynamic_eval, etc.), `injectionPenalty` (0 to -40), `probeBonus` (0 to +20 for live probe success), `hostedBonus` (+4 if hosted endpoint known).
-- `tool_count = null` (couldn't parse source) → -5 "unparsed" penalty. Servers stuck at score 45 = base 50 - 5 unparsed + no other signals.
-- Static analyzer (`scripts/refresh/runtime-static.ts`) fetches README + manifests + up to 8 ranked source files. Picks `.ts`, `.tsx`, `.js`, `.mjs`, `.cjs`, `.py`, `.go`, `.rs` files. Tool extraction patterns: JS/TS `server.tool(name, {description})`, Python `@mcp.tool()` decorator with docstring, Python `Tool(name=, description=)`, and JS/TS `{ name: '...', description: '...' }` object literals (the canonical `setRequestHandler(ListToolsRequestSchema, ...)` shape).
-- Backfill: `npx tsx --env-file=.env.local scripts/score-mcp-runtime.ts` — set `RUNTIME_LIMIT=N` to cap. Rows with `runtime_status = null` are scored first; `error_permanent` rows are skipped.
-- Use `scripts/reset-unparseable-runtime.ts` to clear `runtime_updated_at` for stuck-at-45 rows so the daily refresh re-scores them with the current parser.
+`lib/embeddings.ts` — Voyage AI (`voyage-3`, 1024d) via direct `fetch`. Never import `voyageai` npm package — its ESM build is broken in Turbopack.
 
-**Injection scan backfill**: `npx tsx --env-file=.env.local scripts/scan-mcp-injection.ts` — Layer 1 regex + Layer 2 Haiku + Layer 3 Sonnet extended-thinking (only for borderline cases). All Claude calls have 30s timeout.
+### Compliance reporting (`app/api/compliance/report/route.ts`)
 
-**`GITHUB_TOKEN`** is optional but required for authenticated rate limit (5,000/hr vs 60/hr).
+`GET /api/compliance/report?format=json|csv&period=30d|90d|1y|custom&standard=soc2|iso27001`. Session cookie auth. Fetches all ledger rows for the period (50k row cap → 413 if exceeded). Spot-checks last 1,000 rows with `verifyLedgerRow()`. Fetches `profile_id`, `parameters`, `response_summary` columns (needed for HMAC — not included in output).
 
-### Agent safety layer
+### Docs routes
 
-- **`lib/injection-scanner.ts`** — fast regex Layer-1 scanner for prompt injection patterns; returns `{ score: 0–10, hits: string[] }`
-- **`lib/freshness.ts`** — wraps query results with `content_age_hours` and `data_freshness` (`fresh` / `recent` / `stale`) based on `published_at`
-- **`lib/embeddings.ts`** — `embed(text)` and `embedBatch(texts[])` via Voyage AI HTTP API; never import the `voyageai` npm package (its ESM build is broken in Turbopack)
-- Quarantined items (`is_quarantined = true`) are written to the DB but **never returned** by any API route or MCP tool — except `GET /mcp/verify`, which intentionally surfaces them so callers know a server is dangerous
-- All API routes emit a `logQueryAudit()` record with full params, result IDs, latency, and client IP to `api_query_log`
+`/docs` (`app/docs/page.tsx`) — standalone `'use client'` page, does not use the marketing layout.  
+`/docs/sdk` (`app/(marketing)/docs/sdk/page.tsx`) — uses the marketing layout.  
+Do not create `app/(marketing)/docs/page.tsx` — it conflicts with `app/docs/page.tsx`.
 
-### SDK and GitHub Action (external repos)
+## Design system
 
-The public SDK lives in **`github.com/PThrower/strata-sdk`** (npm: `@strata-ai/sdk@0.1.2`). The GitHub Action Marketplace listing lives in **`github.com/PThrower/strata-mcp-check`** (`uses: PThrower/strata-mcp-check@v1`).
+### Color tokens (CSS custom properties, `app/globals.css`)
 
-**Important naming quirk:** the `strata` package name on npm is taken by an unrelated web framework. The CLI must be invoked as `npx @strata-ai/sdk scan` or `npx @strata-ai/sdk verify`. After `npm install -g @strata-ai/sdk` the bare `strata` binary works.
+Marketing/product palette (fixed, not light/dark):
 
-The SDK ships an identical copy of `lib/risk.ts` at `packages/sdk/src/risk.ts`. If you change the risk-level computation logic here, update the SDK's copy in the same PR. The two files must stay byte-for-byte equivalent in their logic.
+| Token | Value |
+|---|---|
+| `--bg-0` / `--bg-1` / `--bg-2` | `#05060d` / `#0a0d1a` / `#131831` |
+| `--emerald-glow` | `#5fb085` — accents, focus rings, live dot |
+| `--emerald-bright` | `#3d8a65` — API row left border |
+| `--ink` / `--ink-soft` / `--ink-muted` / `--ink-faint` | `#fff` / 84% / 62% / 42% |
+| `--hair` / `--rule` | `rgba(255,255,255,0.10)` — dividers |
 
-### Stripe integration
+Dashboard uses standard Tailwind light/dark tokens (`--background`, `--foreground`, `--border`, `--muted-foreground`).
 
-- `POST /api/stripe/checkout` — creates a Checkout session; sets `client_reference_id` to the user's profile ID so the webhook can match it.
-- `POST /api/stripe/webhook` — handles `checkout.session.completed` (upgrades to `pro`) and `customer.subscription.deleted` (downgrades to `free`). Detects founder purchases via `session.mode === 'payment'` — these set `lifetime_pro = true` and are never downgraded. Requires raw body bytes for signature verification — do not call `.json()` before `stripe.webhooks.constructEvent`.
-- `POST /api/stripe/portal` — creates a Billing Portal session for existing customers.
-- `GET /founder` (`app/founder/route.ts`) — founder checkout redirect. Requires the user to be signed in (redirects to `/signup` if not), then issues a 303 redirect to the Stripe Payment Link with `client_reference_id` and `prefilled_email` appended. Without this route, founder purchases via a bare Stripe link had no profile mapping and silently failed to upgrade the account.
+### Typography
 
-### Auth pages (`app/(auth)/`)
+- Headlines: `var(--font-serif)` (`ui-rounded, system-ui`) — weight 500 for h1, 400 for h2+
+- Body/UI: `var(--font-sans)` (Inter → Geist Sans)
+- Code/labels: `var(--font-mono)` (`ui-monospace, "SF Mono", Menlo`)
+- Brand wordmark: serif 22px, `letter-spacing: 0.18em`, **"S" uppercase "trata" lowercase** — exact
+- Hero h1: 72px / 500 / line-height 1.02 / tracking -0.025em
 
-Login, signup, forgot-password, and reset-password pages all use the `useActionState` hook with Server Actions in `app/actions/auth.ts`. Password strength is enforced both client-side (live `PasswordHint` component) and server-side (`PASSWORD_REGEX`). The reset flow uses Supabase `resetPasswordForEmail()` with `redirectTo: ${NEXT_PUBLIC_APP_URL}/reset-password`; the reset page calls `updateUser({ password })` which works because Supabase sets the session automatically from the email link.
+### UI primitives (`components/ui/`)
 
-`app/auth/callback/route.ts` — Supabase email-confirmation and OAuth callback handler. Exchanges the `code` query param for a session via `exchangeCodeForSession`. Without this route, email-confirmation links 404 and new users cannot verify their accounts.
+Import these — do not recreate inline: `<Glass shimmer?>`, `<Btn variant="emerald|ghost|white|outline">`, `<LiveBadge>`, `<SectionHeading title meta?>`, `<SpaceBackdrop>` (mounted in root layout — do not add per-page).
 
-### Docs pages
+`.glass` = `backdrop-filter: blur(28px) saturate(190%)`. Add `.shimmer` for hover sweep.
 
-Two separate docs surfaces:
+### Design rules
 
-- **`/docs`** — Full API & MCP reference (`app/docs/page.tsx`). A standalone `'use client'` page with its own sidebar nav, right code panel (syntax-highlighted, language-switching), and MCP client tab switcher. Does **not** use the marketing layout. Covers authentication, all REST endpoints with parameter/response tables, error codes, code examples (curl / Python / JS), and MCP server connection guides.
-- **`/docs/sdk`** — SDK reference (`app/(marketing)/docs/sdk/page.tsx`). Uses the marketing layout + Glass/space-backdrop design system. Covers `@strata-ai/sdk`, CLI, GitHub Action, trust signals, capability flags, and error handling. Uses `<CodeBlock>` from `_components/CodeBlock.tsx`. Action YAML references `PThrower/strata-mcp-check@v1`.
+- API/tool rows: `border-left: 2px solid var(--emerald-bright)` — never cards
+- No component libraries (no shadcn, MUI, Radix)
+- All decorative animation gated by `@media (prefers-reduced-motion)`
+- `proxy.ts` not `middleware.ts` — Next.js 16 Turbopack convention
 
-**Nav links** in `app/(marketing)/layout.tsx`:
-- `docs` → `/docs` (API/MCP reference)
-- `sdk` → `/docs/sdk` (SDK reference)
-
-Both links appear in the header nav and in the footer chip row.
-
-**Important**: `app/(marketing)/docs/` and `app/docs/` are separate directories. Route groups like `(marketing)` are transparent — do not create a `page.tsx` inside `app/(marketing)/docs/` as it would conflict with `app/docs/page.tsx`.
-
-### Environment variables required
+## Environment variables
 
 ```
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
-STRIPE_SECRET_KEY
-STRIPE_WEBHOOK_SECRET
-STRIPE_PRO_PRICE_ID
+STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET / STRIPE_PRO_PRICE_ID
 NEXT_PUBLIC_APP_URL
 ANTHROPIC_API_KEY        # refresh pipeline + injection scanning
-VOYAGE_API_KEY           # mcp-directory embeddings (voyage-3, direct HTTP fetch)
-GITHUB_TOKEN             # optional but needed for 5000/hr GitHub rate limit (scoring backfill)
-ADMIN_EMAIL              # email address that gets admin dashboard access
-AUDIT_HASH_PEPPER        # HMAC pepper for api_query_log IP/key hashing (warn-only if missing)
-LEDGER_SIGNING_KEY       # HMAC-SHA256 key for signing agent_activity_ledger rows.
-                         # Generate: openssl rand -hex 32
-                         # Warn-only if missing (rows insert with signature=null).
-                         # The HMAC covers ALL persisted columns via canonical JSON
-                         # (stableStringify with sorted keys). Use verifyLedgerRow(row)
-                         # from lib/ledger.ts to verify a row's integrity at audit time.
-                         # NOTE: rows created before 2026-05-07 used a narrower HMAC input
-                         # (id|profile_id|tool_called|created_at only) — those rows return
-                         # false from verifyLedgerRow and should be treated as "unverifiable"
-                         # (pre-fix), not "tampered".
-STRATA_AGENT_SIGNING_KEY # Ed25519 private key (PKCS#8 PEM) for signing agent identity JWTs.
-                         # Generate:
-                         #   openssl genpkey -algorithm Ed25519 -out strata-agent-private.pem
-                         #   cat strata-agent-private.pem   # → paste as STRATA_AGENT_SIGNING_KEY
-                         # Required. POST /api/v1/agents and the MCP verify_agent_credential
-                         # tool will return 503 if this is unset.
-STRATA_AGENT_PUBLIC_KEY  # Corresponding Ed25519 public key (SubjectPublicKeyInfo PEM).
-                         # Generate (from the private key above):
-                         #   openssl pkey -in strata-agent-private.pem -pubout -out strata-agent-public.pem
-                         #   cat strata-agent-public.pem    # → paste as STRATA_AGENT_PUBLIC_KEY
-                         # Required. GET /.well-known/jwks.json and POST /api/v1/agents/verify
-                         # return 503 if this is unset.
-                         # Key rotation: increment kid in lib/agent-credentials.ts (KEY_ID constant),
-                         # add the new JWK to the JWKS response, keep the old one for existing tokens.
+VOYAGE_API_KEY           # embeddings — direct HTTP fetch only
+GITHUB_TOKEN             # optional; 5,000/hr vs 60/hr for scoring scripts
+ADMIN_EMAIL
+AUDIT_HASH_PEPPER        # HMAC pepper for api_query_log IP hashing
+LEDGER_SIGNING_KEY       # HMAC-SHA256 for agent_activity_ledger. Generate: openssl rand -hex 32
+STRATA_AGENT_SIGNING_KEY # Ed25519 private key (PKCS#8 PEM). Generate:
+                         #   openssl genpkey -algorithm Ed25519 | tee strata-agent-private.pem
+STRATA_AGENT_PUBLIC_KEY  # Matching SubjectPublicKeyInfo PEM.
+                         #   openssl pkey -in strata-agent-private.pem -pubout
+                         # Key rotation: bump KEY_ID in lib/agent-credentials.ts
 ```
-
-## Brand & design system
-
-### Color tokens (CSS custom properties in `app/globals.css`)
-
-Two token sets coexist: light/dark dashboard tokens (`--background`, `--foreground`, `--border`, `--muted-foreground`) and the fixed marketing/product space palette:
-
-| Token | Value | Usage |
-|---|---|---|
-| `--bg-0` | `#05060d` | Deepest space background base |
-| `--bg-1` | `#0a0d1a` | Mid space tone |
-| `--bg-2` | `#131831` | Lit nebula tone |
-| `--emerald-deep` | `#1f5238` | Darkest emerald |
-| `--emerald` | `#2d6a4f` | Brand primary |
-| `--emerald-bright` | `#3d8a65` | API row left border, interactive accents |
-| `--emerald-glow` | `#5fb085` | Italic gradient, return types, check icons, focus ring, live dot |
-| `--emerald-light` | `#9be0bd` | Light emerald highlight |
-| `--ink` | `#ffffff` | Primary text |
-| `--ink-soft` | `rgba(255,255,255,0.84)` | Default body text on dark backgrounds |
-| `--ink-muted` | `rgba(255,255,255,0.62)` | Secondary body text, nav links |
-| `--ink-faint` | `rgba(255,255,255,0.42)` | Eyebrows, params, meta labels |
-| `--hair` / `--rule` | `rgba(255,255,255,0.10)` | Dividers (both defined, same value) |
-| `--hair-strong` | `rgba(255,255,255,0.20)` | Stronger dividers |
-
-### Typography
-
-- **Display / headlines**: `var(--font-serif)` = `ui-rounded, system-ui, -apple-system, sans-serif` (SF Pro Rounded on Apple). Weight 500 for h1, 400 for h2+.
-- **Body / UI**: `var(--font-sans)` = Inter → Geist Sans → system. Use `font-feature-settings: "ss01", "cv11", "calt"`.
-- **Code / labels**: `var(--font-mono)` = `ui-monospace, "SF Mono", Menlo` → Geist Mono.
-- Brand wordmark: `var(--font-serif)` 22px, `letter-spacing: 0.18em`, **"S" uppercase, "trata" lowercase** — preserve exactly.
-- Hero h1: 72px / weight 500 / line-height 1.02 / tracking -0.025em.
-- Section h2: 36px / weight 400.
-
-### Shared UI primitives (`components/ui/`)
-
-Do not recreate these inline — always import them:
-
-| Component | Import | Props |
-|---|---|---|
-| `<Glass>` | `@/components/ui/glass` | `shimmer?`, `as?`, `className?`, `style?` |
-| `<Btn>` | `@/components/ui/button` | `variant` (`emerald\|ghost\|white\|outline`), `href?`, `arrow?` |
-| `<LiveBadge>` | `@/components/ui/live-badge` | none |
-| `<SectionHeading>` | `@/components/ui/section-heading` | `title`, `meta?` |
-| `<SpaceBackdrop>` | `@/components/ui/space-backdrop` | none (renders `.mkt-space` layers) |
-
-These wrap the CSS classes in `globals.css` (`glass`, `shimmer`, `mkt-btn`, `btn-{variant}`, etc.). All visual logic stays in CSS. `SpaceBackdrop` is mounted in `app/layout.tsx` (root layout) so it applies globally — no need to add it per-page.
-
-### Glass primitive
-
-`.glass` class provides the frosted panel treatment. Content must be wrapped or `.glass > *` automatically gets `position: relative; z-index: 3`. Add `.shimmer` for hover sweep effect. Key properties: `backdrop-filter: blur(28px) saturate(190%)`, faint emerald corner cast, `::after` top specular sheen.
-
-### Design rules
-
-- Tool/method rows: `border-left: 2px solid var(--emerald-bright)` — never cards.
-- Pricing: feature comparison rows with hairline `border-top` — never bullet lists.
-- Focus ring: `outline: 2px solid var(--emerald-glow); outline-offset: 3px` — globally applied in `globals.css`.
-- All decorative animation gated by `@media (prefers-reduced-motion)`.
-- No component libraries (no shadcn, MUI, etc.).
-- `proxy.ts` not `middleware.ts` (Next.js 16 Turbopack convention).

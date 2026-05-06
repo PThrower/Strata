@@ -4,16 +4,17 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 export interface ThreatEvent {
-  id:          string
-  server_id:   string
-  server_url:  string | null
-  server_name: string | null
-  event_type:  string
-  severity:    'critical' | 'high' | 'medium' | 'low'
-  old_value:   Record<string, unknown> | null
-  new_value:   Record<string, unknown> | null
-  detail:      string | null
-  created_at:  string
+  id:                        string
+  server_id:                 string
+  server_url:                string | null
+  server_name:               string | null
+  event_type:                string
+  severity:                  'critical' | 'high' | 'medium' | 'low'
+  old_value:                 Record<string, unknown> | null
+  new_value:                 Record<string, unknown> | null
+  detail:                    string | null
+  created_at:                string
+  triggered_circuit_breaker: boolean
 }
 
 function relativeTime(iso: string): string {
@@ -179,14 +180,25 @@ export default function ThreatsClient({
                       {event.detail ?? '—'}
                     </td>
                     <td className="px-4 py-3 text-right whitespace-nowrap">
-                      {flags.length > 0 && (
-                        <Link
-                          href={`/dashboard/policies?prefill=capability_flag&value=${flags[0]}`}
-                          className="text-xs px-2.5 py-1 rounded-md border border-border bg-background hover:bg-red-50 dark:hover:bg-red-950 text-muted-foreground hover:text-red-600 transition-colors"
-                        >
-                          Block {flags[0]}
-                        </Link>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {event.triggered_circuit_breaker && (
+                          <Link
+                            href="/dashboard/circuit-breakers"
+                            className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded font-medium bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 ring-1 ring-red-500/30"
+                            title="This event tripped a circuit breaker"
+                          >
+                            ⚡ CB
+                          </Link>
+                        )}
+                        {flags.length > 0 && (
+                          <Link
+                            href={`/dashboard/policies?prefill=capability_flag&value=${flags[0]}`}
+                            className="text-xs px-2.5 py-1 rounded-md border border-border bg-background hover:bg-red-50 dark:hover:bg-red-950 text-muted-foreground hover:text-red-600 transition-colors"
+                          >
+                            Block {flags[0]}
+                          </Link>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )

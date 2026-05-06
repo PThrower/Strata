@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
   // ── Query threat_feed ─────────────────────────────────────────────────────────
   let query = auth.supabase
     .from('threat_feed')
-    .select('id, server_id, server_url, server_name, event_type, severity, old_value, new_value, detail, created_at', { count: 'exact' })
+    .select('id, server_id, server_url, server_name, event_type, severity, old_value, new_value, detail, created_at, triggered_circuit_breaker', { count: 'exact' })
     .gte('created_at', sinceDate)
     .order('created_at', { ascending: false })
     .limit(limit + 1)

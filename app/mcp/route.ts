@@ -92,6 +92,7 @@ export async function POST(req: Request) {
         min_runtime_score: z.number().optional().describe('Optional. Minimum runtime score (0–100) based on tool behavior analysis. Default: 0. Pass 50 or higher to require behaviorally-trusted servers.'),
         exclude_capability_flags: z.array(z.string()).optional().describe('Optional. Exclude servers exposing any of these capabilities. Valid values: "shell_exec", "dynamic_eval", "fs_write", "arbitrary_sql", "secret_read", "process_spawn", "net_egress". Example: ["shell_exec", "dynamic_eval"].'),
         require_hosted: z.boolean().optional().describe('Optional. If true, only return servers with a discovered live hosted endpoint. Default: false.'),
+        exclude_circuit_broken: z.boolean().optional().describe('Optional. If true, exclude servers with an active circuit breaker (critical risk event detected). Default: false — circuit-broken servers appear with circuit_broken=true.'),
       },
     },
     (args) => handleToolCall('find_mcp_servers', args as Record<string, unknown>, req),
