@@ -94,8 +94,36 @@ const tools = [
   {
     fn: 'search_ecosystem()',
     ret: 'results[]',
-    desc: 'Free-form semantic search across the indexed corpus, scoped to one ecosystem or all five.',
+    desc: 'Free-form semantic search across the indexed corpus, scoped to one ecosystem or all 22.',
     params: '{ q, scope?, k? }',
+    transport: 'rest+mcp',
+  },
+  {
+    fn: 'find_mcp_servers()',
+    ret: 'server[]',
+    desc: 'Search 2,179+ scored MCP servers by capability, risk level, or use case.',
+    params: '{ query, filters? }',
+    transport: 'rest+mcp',
+  },
+  {
+    fn: 'verify_payment_endpoint()',
+    ret: 'trust',
+    desc: 'Trust scores for x402 payment endpoints before your agent pays anything.',
+    params: '{ url }',
+    transport: 'rest+mcp',
+  },
+  {
+    fn: 'verify_agent_credential()',
+    ret: 'claims',
+    desc: 'Verify Ed25519-signed agent JWTs. Live revocation check against the Strata identity registry.',
+    params: '{ credential }',
+    transport: 'mcp',
+  },
+  {
+    fn: 'track_data_flow()',
+    ret: 'flow',
+    desc: 'Record data flows between MCP servers. See which net_egress endpoints touched your data.',
+    params: '{ source, dest }',
     transport: 'rest+mcp',
   },
 ]
@@ -302,7 +330,7 @@ export default async function LandingPage() {
               margin: '0 0 32px', display: 'flex', alignItems: 'center', gap: 14,
             }}>
               <span aria-hidden="true" style={{ width: 32, height: 1, background: 'rgba(255,255,255,0.35)', display: 'inline-block', flexShrink: 0 }} />
-              mcp security · trust layer · {serverCountFormatted} servers scored
+              agentic safety · trust layer · {serverCountFormatted} servers scored
             </p>
 
             {/* Headline */}
@@ -340,8 +368,8 @@ export default async function LandingPage() {
             {/* Body + buttons */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 32, alignItems: 'end' }} className="hero-foot">
               <p style={{ color: 'var(--ink-soft)', fontSize: 16.5, lineHeight: 1.6, maxWidth: 420, margin: 0 }}>
-                Verified intelligence, security scoring, and behavioral analysis for every MCP server your agents use.{' '}
-                <strong style={{ color: 'var(--ink)', fontWeight: 500 }}>Know what you&rsquo;re connecting to before you connect.</strong>
+                Security scoring, agent identity, payment verification, and data lineage tracking for the agentic economy.{' '}
+                <strong style={{ color: 'var(--ink)', fontWeight: 500 }}>Know what your agents are connecting to, who they are, and where your data goes.</strong>
               </p>
               <div style={{ display: 'flex', gap: 12 }}>
                 <Btn variant="emerald" href="/signup">get api key</Btn>
@@ -383,7 +411,7 @@ export default async function LandingPage() {
             {
               step: '02',
               title: 'Score',
-              body: 'Every MCP server gets two trust signals: security_score (repo health) and runtime_score (behavioral analysis). Capability flags expose what tools can actually do.',
+              body: 'Every MCP server gets two trust signals: security_score (repo health) and runtime_score (live endpoint probing + static analysis). Per-tool scoring exposes which specific tools are dangerous — not just the server.',
               accent: true,
             },
             {
@@ -556,7 +584,7 @@ export default async function LandingPage() {
               Connect once
             </h3>
             <p style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.6, margin: '0 0 18px' }}>
-              Add to Claude Desktop, Cursor, or any MCP client — all tools available instantly.
+              Add to Claude Desktop, Cursor, or any MCP client — all 8 tools available instantly. MCP server verification, agent identity, payment trust, and data lineage in one connection.
             </p>
             <code style={{
               display: 'block',
@@ -578,7 +606,7 @@ export default async function LandingPage() {
 
       {/* ══ API Methods ══ */}
       <section style={{ padding: '72px 0' }} id="methods">
-        <SectionHeading title="One endpoint. Four verbs." meta="api/v1 · rest + mcp" />
+        <SectionHeading title="One MCP server. Eight tools." meta="api/v1 · rest + mcp" />
         <Glass style={{ padding: 14 }}>
           {tools.map((tool, i) => (
             <div
@@ -890,6 +918,21 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ══ Phase 3 teaser ══ */}
+      <div style={{
+        padding: '28px 0',
+        borderTop: '1px solid var(--hair)',
+        textAlign: 'center',
+      }}>
+        <p style={{
+          fontFamily: 'var(--font-mono)', fontSize: 10.5, fontWeight: 500,
+          letterSpacing: '0.15em', textTransform: 'uppercase',
+          color: 'var(--ink-faint)', margin: 0,
+        }}>
+          Coming in Phase 3 &mdash; Policy Engine &middot; Compliance Reporting &middot; Real-Time Threat Feed &middot; Behavioral Anomaly Detection
+        </p>
+      </div>
     </>
   )
 }
