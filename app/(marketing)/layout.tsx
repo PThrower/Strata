@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { Btn } from '@/components/ui/button'
+import { MarketingMobileNav } from '@/components/ui/marketing-mobile-nav'
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (
@@ -44,12 +45,15 @@ export default function MarketingLayout({ children }: { children: ReactNode }) {
             </Link>
 
             <div className="flex items-center gap-7">
-              <Link href="/docs"           className="mkt-nav-link hidden sm:block">docs</Link>
-              <Link href="/docs/sdk"       className="mkt-nav-link hidden sm:block">sdk</Link>
+              <Link href="/docs"          className="mkt-nav-link hidden sm:block">docs</Link>
+              <Link href="/docs/sdk"      className="mkt-nav-link hidden sm:block">sdk</Link>
               <Link href="/how-it-works"  className="mkt-nav-link hidden sm:block">how it works</Link>
               <Link href="/submit-mcp"    className="mkt-nav-link hidden sm:block">submit mcp</Link>
               <Link href="/#pricing"      className="mkt-nav-link hidden sm:block">pricing</Link>
-              <Btn variant="emerald" href="/signup">get api key</Btn>
+              <span className="hidden sm:inline-flex">
+                <Btn variant="emerald" href="/signup">get api key</Btn>
+              </span>
+              <MarketingMobileNav />
             </div>
           </nav>
         </div>
