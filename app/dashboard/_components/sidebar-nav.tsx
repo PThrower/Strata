@@ -4,23 +4,23 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const BASE_ITEMS = [
-  { label: 'Overview',    href: '/dashboard' },
-  { label: 'Analytics',   href: '/dashboard/analytics' },
-  { label: 'Ledger',      href: '/dashboard/ledger' },
-  { label: 'Lineage',     href: '/dashboard/lineage' },
-  { label: 'Agents',      href: '/dashboard/agents' },
+  { label: 'Overview',         href: '/dashboard' },
+  { label: 'Analytics',        href: '/dashboard/analytics' },
+  { label: 'Ledger',           href: '/dashboard/ledger' },
+  { label: 'Agents',           href: '/dashboard/agents' },
+  { label: 'Lineage',          href: '/dashboard/lineage' },
+  { label: 'Policies',         href: '/dashboard/policies' },
   { label: 'Threats',          href: '/dashboard/threats' },
-  { label: 'Anomalies',        href: '/dashboard/anomalies' },
   { label: 'Circuit Breakers', href: '/dashboard/circuit-breakers' },
   { label: 'Dependency Graph', href: '/dashboard/dependency-graph' },
-  { label: 'Policies',         href: '/dashboard/policies' },
-  { label: 'Submit',      href: '/dashboard/submit' },
-  { label: 'Submissions', href: '/dashboard/submissions' },
-  { label: 'Submit MCP',  href: '/submit-mcp' },
-  { label: 'Suggest',     href: '/dashboard/suggest' },
-  { label: 'Docs',        href: '/docs' },
-  { label: 'SDK Docs',    href: '/docs/sdk' },
-  { label: 'Billing',     href: '/dashboard/billing' },
+  { label: 'Anomalies',        href: '/dashboard/anomalies' },
+  { label: 'Submit',           href: '/dashboard/submit' },
+  { label: 'Submissions',      href: '/dashboard/submissions' },
+  { label: 'Submit MCP',       href: '/submit-mcp' },
+  { label: 'Suggest',          href: '/dashboard/suggest' },
+  { label: 'Docs',             href: '/docs' },
+  { label: 'SDK Docs',         href: '/docs/sdk' },
+  { label: 'Billing',          href: '/dashboard/billing' },
 ]
 
 export default function SidebarNav({ isAdmin }: { isAdmin?: boolean }) {

@@ -367,9 +367,9 @@ export default function HowItWorksPage() {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       <div style={hr}>
         <SectionHeading
-          eyebrow="Phase 3 — Live"
-          heading="Policy, compliance, and threat monitoring."
-          subtext="Beyond scoring — Strata enforces rules, generates audit evidence, and alerts you when risk profiles change."
+          eyebrow="Phases 3 & 4 — Live"
+          heading="Policy, compliance, threat monitoring, and runtime intelligence."
+          subtext="Beyond scoring — Strata enforces rules, generates audit evidence, alerts on risk changes, and detects behavioral anomalies."
         />
 
         {[
@@ -384,6 +384,18 @@ export default function HowItWorksPage() {
           {
             label: 'Real-Time Threat Feed',
             body: 'A Postgres trigger fires when servers change risk profile — quarantine added, dangerous capabilities gained, security score drops. Push alerts before your agents are affected.',
+          },
+          {
+            label: 'Circuit Breaker',
+            body: 'Automatic disconnection when a server crosses a critical risk threshold. The agent stack continues in degraded-safe mode without human intervention.',
+          },
+          {
+            label: 'Dependency Graph',
+            body: 'Visual map of every server your agents depend on — risk scores, capability flags, circuit breaker status, and data lineage flows in a single view.',
+          },
+          {
+            label: 'Behavioral Anomaly Detection',
+            body: '30-day rolling baselines per agent. Three detectors: volume spikes, high-risk server surges, net-egress floods. Hourly analysis, 6-hour dedup window.',
           },
         ].map(({ label, body }) => (
           <Glass key={label} shimmer style={{ padding: '24px 28px', marginBottom: 10 }}>

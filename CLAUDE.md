@@ -142,6 +142,46 @@ Live probing (`lib/mcp-probe.ts`) POSTs JSON-RPC `initialize` + `tools/list` wit
 
 `GET /api/compliance/report?format=json|csv&period=30d|90d|1y|custom&standard=soc2|iso27001`. Session cookie auth. Fetches all ledger rows for the period (50k row cap → 413 if exceeded). Spot-checks last 1,000 rows with `verifyLedgerRow()`. Fetches `profile_id`, `parameters`, `response_summary` columns (needed for HMAC — not included in output).
 
+### Circuit Breaker (`supabase/migrations/20260509000001_circuit_breaker.sql`)
+
+Three columns on `mcp_servers`: `circuit_broken boolean NOT NULL DEFAULT false`, `circuit_broken_at timestamptz`, `circuit_broken_reason text`. One table: `circuit_breaker_resets` (per-profile bypass, RLS + `REVOKE ALL FROM anon/authenticated`).
+
+Trigger on `threat_feed AFTER INSERT`: auto-trips `circuit_broken = true` when `severity = 'critical'`; auto-resets when `event_type = 'quarantine_removed'` and also `DELETE FROM circuit_breaker_resets WHERE server_id = NEW.server_id` to clear stale bypasses. No infinite loop — the narrow `mcp_servers` trigger fires only on `OF is_quarantined, capability_flags, security_score, injection_risk_score`; `circuit_broken` is not in that list.
+
+Routes: `GET /api/v1/circuit-breakers` (list all tripped servers + caller's reset status), `POST /api/v1/circuit-breakers/:server_id/reset`, `DELETE ...reset`. All use `authenticateRequest`.
+
+`mcp/verify` response includes `circuit_breaker: { tripped, tripped_at, reason, profile_reset }`. `find_mcp_servers` results include `circuit_broken: boolean` + optional `exclude_circuit_broken` param.
+
+Known limitation: `exclude_circuit_broken=true` ignores per-profile resets — filters on global flag only.
+
+### Dependency Graph (`lib/dependency-graph.ts`)
+
+`assembleDepGraph(supabase, profileId, periodDays)` — 3-round parallel query plan:
+1. `agent_activity_ledger` (call history) + `data_lineage_flows` (edges) + `policies` (block rules)
+2. `mcp_servers` bulk URL lookup (enrichment)
+3. `circuit_breaker_resets` + `threat_feed` (status overlays)
+
+Caps at 50 nodes, sorted by risk DESC → circuit_broken DESC → last_seen_at DESC so high-risk servers survive the cap. Summary includes `total_count_before_cap`.
+
+`safeHttpHref(url)` (also exported from `lib/dependency-graph.ts`): validates `http:` or `https:` protocol before rendering as `<a href>` — guards against `javascript:` XSS from malicious server URLs stored in the DB.
+
+`policy_blocked` uses AND semantics (matching `lib/policy-engine.ts`) but ignores `match_tool_names`, time windows, and `agent_id` scoping — document this as intentional for server-centric view.
+
+Route: `GET /api/v1/dependency-graph?period=7d|30d|90d|all`. Dashboard: `/dashboard/dependency-graph` with column SVG layout (sources left, bidirectional centre, destinations right) and table view.
+
+### Behavioral Anomaly Detection (`lib/anomaly-detection.ts`)
+
+Tables: `anomaly_baselines` (no uniqueness — rows inserted hourly, pruned after 48h), `anomaly_events` (RLS SELECT for authenticated, writes through service role only).
+
+`runDetectionForProfile(supabase, profileId)` — requires `sampleCount ≥ 50` AND `daysWithData ≥ 7` before firing alerts. Three detectors:
+- **Volume spike**: calls_last_hour > 5× baseline_slot AND > 10 absolute → medium; > 10× → high
+- **High-risk surge**: high/critical rate > 3× baseline AND > 5 absolute → high
+- **Net-egress surge**: net_egress calls > 3× baseline AND > 5 absolute → medium; off-hours → high
+
+6-hour dedup window per event type (only unacknowledged events count; acknowledging resets the window). Baseline excludes the last 2 hours to avoid current anomalous activity skewing it.
+
+Cron route: `GET /api/v1/anomalies/detect`. Validates **both** Vercel's automatic `Authorization: Bearer ${CRON_SECRET}` **and** manual `X-Cron-Secret: ${CRON_SECRET}` using `crypto.timingSafeEqual`. `export const maxDuration = 300` guards against timeout on large runs.
+
 ### Docs routes
 
 `/docs` (`app/docs/page.tsx`) — standalone `'use client'` page, does not use the marketing layout.  
