@@ -93,6 +93,29 @@ export async function GET(request: NextRequest) {
 
   const body = buildVerifyResult(row)
 
+  // Circuit breaker — present for all callers when server is found.
+  // Profile reset check runs only for authenticated callers on a tripped server.
+  let circuitBreaker: { tripped: boolean; tripped_at: string | null; reason: string | null; profile_reset: boolean } | undefined
+  if (row) {
+    const tripped = row.circuit_broken === true
+    let profileReset = false
+    if (tripped && auth.mode === 'auth') {
+      const { data: resetRow } = await auth.supabase
+        .from('circuit_breaker_resets')
+        .select('id')
+        .eq('server_id', row.id)
+        .eq('profile_id', auth.profile.id)
+        .maybeSingle()
+      profileReset = resetRow !== null
+    }
+    circuitBreaker = {
+      tripped,
+      tripped_at: row.circuit_broken_at ?? null,
+      reason: row.circuit_broken_reason ?? null,
+      profile_reset: profileReset,
+    }
+  }
+
   // Advisory policy verdict — authenticated callers only.
   // Does NOT block the response; agents decide what to do with policy_verdict.
   let policyVerdict: { allowed: boolean; rule_name: string | null; reason: string | null } | undefined
@@ -110,13 +133,14 @@ export async function GET(request: NextRequest) {
       : { allowed: false, rule_name: decision.rule_name, reason: decision.reason }
   }
 
-  const responseBody = policyVerdict !== undefined
-    ? {
-        ...body,
-        ...(policyVerdict.allowed === false ? { trusted: false } : {}),
-        policy_verdict: policyVerdict,
-      }
-    : body
+  const responseBody = {
+    ...body,
+    ...(circuitBreaker !== undefined ? { circuit_breaker: circuitBreaker } : {}),
+    ...(policyVerdict !== undefined ? {
+      ...(policyVerdict.allowed === false ? { trusted: false } : {}),
+      policy_verdict: policyVerdict,
+    } : {}),
+  }
 
   // Log every call, including anon, so /verify usage shows up in dashboards.
   // Anon traffic is bucketed under a sentinel "anon" key so per-user

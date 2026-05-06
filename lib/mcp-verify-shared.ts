@@ -22,13 +22,17 @@ export interface McpRow {
   is_quarantined: boolean | null
   injection_risk_score: number | null
   npm_package: string | null
+  circuit_broken: boolean | null
+  circuit_broken_at: string | null
+  circuit_broken_reason: string | null
 }
 
 export const VERIFY_SELECT_COLUMNS =
   'id, name, description, url, category, tags, ' +
   'security_score, runtime_score, capability_flags, ' +
   'hosted_endpoint, tool_count, stars, archived, ' +
-  'runtime_updated_at, is_quarantined, injection_risk_score, npm_package'
+  'runtime_updated_at, is_quarantined, injection_risk_score, npm_package, ' +
+  'circuit_broken, circuit_broken_at, circuit_broken_reason'
 
 // Returns up to two URL candidates: the canonical owner/repo form, and the
 // .git-suffixed variant. mcp_servers stores either depending on source.

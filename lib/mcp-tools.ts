@@ -113,7 +113,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: 'find_mcp_servers',
     description:
-      'Search 2,100+ MCP servers by use case or keyword using semantic similarity weighted by trust scores. Each result includes: security_score (0–100, repo health), runtime_score (0–100, tool behavior analysis), capability_flags (e.g. "shell_exec", "fs_write", "dynamic_eval"), hosted_endpoint, tool_count, runtime_freshness (fresh/aging/stale/unknown). Use exclude_capability_flags to filter dangerous capabilities; use require_hosted for servers with live endpoints. Quarantined and archived servers are always excluded. ' +
+      'Search 2,100+ MCP servers by use case or keyword using semantic similarity weighted by trust scores. Each result includes: security_score (0–100, repo health), runtime_score (0–100, tool behavior analysis), capability_flags (e.g. "shell_exec", "fs_write", "dynamic_eval"), hosted_endpoint, tool_count, runtime_freshness (fresh/aging/stale/unknown), circuit_broken (true if Strata has automatically tripped a circuit breaker due to a critical risk event — skip these servers or pass exclude_circuit_broken=true). Quarantined and archived servers are always excluded. ' +
       EPISTEMIC_NOTICE,
     inputSchema: {
       type: 'object',
@@ -146,6 +146,10 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         require_hosted: {
           type: 'boolean',
           description: 'If true, only return servers with a discovered live hosted endpoint. Default false.',
+        },
+        exclude_circuit_broken: {
+          type: 'boolean',
+          description: 'If true, exclude servers that have an active circuit breaker (critical risk event detected). Default false — circuit-broken servers appear with circuit_broken=true so agents can make their own decision.',
         },
       },
       required: ['query'],
@@ -546,7 +550,8 @@ export async function handleToolCall(
     const excludeFlags = Array.isArray(args.exclude_capability_flags)
       ? (args.exclude_capability_flags as unknown[]).filter((f): f is string => typeof f === 'string').slice(0, 20)
       : []
-    const requireHosted = args.require_hosted === true
+    const requireHosted       = args.require_hosted === true
+    const excludeCircuitBroken = args.exclude_circuit_broken === true
 
     let embedding: number[]
     try {
@@ -571,7 +576,7 @@ export async function handleToolCall(
       return err('Error: Search error', 500)
     }
 
-    type McpRow = {
+    type McpSearchRow = {
       id: string; name: string; description: string | null; url: string | null
       category: string | null; tags: string[]; similarity: number
       security_score: number | null; runtime_score: number | null
@@ -579,7 +584,21 @@ export async function handleToolCall(
       tool_count: number | null; stars: number | null; archived: boolean | null
       runtime_updated_at: string | null
     }
-    const rows = ((data ?? []) as McpRow[])
+    const rows = ((data ?? []) as McpSearchRow[])
+
+    // Bulk-fetch circuit_broken status for the returned server IDs.
+    // The search RPC doesn't include this column, so we do a single join query.
+    let breakerMap = new Map<string, boolean>()
+    if (rows.length > 0) {
+      const { data: breakerRows } = await supabase
+        .from('mcp_servers')
+        .select('id, circuit_broken')
+        .in('id', rows.map(r => r.id))
+      breakerMap = new Map(
+        ((breakerRows ?? []) as { id: string; circuit_broken: boolean }[]).map(r => [r.id, r.circuit_broken])
+      )
+    }
+
     const now = Date.now()
     const freshness = (iso: string | null): 'fresh' | 'aging' | 'stale' | 'unknown' => {
       if (!iso) return 'unknown'
@@ -588,7 +607,7 @@ export async function handleToolCall(
       if (days < 60) return 'aging'
       return 'stale'
     }
-    const results = rows.map((r) => ({
+    const allResults = rows.map((r) => ({
       name: r.name,
       description: r.description,
       url: r.url,
@@ -601,7 +620,9 @@ export async function handleToolCall(
       tool_count: r.tool_count,
       stars: r.stars,
       runtime_freshness: freshness(r.runtime_updated_at),
+      circuit_broken: breakerMap.get(r.id) ?? false,
     }))
+    const results = excludeCircuitBroken ? allResults.filter(r => !r.circuit_broken) : allResults
 
     await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'mcp-servers', ecosystem: 'mcp', statusCode: 200 })
     return ok({ query, results }, rows.map(r => r.id))

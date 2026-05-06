@@ -16,7 +16,7 @@ export default async function ThreatsPage() {
   // Fetch recent threats (last 7 days) and the user's connected server URLs in parallel
   const [{ data: events }, { data: ledgerRows }] = await Promise.all([
     sb.from('threat_feed')
-      .select('id, server_id, server_url, server_name, event_type, severity, old_value, new_value, detail, created_at')
+      .select('id, server_id, server_url, server_name, event_type, severity, old_value, new_value, detail, created_at, triggered_circuit_breaker')
       .gte('created_at', sevenDaysAgo)
       .order('created_at', { ascending: false })
       .limit(200),
