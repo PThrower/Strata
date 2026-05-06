@@ -15,9 +15,12 @@ type RiskLevel = 'low' | 'medium' | 'high' | 'critical' | 'unknown'
 interface LedgerRow {
   id:               string
   created_at:       string
+  profile_id:       string | null   // needed for verifyLedgerRow HMAC; excluded from output
   agent_id:         string | null
   tool_called:      string
   server_url:       string | null
+  parameters:       Record<string, unknown> | null  // needed for verifyLedgerRow; excluded from output
+  response_summary: Record<string, unknown> | null  // needed for verifyLedgerRow; excluded from output
   risk_level:       RiskLevel | null
   capability_flags: string[] | null
   duration_ms:      number | null
@@ -153,7 +156,13 @@ function toRawRow(r: LedgerRow, sigValid: boolean | null): RawRow {
 // ── CSV builder ───────────────────────────────────────────────────────────────
 
 function csvEscape(v: unknown): string {
-  const s = v == null ? '' : String(v)
+  let s = v == null ? '' : String(v)
+  // Formula-injection guard: spreadsheet apps (Excel, Sheets, LibreOffice) interpret
+  // cells starting with =, +, -, @, tab, or CR as formulas. Prefix with a single
+  // quote so the cell is treated as text.
+  if (s.length > 0 && /^[=+\-@\t\r]/.test(s)) {
+    s = "'" + s
+  }
   if (s.includes(',') || s.includes('"') || s.includes('\n')) {
     return '"' + s.replace(/"/g, '""') + '"'
   }
@@ -358,13 +367,42 @@ export async function GET(request: NextRequest): Promise<Response> {
 
   // ── Fetch rows ───────────────────────────────────────────────────────────────
   const sb = createServiceRoleClient()
+  const MAX_REPORT_ROWS = 50_000
+
+  // Count first to detect overflow before fetching all data
+  const { count: totalCount, error: countErr } = await sb
+    .from('agent_activity_ledger')
+    .select('id', { count: 'exact', head: true })
+    .eq('profile_id', user.id)
+    .gte('created_at', range.from)
+    .lte('created_at', range.to)
+
+  if (countErr) {
+    console.error('[compliance] count failed:', countErr.message)
+    return Response.json({ error: 'Service error' }, { status: 503 })
+  }
+
+  if ((totalCount ?? 0) > MAX_REPORT_ROWS) {
+    return Response.json(
+      {
+        error: `Report would contain ${totalCount} rows, which exceeds the ${MAX_REPORT_ROWS.toLocaleString()} row limit. Use a shorter period (try period=90d or period=30d).`,
+        total_count: totalCount,
+        max_rows:    MAX_REPORT_ROWS,
+      },
+      { status: 413 },
+    )
+  }
+
+  // Fetch all columns needed for verifyLedgerRow HMAC (profile_id, parameters,
+  // response_summary). These are used internally and are NOT included in report output.
   const { data, error: dbErr } = await sb
     .from('agent_activity_ledger')
-    .select('id, created_at, agent_id, tool_called, server_url, risk_level, capability_flags, duration_ms, signature')
+    .select('id, created_at, profile_id, agent_id, tool_called, server_url, parameters, response_summary, risk_level, capability_flags, duration_ms, signature')
     .eq('profile_id', user.id)
     .gte('created_at', range.from)
     .lte('created_at', range.to)
     .order('created_at', { ascending: false })
+    .range(0, MAX_REPORT_ROWS - 1)
 
   if (dbErr) {
     console.error('[compliance] fetch failed:', dbErr.message)
