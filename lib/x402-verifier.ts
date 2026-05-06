@@ -10,6 +10,7 @@ import {
   computeX402RiskLevel,
   type X402ScoreInput,
 } from './x402-risk'
+import { assertPublicHttpsUrl } from './ssrf-guard'
 
 export interface X402VerificationResult {
   url:                string
@@ -124,6 +125,27 @@ export async function verifyX402Endpoint(url: string): Promise<X402VerificationR
   }
   if (parsed.protocol !== 'https:') {
     return syntheticCriticalResult(parsed.toString(), parsed.hostname, [])
+  }
+
+  // ── 1b. SSRF guard — reject private/internal endpoints before fetching ──
+  try {
+    await assertPublicHttpsUrl(parsed.toString())
+  } catch {
+    // Do NOT write to DB — avoids caching a probe of a private endpoint.
+    return {
+      url:                parsed.toString(),
+      domain:             parsed.hostname,
+      security_score:     0,
+      risk_level:         'critical',
+      trusted:            false,
+      flags:              ['private_endpoint'],
+      payment_amount_usd: null,
+      payment_currency:   null,
+      payment_network:    null,
+      ssl_valid:          null,
+      is_quarantined:     false,
+      last_checked_at:    new Date().toISOString(),
+    }
   }
 
   const canonicalUrl = parsed.toString()

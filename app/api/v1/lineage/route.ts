@@ -111,6 +111,30 @@ export async function POST(request: NextRequest) {
     ledgerEntryIds = body.ledger_entry_ids as string[]
   }
 
+  // ── Ownership validation ──────────────────────────────────────────────────────
+  // Prevents forged agent_id / ledger_entry_ids referencing other users' data,
+  // which could poison compliance reports and lineage attribution.
+  if (agentId) {
+    const { data: ownsAgent } = await auth.supabase
+      .from('agent_identities')
+      .select('id')
+      .eq('agent_id', agentId)
+      .eq('profile_id', auth.profile.id)
+      .maybeSingle()
+    if (!ownsAgent) return badRequest('agent_id does not belong to this profile')
+  }
+
+  if (ledgerEntryIds && ledgerEntryIds.length > 0) {
+    const { data: ownedRows, error: ledgerErr } = await auth.supabase
+      .from('agent_activity_ledger')
+      .select('id')
+      .in('id', ledgerEntryIds)
+      .eq('profile_id', auth.profile.id)
+    if (ledgerErr || !ownedRows || ownedRows.length !== ledgerEntryIds.length) {
+      return badRequest('one or more ledger_entry_ids do not belong to this profile')
+    }
+  }
+
   // ── Resolve mcp_servers (parallel) ────────────────────────────────────────
   const [sourceMcp, destMcp] = await Promise.all([
     resolveMcpServer(auth.supabase, sourceUrl),

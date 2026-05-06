@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   if (!auth.ok) return auth.response
 
   const { data, error } = await auth.supabase
-    .rpc('get_lineage_sessions', { p_profile_id: auth.profile.id })
+    .rpc('get_lineage_sessions')
 
   if (error) {
     console.error('[lineage/sessions] rpc failed:', error.message)

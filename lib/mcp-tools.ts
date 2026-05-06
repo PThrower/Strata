@@ -658,7 +658,10 @@ export async function handleToolCall(
       return ok({ valid: false, error: 'revoked', message: identity.revocation_reason ?? 'credential has been revoked', revoked_at: identity.revoked_at })
     }
 
-    void supabase.from('agent_identities').update({ last_verified_at: new Date().toISOString() }).eq('id', identity.id)
+    supabase.from('agent_identities')
+      .update({ last_verified_at: new Date().toISOString() })
+      .eq('id', identity.id)
+      .then(() => {}, (err) => console.error('[mcp-tools] last_verified_at update failed:', err))
 
     return ok({ valid: true, agent_id: claims.agentId, profile_id: claims.profileId, name: claims.name, capabilities: claims.capabilities, expires_at: claims.expiresAt })
   }

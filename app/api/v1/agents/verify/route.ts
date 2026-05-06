@@ -57,11 +57,11 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  // Bump last_verified_at (fire-and-forget; non-fatal if it fails).
-  void sb
-    .from('agent_identities')
+  // Bump last_verified_at (fire-and-forget; must call .then() to trigger execution).
+  sb.from('agent_identities')
     .update({ last_verified_at: new Date().toISOString() })
     .eq('id', identity.id)
+    .then(() => {}, (err) => console.error('[agents/verify] last_verified_at update failed:', err))
 
   return Response.json({
     valid:        true,

@@ -4,6 +4,7 @@
 // persistence. Only reads mcp_probe_optouts to honour operator opt-outs.
 
 import { createClient } from '@supabase/supabase-js'
+import { assertPublicHttpsUrl } from './ssrf-guard'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -221,13 +222,18 @@ export async function probeMcpEndpoint(
   opts?: { staticBaseline?: { toolNames: string[]; capabilityFlags: CapabilityFlag[] } },
 ): Promise<McpProbeResult> {
 
-  // 1. URL validation
+  // 1. URL validation + SSRF guard
   let parsed: URL
   try { parsed = new URL(endpoint) } catch {
     return makeFallback(endpoint, 'error_invalid_url', 'invalid URL')
   }
   if (parsed.protocol !== 'https:') {
     return makeFallback(endpoint, 'error_invalid_url', 'must be https')
+  }
+  try {
+    await assertPublicHttpsUrl(parsed.toString())
+  } catch (err) {
+    return makeFallback(parsed.toString(), 'error_invalid_url', (err as Error).message)
   }
   const url    = parsed.toString()
   const domain = parsed.hostname

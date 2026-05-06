@@ -354,6 +354,13 @@ AUDIT_HASH_PEPPER        # HMAC pepper for api_query_log IP/key hashing (warn-on
 LEDGER_SIGNING_KEY       # HMAC-SHA256 key for signing agent_activity_ledger rows.
                          # Generate: openssl rand -hex 32
                          # Warn-only if missing (rows insert with signature=null).
+                         # The HMAC covers ALL persisted columns via canonical JSON
+                         # (stableStringify with sorted keys). Use verifyLedgerRow(row)
+                         # from lib/ledger.ts to verify a row's integrity at audit time.
+                         # NOTE: rows created before 2026-05-07 used a narrower HMAC input
+                         # (id|profile_id|tool_called|created_at only) — those rows return
+                         # false from verifyLedgerRow and should be treated as "unverifiable"
+                         # (pre-fix), not "tampered".
 STRATA_AGENT_SIGNING_KEY # Ed25519 private key (PKCS#8 PEM) for signing agent identity JWTs.
                          # Generate:
                          #   openssl genpkey -algorithm Ed25519 -out strata-agent-private.pem

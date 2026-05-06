@@ -92,7 +92,31 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Insert ────────────────────────────────────────────────────────────────
-  const sb         = createServiceRoleClient()
+  const sb = createServiceRoleClient()
+
+  // ── Identity cap (free: 50 active, pro: 500 active) ───────────────────────
+  const FREE_CAP = 50
+  const PRO_CAP  = 500
+
+  const [{ count: activeCount }, { data: profileRow }] = await Promise.all([
+    sb.from('agent_identities')
+      .select('*', { count: 'exact', head: true })
+      .eq('profile_id', user.id)
+      .is('revoked_at', null),
+    sb.from('profiles')
+      .select('tier')
+      .eq('id', user.id)
+      .maybeSingle<{ tier: string }>(),
+  ])
+
+  const tierCap = profileRow?.tier === 'pro' ? PRO_CAP : FREE_CAP
+  if ((activeCount ?? 0) >= tierCap) {
+    return Response.json(
+      { error: `Agent identity limit reached for your tier (${tierCap} active). Revoke unused identities first.` },
+      { status: 429 },
+    )
+  }
+
   const agentId    = generateAgentId()
   const now        = new Date()
   const expiresAt  = new Date(now.getTime() + expiresInDays * 86_400_000)
