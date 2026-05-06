@@ -19,19 +19,25 @@ function formatDate(iso: string) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    approved:   'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
-    flagged:    'bg-amber-100  text-amber-700  dark:bg-amber-900/40  dark:text-amber-400',
-    rejected:   'bg-red-100    text-red-700    dark:bg-red-900/40    dark:text-red-400',
-    pending:    'bg-zinc-100   text-zinc-600   dark:bg-zinc-800      dark:text-zinc-400',
-    validating: 'bg-zinc-100   text-zinc-600   dark:bg-zinc-800      dark:text-zinc-400',
+  const INLINE: Record<string, React.CSSProperties> = {
+    approved:   { color: '#00c472', background: 'rgba(0,196,114,0.10)',   borderColor: 'rgba(0,196,114,0.32)' },
+    flagged:    { color: '#f5b042', background: 'rgba(245,176,66,0.10)',  borderColor: 'rgba(245,176,66,0.32)' },
+    rejected:   { color: '#ff7a45', background: 'rgba(255,122,69,0.10)',  borderColor: 'rgba(255,122,69,0.32)' },
+    pending:    { color: '#888888', background: 'rgba(136,136,136,0.10)', borderColor: 'rgba(136,136,136,0.30)' },
+    validating: { color: '#888888', background: 'rgba(136,136,136,0.10)', borderColor: 'rgba(136,136,136,0.30)' },
   }
   const labels: Record<string, string> = {
     approved: 'Published', flagged: 'Under Review',
     rejected: 'Not Published', pending: 'Processing', validating: 'Processing',
   }
+  const s = INLINE[status] ?? INLINE.pending
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${styles[status] ?? styles.pending}`}>
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', padding: '3px 9px',
+      borderRadius: '999px', fontFamily: 'var(--font-mono)',
+      fontSize: '10.5px', fontWeight: 500, letterSpacing: '0.14em',
+      textTransform: 'uppercase', border: '1px solid', ...s,
+    }}>
       {labels[status] ?? status}
     </span>
   )
@@ -51,12 +57,12 @@ export default async function SubmissionsPage() {
 
   const submissions = (rows ?? []) as Submission[]
 
-  const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(16px) saturate(1.5)', WebkitBackdropFilter: 'blur(16px) saturate(1.5)', border: '1px solid rgba(255,255,255,0.09)', borderTopColor: 'rgba(255,255,255,0.15)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.25)', borderRadius: 12 }
+  const CARD: React.CSSProperties = { background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 35%, rgba(255,255,255,0.02) 70%, rgba(0,196,114,0.05) 100%)', backdropFilter: 'blur(28px) saturate(180%)', WebkitBackdropFilter: 'blur(28px) saturate(180%)', border: '1px solid rgba(255,255,255,0.10)', borderTopColor: 'rgba(255,255,255,0.28)', borderLeftColor: 'rgba(255,255,255,0.20)', borderRadius: '22px', boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.30), inset 1px 0 0 0 rgba(255,255,255,0.14), inset 0 -1px 0 0 rgba(0,0,0,0.30), inset 0 0 36px 0 rgba(0,196,114,0.04), 0 24px 60px -24px rgba(0,0,0,0.7), 0 4px 14px -4px rgba(0,0,0,0.4)' }
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto' }}>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="font-serif text-2xl font-semibold">My Submissions</h1>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '44px', fontWeight: 400, letterSpacing: '-0.022em', color: '#ffffff', margin: 0 }}>My Submissions</h1>
         <Link
           href="/dashboard/submit"
           className="text-sm px-4 py-2 rounded-md font-medium transition-colors"
@@ -109,7 +115,7 @@ function SubmissionRow({ sub }: { sub: Submission }) {
 
   return (
     <>
-      <tr className="border-b border-border last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <td className="px-4 py-3 text-xs text-muted-foreground tabular-nums whitespace-nowrap">
           {formatDate(sub.submitted_at)}
         </td>

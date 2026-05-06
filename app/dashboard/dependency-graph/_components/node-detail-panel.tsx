@@ -37,13 +37,12 @@ export default function NodeDetailPanel({ node, edges, onClose }: Props) {
   const outFlows = edges.filter(e => e.source_url === node.url)
 
   const PANEL: React.CSSProperties = {
-    background: 'rgba(5,6,13,0.88)',
-    backdropFilter: 'blur(24px) saturate(1.6)',
-    WebkitBackdropFilter: 'blur(24px) saturate(1.6)',
-    border: '1px solid rgba(255,255,255,0.09)',
-    borderTopColor: 'rgba(255,255,255,0.16)',
-    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07), 0 16px 48px rgba(0,0,0,0.40)',
-    borderRadius: 14,
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 35%, rgba(0,196,114,0.05) 100%)',
+    backdropFilter: 'blur(40px) saturate(190%)',
+    WebkitBackdropFilter: 'blur(40px) saturate(190%)',
+    border: '1px solid rgba(255,255,255,0.16)',
+    boxShadow: '-30px 0 80px -20px rgba(0,0,0,0.7)',
+    borderRadius: '22px',
   }
 
   return (

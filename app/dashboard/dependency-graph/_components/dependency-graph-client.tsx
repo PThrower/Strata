@@ -21,12 +21,20 @@ const RISK_STROKE: Record<string, string> = {
 }
 
 const CARD: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(16px) saturate(1.5)', WebkitBackdropFilter: 'blur(16px) saturate(1.5)', border: '1px solid rgba(255,255,255,0.09)', borderTopColor: 'rgba(255,255,255,0.15)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.25)', borderRadius: 12,
+  background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 35%, rgba(255,255,255,0.02) 70%, rgba(0,196,114,0.05) 100%)',
+  backdropFilter: 'blur(28px) saturate(180%)', WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+  border: '1px solid rgba(255,255,255,0.10)', borderTopColor: 'rgba(255,255,255,0.28)', borderLeftColor: 'rgba(255,255,255,0.20)',
+  borderRadius: '22px',
+  boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.30), inset 1px 0 0 0 rgba(255,255,255,0.14), inset 0 -1px 0 0 rgba(0,0,0,0.30), inset 0 0 36px 0 rgba(0,196,114,0.04), 0 24px 60px -24px rgba(0,0,0,0.7), 0 4px 14px -4px rgba(0,0,0,0.4)',
 }
 const CHIP_BASE: React.CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 6,
-  fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 400, border: '1px solid',
-  whiteSpace: 'nowrap', background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.09)',
+  display: 'inline-flex', alignItems: 'center', gap: '7px',
+  padding: '5px 11px 5px 9px', borderRadius: '999px',
+  fontFamily: 'var(--font-mono)', fontSize: '10.5px', fontWeight: 500,
+  letterSpacing: '0.18em', textTransform: 'uppercase',
+  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.14)',
+  color: 'rgba(255,255,255,0.85)',
+  whiteSpace: 'nowrap',
 }
 const PERIODS = [
   { value: '7d',  label: '7 days' },
@@ -402,7 +410,15 @@ export default function DependencyGraphClient({
     return true
   })
 
-  const tabBase = 'px-3 py-1.5 text-xs rounded-md border transition-colors'
+  const TAB = (active: boolean): React.CSSProperties => ({
+  padding: '6px 14px', borderRadius: '999px',
+  fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 500,
+  letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer',
+  border: active ? '1px solid rgba(0,196,114,0.40)' : '1px solid rgba(255,255,255,0.10)',
+  background: active ? 'rgba(0,196,114,0.12)' : 'rgba(255,255,255,0.04)',
+  color: active ? '#00c472' : 'rgba(255,255,255,0.55)',
+  transition: 'all 150ms',
+})
 
   if (graph.nodes.length === 0) {
     return (
@@ -450,7 +466,7 @@ export default function DependencyGraphClient({
         <div className="flex gap-1">
           {(['graph', 'table'] as View[]).map(v => (
             <button key={v} onClick={() => setView(v)}
-              className={`${tabBase} ${view === v ? 'border-border bg-zinc-100 dark:bg-zinc-800 font-medium text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
+              className={`${view === v ? 'border-border font-medium text-foreground'  : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
               {v === 'graph' ? '⬡ Graph' : '☰ Table'}
             </button>
           ))}
@@ -459,7 +475,7 @@ export default function DependencyGraphClient({
         <div className="flex gap-1">
           {PERIODS.map(p => (
             <button key={p.value} onClick={() => handlePeriodChange(p.value)}
-              className={`${tabBase} ${period === p.value ? 'border-border bg-zinc-100 dark:bg-zinc-800 font-medium text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
+              className={`${period === p.value ? 'border-border font-medium text-foreground'  : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
               {p.label}
             </button>
           ))}
@@ -497,7 +513,7 @@ export default function DependencyGraphClient({
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             {(['all', 'high-risk', 'circuit-broken', 'net-egress'] as Filter[]).map(f => (
               <button key={f} onClick={() => setFilter(f)}
-                className={`${tabBase} ${filter === f ? 'border-border bg-zinc-100 dark:bg-zinc-800 font-medium text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
+                className={`${filter === f ? 'border-border font-medium text-foreground'  : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
                 {f === 'all' ? 'All' : f === 'high-risk' ? '⚠ High Risk' : f === 'circuit-broken' ? '⚡ Circuit Broken' : '↗ Net Egress Dest'}
               </button>
             ))}

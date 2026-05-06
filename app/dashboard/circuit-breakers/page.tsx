@@ -41,7 +41,7 @@ export default async function CircuitBreakersPage() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
       <div className="mb-8">
-        <h1 className="font-serif text-2xl font-semibold mb-1">Circuit Breakers</h1>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '44px', fontWeight: 400, letterSpacing: '-0.022em', color: '#ffffff', margin: '0 0 8px' }}>Circuit Breakers</h1>
         <p className="text-sm text-muted-foreground">
           MCP servers that Strata has automatically circuit-broken due to a critical risk event — quarantine, prompt injection, or severe score drop.
           Your agents will see <code className="text-xs bg-muted px-1 py-0.5 rounded">circuit_broken: true</code> in verify responses.

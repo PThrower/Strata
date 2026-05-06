@@ -250,3 +250,5 @@ STRATA_AGENT_PUBLIC_KEY  # Matching SubjectPublicKeyInfo PEM.
                          #   openssl pkey -in strata-agent-private.pem -pubout
                          # Key rotation: bump KEY_ID in lib/agent-credentials.ts
 ```
+
+Before building any dashboard component, read DASHBOARD_DESIGN.md for exact style values and component patterns.

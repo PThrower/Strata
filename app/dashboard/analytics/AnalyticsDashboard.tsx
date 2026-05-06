@@ -23,15 +23,20 @@ const eyebrow: React.CSSProperties = {
 type Days = 7 | 30 | 90
 
 function StatusBadge({ code }: { code: number }) {
-  const isRed = code === 401 || code === 500 || code >= 500
+  const isRed = code === 401 || code >= 500
   const isAmber = code === 403 || code === 429
-  const cls = isRed
-    ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+  const style: React.CSSProperties = isRed
+    ? { color: '#ff7a45', background: 'rgba(255,122,69,0.10)', borderColor: 'rgba(255,122,69,0.32)' }
     : isAmber
-    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
-    : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+    ? { color: '#f5b042', background: 'rgba(245,176,66,0.10)', borderColor: 'rgba(245,176,66,0.32)' }
+    : { color: '#888888', background: 'rgba(136,136,136,0.10)', borderColor: 'rgba(136,136,136,0.30)' }
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium ${cls}`}>
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', padding: '2px 8px',
+      borderRadius: '8px', border: '1px solid',
+      fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 500,
+      ...style,
+    }}>
       {code}
     </span>
   )
@@ -41,8 +46,7 @@ function HBar({ label, percentage }: { label: string; percentage: number }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
       <span
-        className="text-muted-foreground font-mono"
-        style={{ fontSize: 12, width: 180, flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+        style={{ fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.62)', fontSize: 12, width: 180, flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
       >
         {label}
       </span>

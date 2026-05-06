@@ -23,7 +23,7 @@ export default async function PoliciesPage() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
       <div className="mb-8">
-        <h1 className="font-serif text-2xl font-semibold mb-1">Policies</h1>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '44px', fontWeight: 400, letterSpacing: '-0.022em', color: '#ffffff', margin: '0 0 8px' }}>Policies</h1>
         <p className="text-sm text-muted-foreground">
           Rules that govern what your agents are allowed to do. Enforced at the Strata layer before any tool call executes.
         </p>

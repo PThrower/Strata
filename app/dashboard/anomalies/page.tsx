@@ -28,7 +28,7 @@ export default async function AnomaliesPage() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
       <div className="mb-8">
-        <h1 className="font-serif text-2xl font-semibold mb-1">Behavioral Anomalies</h1>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '44px', fontWeight: 400, letterSpacing: '-0.022em', color: '#ffffff', margin: '0 0 8px' }}>Behavioral Anomalies</h1>
         <p className="text-sm text-muted-foreground">
           Deviations from your agents&apos; normal activity patterns — volume spikes, unusual
           risk concentrations, and off-hours net_egress surges. Strata detects anomalies

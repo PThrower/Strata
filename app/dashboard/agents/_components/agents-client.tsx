@@ -34,10 +34,16 @@ function shortAgentId(id: string): string {
   return id.slice(0, 12) + '…'
 }
 
-const STATUS_STYLES: Record<AgentStatus, string> = {
-  active:  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400',
-  revoked: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
-  expired: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
+const STATUS_INLINE: Record<AgentStatus, React.CSSProperties> = {
+  active:  { color: '#00c472', background: 'rgba(0,196,114,0.10)',   border: '1px solid rgba(0,196,114,0.32)' },
+  revoked: { color: '#ff7a45', background: 'rgba(255,122,69,0.10)',  border: '1px solid rgba(255,122,69,0.32)' },
+  expired: { color: '#888888', background: 'rgba(136,136,136,0.10)', border: '1px solid rgba(136,136,136,0.30)' },
+}
+
+const BADGE_BASE: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', padding: '3px 9px',
+  borderRadius: '999px', fontFamily: 'var(--font-mono)',
+  fontSize: '10.5px', fontWeight: 500, letterSpacing: '0.14em', textTransform: 'uppercase',
 }
 
 const CAP_LABELS: Record<string, string> = {
@@ -47,14 +53,30 @@ const CAP_LABELS: Record<string, string> = {
 
 const ALL_CAPABILITIES = ['mcp:invoke', 'x402:pay'] as const
 
-const btnBase =
-  'text-xs px-3 py-1.5 rounded-md border border-border transition-colors disabled:opacity-50'
-const btnPrimary =
-  `${btnBase} bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700`
-const btnGhost =
-  `${btnBase} bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 text-muted-foreground hover:text-foreground`
-const btnDanger =
-  `${btnBase} bg-background hover:bg-red-50 dark:hover:bg-red-950 text-muted-foreground hover:text-red-600`
+const BTN_PRIMARY: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: '8px',
+  padding: '8px 16px', borderRadius: '999px',
+  fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 500,
+  cursor: 'pointer', border: '1px solid rgba(0,196,114,0.50)',
+  background: 'rgba(0,196,114,0.15)', color: '#00c472',
+  transition: 'opacity 150ms',
+}
+const BTN_GHOST: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: '8px',
+  padding: '8px 16px', borderRadius: '999px',
+  fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 500,
+  cursor: 'pointer', border: '1px solid rgba(255,255,255,0.14)',
+  background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.65)',
+  transition: 'opacity 150ms',
+}
+const BTN_DANGER: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: '8px',
+  padding: '8px 16px', borderRadius: '999px',
+  fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 500,
+  cursor: 'pointer', border: '1px solid rgba(255,122,69,0.32)',
+  background: 'rgba(255,122,69,0.08)', color: '#ff7a45',
+  transition: 'opacity 150ms',
+}
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -132,7 +154,7 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
     setTimeout(() => setJwtCopied(false), 2000)
   }
 
-  const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(16px) saturate(1.5)', WebkitBackdropFilter: 'blur(16px) saturate(1.5)', border: '1px solid rgba(255,255,255,0.09)', borderTopColor: 'rgba(255,255,255,0.15)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.25)', borderRadius: 12 }
+  const CARD: React.CSSProperties = { background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 35%, rgba(255,255,255,0.02) 70%, rgba(0,196,114,0.05) 100%)', backdropFilter: 'blur(28px) saturate(180%)', WebkitBackdropFilter: 'blur(28px) saturate(180%)', border: '1px solid rgba(255,255,255,0.10)', borderTopColor: 'rgba(255,255,255,0.28)', borderLeftColor: 'rgba(255,255,255,0.20)', borderRadius: '22px', boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.30), inset 1px 0 0 0 rgba(255,255,255,0.14), inset 0 -1px 0 0 rgba(0,0,0,0.30), inset 0 0 36px 0 rgba(0,196,114,0.04), 0 24px 60px -24px rgba(0,0,0,0.7), 0 4px 14px -4px rgba(0,0,0,0.4)' }
 
   return (
     <>
@@ -140,7 +162,7 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
       <div className="flex justify-between items-center mb-4">
         <p className="text-sm text-muted-foreground">{agents.length} identit{agents.length === 1 ? 'y' : 'ies'}</p>
         {!showCreate && (
-          <button onClick={() => setShowCreate(true)} className={btnPrimary}>
+          <button onClick={() => setShowCreate(true)} style={BTN_PRIMARY}>
             + Create Agent
           </button>
         )}
@@ -212,10 +234,10 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
               <p className="text-xs text-red-500">{createError}</p>
             )}
             <div className="flex gap-2 pt-1">
-              <button onClick={handleCreate} disabled={isPending} className={btnPrimary}>
+              <button onClick={handleCreate} disabled={isPending} style={BTN_PRIMARY}>
                 {isPending ? 'Creating…' : 'Create Identity'}
               </button>
-              <button onClick={() => { setShowCreate(false); setCreateError(null) }} disabled={isPending} className={btnGhost}>
+              <button onClick={() => { setShowCreate(false); setCreateError(null) }} disabled={isPending} style={BTN_GHOST}>
                 Cancel
               </button>
             </div>
@@ -230,7 +252,7 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
           <p className="text-sm text-muted-foreground mb-6">
             Create an identity to issue a cryptographic credential for your agent.
           </p>
-          <button onClick={() => setShowCreate(true)} className={btnPrimary}>
+          <button onClick={() => setShowCreate(true)} style={BTN_PRIMARY}>
             Create your first agent
           </button>
         </div>
@@ -270,7 +292,7 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
                           {agent.capabilities.map(cap => (
                             <span
                               key={cap}
-                              className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                              style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', padding: '2px 7px', borderRadius: '6px', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.12)' }}
                             >
                               {cap}
                             </span>
@@ -279,7 +301,7 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[status]}`}>
+                      <span style={{ ...BADGE_BASE, ...STATUS_INLINE[status] }}>
                         {status}
                       </span>
                     </td>
@@ -294,7 +316,7 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
                         <button
                           onClick={() => setRevokeTarget(agent)}
                           disabled={isPending}
-                          className={btnDanger}
+                          style={BTN_DANGER}
                         >
                           Revoke
                         </button>
@@ -388,7 +410,7 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
       {/* ── Revoke Confirmation Modal ────────────────────────────────────────── */}
       {revokeTarget && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-zinc-900 rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl border border-border">
+          <div style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 35%, rgba(0,196,114,0.05) 100%)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: '22px', padding: '24px', maxWidth: 380, width: '100%', margin: '0 16px' }}>
             <p className="text-sm font-medium mb-1">Revoke <span className="font-mono">{revokeTarget.name}</span>?</p>
             <p className="text-sm text-muted-foreground mb-5">
               This immediately invalidates the credential. Any agent using it will be rejected on
@@ -398,14 +420,14 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
               <button
                 onClick={() => setRevokeTarget(null)}
                 disabled={isPending}
-                className="text-sm px-4 py-2 border border-border rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                style={BTN_GHOST}
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleRevoke(revokeTarget)}
                 disabled={isPending}
-                className="text-sm px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-60"
+                style={BTN_DANGER}
               >
                 {isPending ? 'Revoking…' : 'Revoke'}
               </button>

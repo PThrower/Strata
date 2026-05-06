@@ -29,9 +29,18 @@ function shortHost(url: string | null): string {
   try { return new URL(url).hostname } catch { return url }
 }
 
-const btnBase   = 'text-xs px-3 py-1.5 rounded-md border border-border transition-colors disabled:opacity-50'
-const btnGhost  = `${btnBase} bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 text-muted-foreground hover:text-foreground`
-const btnDanger = `${btnBase} bg-background hover:bg-red-50 dark:hover:bg-red-950 text-muted-foreground hover:text-red-600`
+const BTN_GHOST: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', padding: '8px 16px', borderRadius: '999px',
+  fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 500, cursor: 'pointer',
+  border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.05)',
+  color: 'rgba(255,255,255,0.65)', transition: 'opacity 150ms',
+}
+const BTN_DANGER: React.CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', padding: '8px 16px', borderRadius: '999px',
+  fontFamily: 'var(--font-mono)', fontSize: '12px', fontWeight: 500, cursor: 'pointer',
+  border: '1px solid rgba(255,122,69,0.32)', background: 'rgba(255,122,69,0.08)',
+  color: '#ff7a45', transition: 'opacity 150ms',
+}
 
 export default function CircuitBreakersClient({ initialBreakers }: { initialBreakers: BreakerRow[] }) {
   const [breakers, setBreakers] = useState<BreakerRow[]>(initialBreakers)
@@ -40,7 +49,7 @@ export default function CircuitBreakersClient({ initialBreakers }: { initialBrea
   const [error, setError]               = useState<string | null>(null)
   const [isPending, startTransition]    = useTransition()
 
-  const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(16px) saturate(1.5)', WebkitBackdropFilter: 'blur(16px) saturate(1.5)', border: '1px solid rgba(255,255,255,0.09)', borderTopColor: 'rgba(255,255,255,0.15)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.25)', borderRadius: 12 }
+  const CARD: React.CSSProperties = { background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 35%, rgba(255,255,255,0.02) 70%, rgba(0,196,114,0.05) 100%)', backdropFilter: 'blur(28px) saturate(180%)', WebkitBackdropFilter: 'blur(28px) saturate(180%)', border: '1px solid rgba(255,255,255,0.10)', borderTopColor: 'rgba(255,255,255,0.28)', borderLeftColor: 'rgba(255,255,255,0.20)', borderRadius: '22px', boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.30), inset 1px 0 0 0 rgba(255,255,255,0.14), inset 0 -1px 0 0 rgba(0,0,0,0.30), inset 0 0 36px 0 rgba(0,196,114,0.04), 0 24px 60px -24px rgba(0,0,0,0.7), 0 4px 14px -4px rgba(0,0,0,0.4)' }
 
   function handleReset(row: BreakerRow) {
     setResetTarget(row)
@@ -177,7 +186,7 @@ export default function CircuitBreakersClient({ initialBreakers }: { initialBrea
                       <button
                         onClick={() => revokeReset(row)}
                         disabled={isPending}
-                        className={btnDanger}
+                        style={BTN_DANGER}
                       >
                         Revoke reset
                       </button>
@@ -185,7 +194,7 @@ export default function CircuitBreakersClient({ initialBreakers }: { initialBrea
                       <button
                         onClick={() => handleReset(row)}
                         disabled={isPending}
-                        className={btnGhost}
+                        style={BTN_GHOST}
                       >
                         Reset for me
                       </button>
@@ -200,8 +209,8 @@ export default function CircuitBreakersClient({ initialBreakers }: { initialBrea
 
       {/* ── Reset confirmation modal ── */}
       {resetTarget && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border p-6 w-full max-w-md shadow-xl">
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(4,5,12,0.65)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 35%, rgba(0,196,114,0.05) 100%)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: '22px', padding: '24px', maxWidth: 480, width: '100%' }}>
             <h2 className="font-serif text-lg font-semibold mb-1">Reset circuit breaker</h2>
             <p className="text-sm text-muted-foreground mb-4">
               This acknowledges the risk for <strong>{resetTarget.server_name}</strong> and allows your agents to connect.
@@ -223,7 +232,7 @@ export default function CircuitBreakersClient({ initialBreakers }: { initialBrea
               <button
                 onClick={() => setResetTarget(null)}
                 disabled={isPending}
-                className={btnGhost}
+                style={BTN_GHOST}
               >
                 Cancel
               </button>

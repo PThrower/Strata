@@ -5,7 +5,7 @@ import Link from 'next/link'
 
 import { RiskBadge } from '../../_components/RiskBadge'
 
-const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(16px) saturate(1.5)', WebkitBackdropFilter: 'blur(16px) saturate(1.5)', border: '1px solid rgba(255,255,255,0.09)', borderTopColor: 'rgba(255,255,255,0.15)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.25)', borderRadius: 12 }
+const CARD: React.CSSProperties = { background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 35%, rgba(255,255,255,0.02) 70%, rgba(0,196,114,0.05) 100%)', backdropFilter: 'blur(28px) saturate(180%)', WebkitBackdropFilter: 'blur(28px) saturate(180%)', border: '1px solid rgba(255,255,255,0.10)', borderTopColor: 'rgba(255,255,255,0.28)', borderLeftColor: 'rgba(255,255,255,0.20)', borderRadius: '22px', boxShadow: 'inset 0 1px 0 0 rgba(255,255,255,0.30), inset 1px 0 0 0 rgba(255,255,255,0.14), inset 0 -1px 0 0 rgba(0,0,0,0.30), inset 0 0 36px 0 rgba(0,196,114,0.04), 0 24px 60px -24px rgba(0,0,0,0.7), 0 4px 14px -4px rgba(0,0,0,0.4)' }
 
 export interface AnomalyEvent {
   id:                   string
@@ -91,7 +91,15 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
     })
   }
 
-  const tabBase = 'px-3 py-1.5 text-xs rounded-md border transition-colors'
+  const TAB = (active: boolean): React.CSSProperties => ({
+  padding: '6px 14px', borderRadius: '999px',
+  fontFamily: 'var(--font-mono)', fontSize: '11px', fontWeight: 500,
+  letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer',
+  border: active ? '1px solid rgba(0,196,114,0.40)' : '1px solid rgba(255,255,255,0.10)',
+  background: active ? 'rgba(0,196,114,0.12)' : 'rgba(255,255,255,0.04)',
+  color: active ? '#00c472' : 'rgba(255,255,255,0.55)',
+  transition: 'all 150ms',
+})
 
   return (
     <>
@@ -122,9 +130,7 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`${tabBase} ${filter === f
-              ? 'border-border bg-zinc-100 dark:bg-zinc-800 font-medium text-foreground'
-              : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+            style={TAB(filter === f)}
           >
             {label}
           </button>
@@ -207,7 +213,7 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
                     {!event.acknowledged && (
                       <button
                         onClick={() => { setAckTarget(event); setAckReason('') }}
-                        className="text-xs px-2.5 py-1 rounded-md border border-border bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 text-muted-foreground hover:text-foreground transition-colors"
+                        style={{ fontFamily: 'var(--font-mono)', fontSize: 10, padding: '4px 10px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.65)', cursor: 'pointer' }}
                       >
                         Acknowledge
                       </button>
@@ -215,7 +221,7 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
                     {event.affected_server_urls && event.affected_server_urls.length > 0 && (
                       <Link
                         href={`/dashboard/dependency-graph?highlight=${encodeURIComponent(event.affected_server_urls[0])}`}
-                        className="ml-2 text-xs px-2.5 py-1 rounded-md border border-border bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 text-muted-foreground hover:text-foreground transition-colors"
+                        style={{ fontFamily: 'var(--font-mono)', fontSize: 10, padding: '4px 10px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.65)', cursor: 'pointer' }}
                       >
                         View in graph →
                       </Link>
@@ -230,8 +236,8 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
 
       {/* ── Acknowledge modal ── */}
       {ackTarget && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-border p-6 w-full max-w-md shadow-xl">
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(4,5,12,0.65)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 35%, rgba(0,196,114,0.05) 100%)', backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: '22px', padding: '24px', maxWidth: 480, width: '100%' }}>
             <h2 className="font-serif text-lg font-semibold mb-1">Acknowledge anomaly</h2>
             <p className="text-sm text-muted-foreground mb-4">
               {EVENT_LABELS[ackTarget.event_type]} — {ackTarget.detail}
@@ -252,14 +258,14 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
               <button
                 onClick={() => setAckTarget(null)}
                 disabled={isPending}
-                className="text-xs px-3 py-1.5 rounded-md border border-border bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 text-muted-foreground hover:text-foreground disabled:opacity-50 transition-colors"
+                style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '8px 16px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.65)', cursor: 'pointer' }}
               >
                 Cancel
               </button>
               <button
                 onClick={submitAck}
                 disabled={isPending}
-                className="text-xs px-3 py-1.5 rounded-md bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '8px 16px', borderRadius: '999px', border: '1px solid rgba(0,196,114,0.50)', background: 'rgba(0,196,114,0.15)', color: '#00c472', cursor: 'pointer' }}
               >
                 {isPending ? 'Acknowledging…' : 'Confirm'}
               </button>

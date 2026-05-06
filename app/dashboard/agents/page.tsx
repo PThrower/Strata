@@ -21,7 +21,7 @@ export default async function AgentsPage() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
       <div className="mb-8">
-        <h1 className="font-serif text-2xl font-semibold mb-1">Agent Identities</h1>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '44px', fontWeight: 400, letterSpacing: '-0.022em', color: '#ffffff', margin: '0 0 8px' }}>Agent Identities</h1>
         <p className="text-sm text-muted-foreground">
           Cryptographic identities for agents you operate. Each identity issues an Ed25519-signed JWT
           that MCP servers and x402 endpoints verify before honouring tool calls.
