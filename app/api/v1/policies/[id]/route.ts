@@ -1,5 +1,6 @@
 import { type NextRequest } from 'next/server'
-import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server'
+import { createServiceRoleClient } from '@/lib/supabase-server'
+import { authenticateAny } from '@/lib/api-auth'
 import { invalidatePolicyCache } from '@/lib/policy-engine'
 
 type Params = { params: Promise<{ id: string }> }
@@ -10,9 +11,8 @@ function bad(msg: string) { return Response.json({ error: msg }, { status: 400 }
 
 export async function PUT(request: NextRequest, { params }: Params) {
   const { id } = await params
-  const userClient = await createUserClient()
-  const { data: { user } } = await userClient.auth.getUser()
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await authenticateAny(request)
+  if (!auth.ok) return auth.response
 
   let body: Record<string, unknown>
   try { body = await request.json() as Record<string, unknown> } catch {
@@ -58,7 +58,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
   const sb = createServiceRoleClient()
   const { data: existing } = await sb
-    .from('policies').select('id').eq('id', id).eq('profile_id', user.id).maybeSingle()
+    .from('policies').select('id').eq('id', id).eq('profile_id', auth.profileId).maybeSingle()
   if (!existing) return Response.json({ error: 'Not found' }, { status: 404 })
 
   if (agentIdFinal) {
@@ -66,7 +66,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
       .from('agent_identities')
       .select('id')
       .eq('agent_id', agentIdFinal)
-      .eq('profile_id', user.id)
+      .eq('profile_id', auth.profileId)
       .maybeSingle()
     if (!ownsAgent) return bad('agent_id does not belong to this profile')
   }
@@ -87,7 +87,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
       priority:               body.priority != null ? Number(body.priority) : 100,
       updated_at:             new Date().toISOString(),
     })
-    .eq('id', id).eq('profile_id', user.id)
+    .eq('id', id).eq('profile_id', auth.profileId)
     .select()
     .single()
 
@@ -96,7 +96,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     return Response.json({ error: 'Service error' }, { status: 503 })
   }
 
-  invalidatePolicyCache(user.id)
+  invalidatePolicyCache(auth.profileId)
   return Response.json(data)
 }
 
@@ -104,9 +104,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   const { id } = await params
-  const userClient = await createUserClient()
-  const { data: { user } } = await userClient.auth.getUser()
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await authenticateAny(request)
+  if (!auth.ok) return auth.response
 
   let body: Record<string, unknown>
   try { body = await request.json() as Record<string, unknown> } catch {
@@ -133,40 +132,39 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   const sb = createServiceRoleClient()
   const { data: existing } = await sb
-    .from('policies').select('id').eq('id', id).eq('profile_id', user.id).maybeSingle()
+    .from('policies').select('id').eq('id', id).eq('profile_id', auth.profileId).maybeSingle()
   if (!existing) return Response.json({ error: 'Not found' }, { status: 404 })
 
   const { data, error } = await sb
-    .from('policies').update(patch).eq('id', id).eq('profile_id', user.id).select().single()
+    .from('policies').update(patch).eq('id', id).eq('profile_id', auth.profileId).select().single()
 
   if (error) {
     console.error('[policies] patch failed:', error.message)
     return Response.json({ error: 'Service error' }, { status: 503 })
   }
 
-  invalidatePolicyCache(user.id)
+  invalidatePolicyCache(auth.profileId)
   return Response.json(data)
 }
 
 // ── DELETE ────────────────────────────────────────────────────────────────────
 
-export async function DELETE(_request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: Params) {
   const { id } = await params
-  const userClient = await createUserClient()
-  const { data: { user } } = await userClient.auth.getUser()
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await authenticateAny(request)
+  if (!auth.ok) return auth.response
 
   const sb = createServiceRoleClient()
   const { data: existing } = await sb
-    .from('policies').select('id').eq('id', id).eq('profile_id', user.id).maybeSingle()
+    .from('policies').select('id').eq('id', id).eq('profile_id', auth.profileId).maybeSingle()
   if (!existing) return Response.json({ error: 'Not found' }, { status: 404 })
 
-  const { error } = await sb.from('policies').delete().eq('id', id).eq('profile_id', user.id)
+  const { error } = await sb.from('policies').delete().eq('id', id).eq('profile_id', auth.profileId)
   if (error) {
     console.error('[policies] delete failed:', error.message)
     return Response.json({ error: 'Service error' }, { status: 503 })
   }
 
-  invalidatePolicyCache(user.id)
+  invalidatePolicyCache(auth.profileId)
   return Response.json({ id, deleted: true })
 }

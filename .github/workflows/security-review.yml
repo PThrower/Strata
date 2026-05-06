@@ -2,12 +2,11 @@
 #   ANTHROPIC_API_KEY - Anthropic API key for Claude
 # GITHUB_TOKEN is auto-provided by Actions — no manual setup needed.
 
+# DISABLED — manual Opus security reviews run before every merge via Claude Code.
+# The action reference was also wrong (anthropic/ → anthropics/).
 name: Security Review
 
-on:
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened]
+on: {}
 
 permissions:
   contents: read

@@ -1,7 +1,7 @@
 import { createHmac } from 'crypto'
 import type { NextRequest } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { createServiceRoleClient } from './supabase-server'
+import { createServiceRoleClient, createUserClient } from './supabase-server'
 
 // ── Audit hash helper (H-6/M-1) ─────────────────────────────────────────────
 // Requires AUDIT_HASH_PEPPER to be set in env. Without it, hashes are HMAC
@@ -242,6 +242,36 @@ export async function logQueryAudit(
   if (error) {
     console.error('[api_query_log] insert failed:', error.message)
   }
+}
+
+// ── Dual-auth: API key OR session cookie ─────────────────────────────────────
+// Used by /api/v1/policies — accepts both API key callers (programmatic) and
+// dashboard session callers. All other /api/v1/* routes use authenticateRequest.
+
+export type AnyAuthResult =
+  | { ok: true; profileId: string; supabase: ServiceClient }
+  | { ok: false; response: Response }
+
+export async function authenticateAny(req: NextRequest): Promise<AnyAuthResult> {
+  const headerKey = req.headers.get('x-api-key')
+  const bearer = req.headers.get('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1]
+  const apiKey = headerKey ?? bearer ?? null
+
+  if (apiKey) {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? ''
+    if (ip && !allowIp(ip)) {
+      return { ok: false, response: Response.json({ error: 'Too many requests' }, { status: 429 }) }
+    }
+    const result = await consumeApiCall(apiKey)
+    if (!result.ok) return { ok: false, response: result.response }
+    return { ok: true, profileId: result.profile.id, supabase: result.supabase }
+  }
+
+  const userClient = await createUserClient()
+  const { data: { user } } = await userClient.auth.getUser()
+  if (!user) return { ok: false, response: Response.json({ error: 'Unauthorized' }, { status: 401 }) }
+
+  return { ok: true, profileId: user.id, supabase: createServiceRoleClient() }
 }
 
 function invalidKey(): AuthFailure {

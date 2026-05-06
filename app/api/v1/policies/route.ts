@@ -2,7 +2,8 @@
 // Auth: Supabase session cookie (createUserClient) — dashboard-first, mirrors agents pattern.
 
 import { type NextRequest } from 'next/server'
-import { createUserClient, createServiceRoleClient } from '@/lib/supabase-server'
+import { createServiceRoleClient } from '@/lib/supabase-server'
+import { authenticateAny } from '@/lib/api-auth'
 import { invalidatePolicyCache } from '@/lib/policy-engine'
 
 const VALID_CAPABILITY_FLAGS = new Set([
@@ -84,10 +85,9 @@ function validateBody(body: PolicyBody, requireCondition = true): string | null 
 
 // ── GET — list policies ───────────────────────────────────────────────────────
 
-export async function GET() {
-  const userClient = await createUserClient()
-  const { data: { user } } = await userClient.auth.getUser()
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+export async function GET(req: NextRequest) {
+  const auth = await authenticateAny(req)
+  if (!auth.ok) return auth.response
 
   const sb = createServiceRoleClient()
   const { data, error } = await sb
@@ -96,7 +96,7 @@ export async function GET() {
       'id, name, description, enabled, action, match_capability_flags, match_risk_level_gte, ' +
       'match_tool_names, time_start_hour, time_end_hour, agent_id, priority, created_at, updated_at'
     )
-    .eq('profile_id', user.id)
+    .eq('profile_id', auth.profileId)
     .order('priority', { ascending: true })
     .order('created_at', { ascending: true })
 
@@ -111,9 +111,8 @@ export async function GET() {
 // ── POST — create policy ──────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
-  const userClient = await createUserClient()
-  const { data: { user } } = await userClient.auth.getUser()
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  const auth = await authenticateAny(request)
+  if (!auth.ok) return auth.response
 
   let body: PolicyBody
   try { body = await request.json() as PolicyBody } catch {
@@ -135,7 +134,7 @@ export async function POST(request: NextRequest) {
       .from('agent_identities')
       .select('id')
       .eq('agent_id', agentIdFinal)
-      .eq('profile_id', user.id)
+      .eq('profile_id', auth.profileId)
       .maybeSingle()
     if (!ownsAgent) return bad('agent_id does not belong to this profile')
   }
@@ -143,7 +142,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await sb
     .from('policies')
     .insert({
-      profile_id:             user.id,
+      profile_id:             auth.profileId,
       name:                   (body.name as string).trim(),
       description:            typeof body.description === 'string' ? body.description.trim() || null : null,
       enabled:                body.enabled !== false,
@@ -166,6 +165,6 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'Service error' }, { status: 503 })
   }
 
-  invalidatePolicyCache(user.id)
+  invalidatePolicyCache(auth.profileId)
   return Response.json(data, { status: 201 })
 }
