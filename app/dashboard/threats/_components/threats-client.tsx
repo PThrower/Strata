@@ -190,6 +190,15 @@ export default function ThreatsClient({
                             ⚡ CB
                           </Link>
                         )}
+                        {event.server_url && affectedSet.has(event.server_url) && (
+                          <Link
+                            href={`/dashboard/dependency-graph?highlight=${encodeURIComponent(event.server_url)}`}
+                            className="text-xs px-2.5 py-1 rounded-md border border-border bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 text-muted-foreground hover:text-foreground transition-colors"
+                            title="View this server in your dependency graph"
+                          >
+                            View in graph →
+                          </Link>
+                        )}
                         {flags.length > 0 && (
                           <Link
                             href={`/dashboard/policies?prefill=capability_flag&value=${flags[0]}`}
