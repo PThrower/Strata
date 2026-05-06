@@ -5,7 +5,7 @@ import { Btn } from '@/components/ui/button'
 export const metadata: Metadata = {
   title: 'How It Works — Strata',
   description:
-    'Three pipelines: MCP server security scoring, content intelligence validation, and the governance layer for policy enforcement, compliance reporting, and real-time threat monitoring.',
+    'Four phases of trust infrastructure: MCP server security scoring, content intelligence, governance and policy enforcement, and runtime intelligence — circuit breakers, dependency graphs, and behavioral anomaly detection.',
 }
 
 function CodeBlock({ children }: { children: string }) {
@@ -81,7 +81,7 @@ export default function HowItWorksPage() {
         letterSpacing: '0.20em', textTransform: 'uppercase', color: 'var(--emerald-glow)',
         margin: '0 0 20px',
       }}>
-        security · content · governance
+        security · content · governance · runtime
       </p>
       <h1 style={{
         fontFamily: 'var(--font-serif)', fontSize: 48, fontWeight: 500,
@@ -94,8 +94,9 @@ export default function HowItWorksPage() {
         fontSize: 16, color: 'var(--ink-soft)', lineHeight: 1.65,
         maxWidth: 512, margin: '0 0 64px',
       }}>
-        Three interconnected pipelines: server scoring, content validation, and the
-        governance layer that sits above both.
+        Four phases of trust infrastructure: server scoring, content validation,
+        the governance layer, and runtime intelligence that monitors your agents
+        as they operate.
       </p>
 
       {/* ══════════════════════════════════════════════════════════════════════ */}
@@ -367,9 +368,9 @@ export default function HowItWorksPage() {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       <div style={hr}>
         <SectionHeading
-          eyebrow="Phases 3 & 4 — Live"
-          heading="Policy, compliance, threat monitoring, and runtime intelligence."
-          subtext="Beyond scoring — Strata enforces rules, generates audit evidence, alerts on risk changes, and detects behavioral anomalies."
+          eyebrow="Phase 3 — Live"
+          heading="Policy, compliance, and threat monitoring."
+          subtext="Beyond scoring — Strata enforces rules, generates tamper-evident audit evidence, and alerts you when connected servers change risk profile."
         />
 
         {[
@@ -385,17 +386,44 @@ export default function HowItWorksPage() {
             label: 'Real-Time Threat Feed',
             body: 'A Postgres trigger fires when servers change risk profile — quarantine added, dangerous capabilities gained, security score drops. Push alerts before your agents are affected.',
           },
+        ].map(({ label, body }) => (
+          <Glass key={label} shimmer style={{ padding: '24px 28px', marginBottom: 10 }}>
+            <p style={{
+              fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600,
+              letterSpacing: '0.10em', textTransform: 'uppercase',
+              color: 'var(--emerald-glow)', margin: '0 0 10px',
+            }}>
+              {label}
+            </p>
+            <p style={{ fontSize: 15, color: 'var(--ink-soft)', lineHeight: 1.65, margin: 0 }}>
+              {body}
+            </p>
+          </Glass>
+        ))}
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* SECTION 4 — Runtime Intelligence (Phase 4)                            */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      <div style={hr}>
+        <SectionHeading
+          eyebrow="Phase 4 — Live"
+          heading="Runtime intelligence."
+          subtext="Beyond static scoring — Strata monitors your agents in real time, maps your dependencies, and breaks circuits before damage occurs."
+        />
+
+        {[
           {
-            label: 'Circuit Breaker',
-            body: 'Automatic disconnection when a server crosses a critical risk threshold. The agent stack continues in degraded-safe mode without human intervention.',
+            label: 'Circuit Breaker & Rollback',
+            body: 'When a connected server crosses a critical risk threshold — quarantined, injection detected, score collapse — Strata automatically trips a circuit breaker. Agents continue in degraded-safe mode. No human intervention required. Per-profile bypass available for reviewed exceptions.',
           },
           {
-            label: 'Dependency Graph',
-            body: 'Visual map of every server your agents depend on — risk scores, capability flags, circuit breaker status, and data lineage flows in a single view.',
+            label: 'MCP Server Dependency Graph',
+            body: 'Visual map of every MCP server your agents depend on. Risk scores, capability flags, circuit breaker status, and data lineage flows in one view. Nodes sorted by risk — critical servers surface first. Enriched with live threat feed data and policy status.',
           },
           {
             label: 'Behavioral Anomaly Detection',
-            body: '30-day rolling baselines per agent. Three detectors: volume spikes, high-risk server surges, net-egress floods. Hourly analysis, 6-hour dedup window.',
+            body: '30-day rolling baselines per agent. Three detectors: volume spikes (5× baseline), high-risk server surges (3× baseline), net-egress floods (3× baseline, escalates to critical off-hours). Hourly analysis. 6-hour dedup window. Requires 7 days history and 50 calls minimum — no false positives on new accounts.',
           },
         ].map(({ label, body }) => (
           <Glass key={label} shimmer style={{ padding: '24px 28px', marginBottom: 10 }}>
