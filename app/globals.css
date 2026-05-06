@@ -17,6 +17,22 @@
   }
 }
 
+/* ─── Align Tailwind tokens to marketing design system ──────────────────────
+   Override the light/dark Tailwind tokens unconditionally so dashboard,
+   marketing, and docs all use the space palette regardless of OS preference.
+   This lets existing Tailwind classes (text-muted-foreground, border-border,
+   bg-muted, bg-background) resolve to the correct marketing tokens automatically.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+  --background:       var(--bg-0);
+  --foreground:       var(--ink);
+  --muted-foreground: var(--ink-faint);
+  --border:           var(--hair);
+  --card:             var(--bg-1);
+  --muted:            rgba(255, 255, 255, 0.04);
+  --surface:          rgba(255, 255, 255, 0.04);
+}
+
 /* ─── Marketing / product design tokens ─────────────────────────
    Space palette — dark, deep, rich. Emerald is the accent.
    ─────────────────────────────────────────────────────────────── */

@@ -78,9 +78,9 @@ const CHIP_BASE: React.CSSProperties = {
 
 const CHIP_ZINC: React.CSSProperties = {
   ...CHIP_BASE,
-  background: 'rgba(255,255,255,0.05)',
-  borderColor: 'rgba(255,255,255,0.10)',
-  color: 'rgba(255,255,255,0.55)',
+  background: 'var(--hair)',
+  borderColor: 'var(--hair)',
+  color: 'var(--ink-muted)',
 }
 const CHIP_EMERALD: React.CSSProperties = {
   ...CHIP_BASE,
@@ -102,15 +102,15 @@ const CHIP_RED: React.CSSProperties = {
 }
 
 const CARD: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.03)',
-  border: '1px solid rgba(255,255,255,0.07)',
+  background: 'var(--surface)',
+  border: '1px solid var(--hair)',
   borderRadius: 12, padding: 16,
 }
 
 const COL_LABEL: React.CSSProperties = {
   fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 500,
   letterSpacing: '0.18em', textTransform: 'uppercase',
-  color: 'rgba(255,255,255,0.35)', marginBottom: 12,
+  color: 'var(--ink-faint)', marginBottom: 12,
 }
 
 const SEV_DOT: Record<string, string> = {
@@ -118,7 +118,7 @@ const SEV_DOT: Record<string, string> = {
 }
 
 const RISK_DOT: Record<string, string> = {
-  critical: '#ef4444', high: '#f97316', medium: '#f59e0b', low: '#00c472', unknown: 'rgba(255,255,255,0.25)',
+  critical: '#ef4444', high: '#f97316', medium: '#f59e0b', low: '#00c472', unknown: 'var(--ink-faint)',
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -274,17 +274,17 @@ export default async function DashboardPage() {
                 <div key={t.id} style={{
                   display: 'flex', alignItems: 'flex-start', gap: 8,
                   paddingBottom: 8, marginBottom: 8,
-                  borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  borderBottom: '1px solid var(--hair)',
                 }}>
                   <span style={{
                     width: 6, height: 6, borderRadius: '50%', flexShrink: 0, marginTop: 4,
                     background: SEV_DOT[t.severity] ?? '#6b7280',
                   }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.75)', marginBottom: 2 }}>
+                    <p style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-soft)', marginBottom: 2 }}>
                       {THREAT_LABELS[t.event_type] ?? t.event_type}
                     </p>
-                    <p style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {safeHostname(t.server_url)} · {relativeTime(t.created_at)}
                     </p>
                   </div>
@@ -297,7 +297,7 @@ export default async function DashboardPage() {
           )}
 
           {/* Anomalies */}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, marginTop: 4 }}>
+          <div style={{ borderTop: '1px solid var(--hair)', paddingTop: 10, marginTop: 4 }}>
             {(anomalyCount ?? 0) > 0 ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <p style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: '#f97316' }}>
@@ -313,7 +313,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Circuit breakers */}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, marginTop: 10 }}>
+          <div style={{ borderTop: '1px solid var(--hair)', paddingTop: 10, marginTop: 10 }}>
             {(cbCount ?? 0) > 0 ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <p style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: '#ef4444' }}>
@@ -339,9 +339,9 @@ export default async function DashboardPage() {
           </div>
 
           {/* Recent ledger */}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10, marginBottom: 10 }}>
+          <div style={{ borderTop: '1px solid var(--hair)', paddingTop: 10, marginBottom: 10 }}>
             {ledger.length === 0 ? (
-              <p style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.30)', marginBottom: 8 }}>
+              <p style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-faint)', marginBottom: 8 }}>
                 No activity yet
               </p>
             ) : (
@@ -350,19 +350,19 @@ export default async function DashboardPage() {
                   <div key={row.id} style={{
                     display: 'flex', alignItems: 'center', gap: 8,
                     paddingBottom: 6, marginBottom: 6,
-                    borderBottom: '1px solid rgba(255,255,255,0.04)',
+                    borderBottom: '1px solid var(--surface)',
                   }}>
                     <span style={{
                       width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
                       background: RISK_DOT[row.risk_level ?? 'unknown'] ?? RISK_DOT.unknown,
                     }} />
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'rgba(255,255,255,0.65)', flex: '0 0 auto', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-muted)', flex: '0 0 auto', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {row.tool_called}
                     </span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(255,255,255,0.30)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {safeHostname(row.server_url)}
                     </span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(255,255,255,0.25)', flexShrink: 0 }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)', flexShrink: 0 }}>
                       {relativeTime(row.created_at)}
                     </span>
                   </div>
@@ -370,7 +370,7 @@ export default async function DashboardPage() {
               </div>
             )}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'rgba(255,255,255,0.35)' }}>
+              <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ink-faint)' }}>
                 {agentCount ?? 0} active agent{agentCount === 1 ? '' : 's'}
               </span>
               <Link href="/dashboard/ledger" style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: '#00c472', textDecoration: 'none' }}>
@@ -380,7 +380,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* API key */}
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 10 }}>
+          <div style={{ borderTop: '1px solid var(--hair)', paddingTop: 10 }}>
             <p style={{ ...COL_LABEL, marginBottom: 8 }}>API key</p>
             <ApiKeyCard apiKey={profile.api_key} />
           </div>
@@ -392,7 +392,7 @@ export default async function DashboardPage() {
 
           {policies.length === 0 ? (
             <>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.40)', lineHeight: 1.6, marginBottom: 12 }}>
+              <p style={{ fontSize: 12, color: 'var(--ink-faint)', lineHeight: 1.6, marginBottom: 12 }}>
                 No policies yet. Create rules to enforce safe behavior — block shell_exec, gate high-risk servers, enforce time windows.
               </p>
               <Link href="/dashboard/policies" style={{
@@ -408,13 +408,13 @@ export default async function DashboardPage() {
                 <div key={p.id} style={{
                   display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8,
                   paddingBottom: 8, marginBottom: 8,
-                  borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  borderBottom: '1px solid var(--hair)',
                 }}>
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'rgba(255,255,255,0.75)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-soft)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {p.name}
                     </p>
-                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-faint)' }}>
                       {policyCondition(p)}
                     </p>
                   </div>
@@ -450,9 +450,9 @@ export default async function DashboardPage() {
             style={{
               fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 400,
               padding: '7px 14px', borderRadius: 8, textDecoration: 'none',
-              border: '1px solid rgba(255,255,255,0.12)',
-              background: 'rgba(255,255,255,0.04)',
-              color: 'rgba(255,255,255,0.65)',
+              border: '1px solid var(--hair)',
+              background: 'var(--surface)',
+              color: 'var(--ink-muted)',
             }}
           >
             {label}
@@ -465,9 +465,9 @@ export default async function DashboardPage() {
           style={{
             fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 400,
             padding: '7px 14px', borderRadius: 8, textDecoration: 'none',
-            border: '1px solid rgba(255,255,255,0.12)',
-            background: 'rgba(255,255,255,0.04)',
-            color: 'rgba(255,255,255,0.65)',
+            border: '1px solid var(--hair)',
+            background: 'var(--surface)',
+            color: 'var(--ink-muted)',
           }}
         >
           Export SOC 2 ↗

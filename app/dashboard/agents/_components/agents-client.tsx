@@ -132,7 +132,7 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
     setTimeout(() => setJwtCopied(false), 2000)
   }
 
-  const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }
+  const CARD: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--hair)', borderRadius: 12 }
 
   return (
     <>
@@ -342,8 +342,8 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
                 <code
                   className="block font-mono text-[11px] break-all rounded-lg p-3 select-all"
                   style={{
-                    background:  'rgba(255,255,255,0.04)',
-                    border:      '1px solid rgba(255,255,255,0.10)',
+                    background:  'var(--surface)',
+                    border:      '1px solid var(--hair)',
                     color:       'var(--emerald-light)',
                     lineHeight:  1.6,
                     maxHeight:   160,
@@ -370,7 +370,7 @@ export default function AgentsClient({ initialAgents }: { initialAgents: AgentRo
                   className="px-4 py-2 text-sm rounded-lg transition-colors"
                   style={{
                     background: 'transparent',
-                    border:     '1px solid rgba(255,255,255,0.12)',
+                    border:     '1px solid var(--hair)',
                     color:      'var(--ink-muted)',
                   }}
                 >

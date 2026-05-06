@@ -58,10 +58,10 @@ export function TopNav({ email, isAdmin }: TopNavProps) {
       {/* ── Sticky top bar ── */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 40,
-        height: 52, display: 'flex', alignItems: 'center',
+        height: 64, display: 'flex', alignItems: 'center',
         padding: '0 20px', gap: 0, flexShrink: 0,
         background: 'rgba(5,6,13,0.92)',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
+        borderBottom: '1px solid var(--hair)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
       }}>
@@ -92,21 +92,20 @@ export function TopNav({ email, isAdmin }: TopNavProps) {
           }}
           aria-label="Dashboard navigation"
         >
-          <style>{`.dn-nav::-webkit-scrollbar{display:none}`}</style>
           {allGroups.map((group, gi) => (
             <span key={group.label} style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>
               {gi > 0 && (
                 <span aria-hidden="true" style={{
                   fontFamily: 'var(--font-mono)', fontSize: 12,
-                  color: 'rgba(255,255,255,0.15)', padding: '0 8px',
+                  color: 'var(--hair)', padding: '0 8px',
                 }}>
                   ·
                 </span>
               )}
               <span style={{
-                fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 500,
+                fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500,
                 letterSpacing: '0.18em', textTransform: 'uppercase',
-                color: 'rgba(255,255,255,0.28)', marginRight: 8, flexShrink: 0,
+                color: 'var(--ink-faint)', marginRight: 8, flexShrink: 0,
               }}>
                 {group.label}
               </span>
@@ -117,13 +116,13 @@ export function TopNav({ email, isAdmin }: TopNavProps) {
                     key={item.href}
                     href={item.href}
                     style={{
-                      fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 400,
-                      color: active ? '#00c472' : 'rgba(255,255,255,0.55)',
+                      fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 400,
+                      color: active ? '#00c472' : 'var(--ink-muted)',
                       textDecoration: 'none', flexShrink: 0,
                       borderBottom: `2px solid ${active ? '#00c472' : 'transparent'}`,
                       paddingBottom: 1,
-                      marginRight: 14,
-                      lineHeight: '50px',
+                      marginRight: 16,
+                      lineHeight: '62px',
                       display: 'inline-block',
                     }}
                   >
@@ -140,7 +139,7 @@ export function TopNav({ email, isAdmin }: TopNavProps) {
           {email && (
             <span style={{
               fontFamily: 'var(--font-mono)', fontSize: 11,
-              color: 'rgba(255,255,255,0.30)',
+              color: 'var(--ink-faint)',
               maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
               {email}
@@ -153,11 +152,11 @@ export function TopNav({ email, isAdmin }: TopNavProps) {
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
                 fontFamily: 'var(--font-mono)', fontSize: 13,
-                color: 'rgba(255,255,255,0.30)', padding: '2px 4px',
+                color: 'var(--ink-faint)', padding: '2px 4px',
                 transition: 'color 120ms',
               }}
-              onMouseOver={e => (e.currentTarget.style.color = '#fff')}
-              onMouseOut={e  => (e.currentTarget.style.color = 'rgba(255,255,255,0.30)')}
+              onMouseOver={e => (e.currentTarget.style.color = 'var(--ink)')}
+              onMouseOut={e  => (e.currentTarget.style.color = 'var(--ink-faint)')}
             >
               →
             </button>
@@ -171,7 +170,7 @@ export function TopNav({ email, isAdmin }: TopNavProps) {
           aria-label="Open navigation"
           style={{
             marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer',
-            color: 'rgba(255,255,255,0.55)', fontSize: 18, padding: 8,
+            color: 'var(--ink-muted)', fontSize: 18, padding: 8,
           }}
         >
           ☰
@@ -190,8 +189,8 @@ export function TopNav({ email, isAdmin }: TopNavProps) {
           <aside style={{
             position: 'absolute', top: 0, left: 0, height: '100%',
             width: 260, overflowY: 'auto',
-            background: 'rgba(5,6,13,0.97)',
-            borderRight: '1px solid rgba(255,255,255,0.08)',
+            background: 'var(--bg-0)',
+            borderRight: '1px solid var(--hair)',
             backdropFilter: 'blur(20px)',
             display: 'flex', flexDirection: 'column',
             padding: '20px 16px',
@@ -209,7 +208,7 @@ export function TopNav({ email, isAdmin }: TopNavProps) {
               <button
                 onClick={() => setOpen(false)}
                 aria-label="Close navigation"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.45)', fontSize: 18 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-faint)', fontSize: 18 }}
               >
                 ✕
               </button>
@@ -220,9 +219,9 @@ export function TopNav({ email, isAdmin }: TopNavProps) {
               {allGroups.map(group => (
                 <div key={group.label} style={{ marginBottom: 18 }}>
                   <p style={{
-                    fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 500,
+                    fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500,
                     letterSpacing: '0.18em', textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.28)', marginBottom: 4, paddingLeft: 4,
+                    color: 'var(--ink-faint)', marginBottom: 4, paddingLeft: 4,
                   }}>
                     {group.label}
                   </p>
@@ -236,7 +235,7 @@ export function TopNav({ email, isAdmin }: TopNavProps) {
                         style={{
                           display: 'block', textDecoration: 'none',
                           fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 400,
-                          color: active ? '#00c472' : 'rgba(255,255,255,0.60)',
+                          color: active ? '#00c472' : 'var(--ink-muted)',
                           padding: '9px 0 9px 12px',
                           borderLeft: `2px solid ${active ? '#00c472' : 'transparent'}`,
                         }}
@@ -250,11 +249,11 @@ export function TopNav({ email, isAdmin }: TopNavProps) {
             </nav>
 
             {/* Footer */}
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12 }}>
+            <div style={{ borderTop: '1px solid var(--hair)', paddingTop: 12 }}>
               {email && (
                 <p style={{
                   fontSize: 11, fontFamily: 'var(--font-mono)',
-                  color: 'rgba(255,255,255,0.28)', paddingLeft: 4, marginBottom: 8,
+                  color: 'var(--ink-faint)', paddingLeft: 4, marginBottom: 8,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>
                   {email}
@@ -266,7 +265,7 @@ export function TopNav({ email, isAdmin }: TopNavProps) {
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
                     fontSize: 12, fontFamily: 'var(--font-mono)',
-                    color: 'rgba(255,255,255,0.35)', paddingLeft: 4,
+                    color: 'var(--ink-faint)', paddingLeft: 4,
                   }}
                 >
                   Sign out

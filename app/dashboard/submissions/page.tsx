@@ -51,7 +51,7 @@ export default async function SubmissionsPage() {
 
   const submissions = (rows ?? []) as Submission[]
 
-  const CARD = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }
+  const CARD = { background: 'var(--surface)', border: '1px solid var(--hair)', borderRadius: 12 }
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto' }}>

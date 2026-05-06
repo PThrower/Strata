@@ -6,8 +6,8 @@ import Link from 'next/link'
 import { RiskBadge } from '../../_components/RiskBadge'
 
 const CARD: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.03)',
-  border: '1px solid rgba(255,255,255,0.07)',
+  background: 'var(--surface)',
+  border: '1px solid var(--hair)',
   borderRadius: 12,
 }
 
@@ -155,8 +155,8 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
       ) : (
         <div style={{ ...CARD, overflowX: 'auto' }}>
           <table className="w-full text-sm">
-            <thead style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-              <tr style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
+            <thead style={{ borderBottom: '1px solid var(--hair)' }}>
+              <tr style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 <th className="px-4 py-3 font-medium">Time</th>
                 <th className="px-4 py-3 font-medium">Type</th>
                 <th className="px-4 py-3 font-medium">Severity</th>
@@ -170,7 +170,7 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
               {filtered.map(event => (
                 <tr
                   key={event.id}
-                  style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', opacity: event.acknowledged ? 0.5 : 1 }}
+                  style={{ borderBottom: '1px solid var(--hair)', opacity: event.acknowledged ? 0.5 : 1 }}
                 >
                   <td
                     className="px-4 py-3 text-muted-foreground whitespace-nowrap text-xs"
@@ -179,7 +179,7 @@ export default function AnomaliesClient({ initialEvents }: { initialEvents: Anom
                     {relativeTime(event.created_at)}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontFamily: 'var(--font-mono)', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.65)' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 8px', borderRadius: 4, fontSize: 11, fontFamily: 'var(--font-mono)', background: 'rgba(255,255,255,0.06)', color: 'var(--ink-muted)' }}>
                       {EVENT_LABELS[event.event_type] ?? event.event_type}
                     </span>
                   </td>

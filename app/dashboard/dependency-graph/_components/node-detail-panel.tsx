@@ -141,7 +141,7 @@ export default function NodeDetailPanel({ node, edges, onClose }: Props) {
                 className="font-mono text-[10px] px-1.5 py-0.5 rounded"
                 style={{
                   background: FLAG_DANGER.has(f) ? 'rgba(239,68,68,0.15)' : FLAG_WARN.has(f) ? 'rgba(234,179,8,0.15)' : 'rgba(255,255,255,0.06)',
-                  color:       FLAG_DANGER.has(f) ? '#ef4444'              : FLAG_WARN.has(f) ? '#eab308'              : 'rgba(255,255,255,0.55)',
+                  color:       FLAG_DANGER.has(f) ? '#ef4444'              : FLAG_WARN.has(f) ? '#eab308'              : 'var(--ink-muted)',
                 }}
               >
                 {f}

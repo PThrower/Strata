@@ -45,13 +45,13 @@ function shortServer(url: string | null): string {
 }
 
 function FlagChips({ flags }: { flags: string[] | null }) {
-  if (!flags || flags.length === 0) return <span style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'var(--font-mono)', fontSize: 11 }}>—</span>
+  if (!flags || flags.length === 0) return <span style={{ color: 'var(--ink-faint)', fontFamily: 'var(--font-mono)', fontSize: 11 }}>—</span>
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
       {flags.map((f) => (
         <span
           key={f}
-          style={{ display: 'inline-flex', alignItems: 'center', padding: '1px 6px', borderRadius: 4, fontSize: 10, fontFamily: 'var(--font-mono)', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)' }}
+          style={{ display: 'inline-flex', alignItems: 'center', padding: '1px 6px', borderRadius: 4, fontSize: 10, fontFamily: 'var(--font-mono)', background: 'rgba(255,255,255,0.06)', color: 'var(--ink-muted)' }}
         >
           {f}
         </span>
@@ -61,8 +61,8 @@ function FlagChips({ flags }: { flags: string[] | null }) {
 }
 
 const CARD: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.03)',
-  border: '1px solid rgba(255,255,255,0.07)',
+  background: 'var(--surface)',
+  border: '1px solid var(--hair)',
   borderRadius: 12,
 }
 
@@ -136,8 +136,8 @@ export default async function LedgerPage({
         <>
           <div style={{ ...CARD, overflowX: 'auto' }}>
             <table className="w-full text-sm">
-              <thead style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                <tr style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
+              <thead style={{ borderBottom: '1px solid var(--hair)' }}>
+                <tr style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                   <th className="px-4 py-3 font-medium">Time</th>
                   <th className="px-4 py-3 font-medium">Tool</th>
                   <th className="px-4 py-3 font-medium">Server</th>
@@ -148,7 +148,7 @@ export default async function LedgerPage({
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <tr key={r.id} style={{ borderBottom: '1px solid var(--hair)' }}>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap" title={r.created_at}>
                       {relativeTime(r.created_at)}
                     </td>

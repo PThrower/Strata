@@ -40,7 +40,7 @@ export default function CircuitBreakersClient({ initialBreakers }: { initialBrea
   const [error, setError]               = useState<string | null>(null)
   const [isPending, startTransition]    = useTransition()
 
-  const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }
+  const CARD: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--hair)', borderRadius: 12 }
 
   function handleReset(row: BreakerRow) {
     setResetTarget(row)

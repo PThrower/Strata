@@ -18,9 +18,11 @@ export default async function DashboardLayout({
       <main
         style={{
           flex: 1,
-          background: 'rgba(5,6,13,0.55)',
+          background: 'var(--bg-0)',
           padding: '24px 28px',
-        }}
+          WebkitFontSmoothing: 'antialiased',
+          MozOsxFontSmoothing: 'grayscale',
+        } as React.CSSProperties}
       >
         {children}
       </main>

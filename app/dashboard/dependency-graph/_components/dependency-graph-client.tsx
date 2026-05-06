@@ -42,7 +42,7 @@ function FlagChips({ flags }: { flags: string[] }) {
           className="font-mono text-[9px] px-1 py-0.5 rounded"
           style={{
             background: danger.has(f) ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.06)',
-            color:      danger.has(f) ? '#ef4444'              : 'rgba(255,255,255,0.45)',
+            color:      danger.has(f) ? '#ef4444'              : 'var(--ink-muted)',
           }}
         >
           {f}
@@ -93,7 +93,7 @@ export default function DependencyGraphClient({
     return true
   })
 
-  const CARD: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12 }
+  const CARD: React.CSSProperties = { background: 'var(--surface)', border: '1px solid var(--hair)', borderRadius: 12 }
   const tabBase = 'px-3 py-1.5 text-xs rounded-md border transition-colors'
 
   // ── Empty state ─────────────────────────────────────────────────────────────
