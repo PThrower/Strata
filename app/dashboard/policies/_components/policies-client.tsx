@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect, useMemo } from 'react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -110,14 +110,41 @@ type FormState = typeof blankForm
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+// Read ?prefill=capability_flag&value=<flag> from the URL — used by the
+// threat feed's "Block this flag" button. Lazy initialisers run once on mount
+// (client-only) so we avoid setState inside an effect.
+function prefillFromUrl(): { form: FormState; showForm: boolean } {
+  if (typeof window === 'undefined') return { form: blankForm, showForm: false }
+  const params  = new URLSearchParams(window.location.search)
+  const prefill = params.get('prefill')
+  const value   = params.get('value')
+  if (prefill === 'capability_flag' && value && ALL_CAP_FLAGS.includes(value as typeof ALL_CAP_FLAGS[number])) {
+    return {
+      form: { ...blankForm, name: `Block ${value}`, action: 'block', match_capability_flags: [value] },
+      showForm: true,
+    }
+  }
+  return { form: blankForm, showForm: false }
+}
+
 export default function PoliciesClient({ initialPolicies }: { initialPolicies: PolicyRow[] }) {
   const [policies, setPolicies]     = useState<PolicyRow[]>(initialPolicies)
-  const [showForm, setShowForm]     = useState(false)
-  const [form, setForm]             = useState<FormState>(blankForm)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const initial = useMemo(() => prefillFromUrl(), [])
+  const [showForm, setShowForm]     = useState(initial.showForm)
+  const [form, setForm]             = useState<FormState>(initial.form)
   const [editId, setEditId]         = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<PolicyRow | null>(null)
   const [formError, setFormError]   = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+
+  // Clean the prefill params from the URL after the form is seeded (no setState).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('prefill') === 'capability_flag') {
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
 
   const card = 'bg-white dark:bg-zinc-900 rounded-lg border border-border'
   const btnBase = 'text-xs px-3 py-1.5 rounded-md border transition-colors disabled:opacity-50'

@@ -138,6 +138,10 @@ async function main() {
     console.log(`${YELLOW}    audit-log GC failed: ${String(err)}${RESET}`)
   }
 
+  // threat_feed is an audit trail matching agent_activity_ledger — no automated prune.
+  // Storage cost is negligible (~50-200 events/month). Retention > 90 days is needed
+  // for SOC 2 Type II (12-month) and ISO 27001 audit periods.
+
   // ── MCP Runtime Behavioral Scoring ────────────────────────────
   console.log(`\n${CYAN}  ◆ mcp-runtime${RESET}`)
   try {
