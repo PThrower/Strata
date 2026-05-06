@@ -198,6 +198,25 @@ Verification flow for an MCP server:
 
 Note: `agent_activity_ledger.agent_id` is intentionally free-form text with no FK to `agent_identities.agent_id` so anonymous and pre-identity ledger rows still work. When an identity is in use, the same `agt_<hex>` value appears in both columns.
 
+### Data Lineage Tracking
+
+Explicit agent-declared data flows: "I read from Server A and sent it to Server B." Risk signals are denormalized at write time so the dashboard never joins `mcp_servers`.
+
+- **Table** `data_lineage_flows` — `profile_id`, `agent_id`, `session_id` (caller-supplied run/trace ID), `source_server_url`, `source_tool`, `source_mcp_server_id` (FK to mcp_servers, resolved at insert), `dest_server_url`, `dest_tool`, `dest_mcp_server_id`, `source_capability_flags text[]`, `dest_capability_flags text[]`, `dest_has_net_egress boolean`, `data_tags text[]` (caller-reported: `pii`, `credentials`, `financial`, `internal`), `risk_level` (computed: low/medium/high/critical), `ledger_entry_ids uuid[]` (optional cross-refs to agent_activity_ledger). RLS: owner-read-only; all writes are service-role only. No append-only trigger (unlike the ledger).
+- **Library** `lib/lineage.ts` — `computeLineageRisk(destFlags, dataTags, isDestQuarantined)` pure function; `shortServerLabel(url)` for display.
+- **Risk model** (destination-only — source taint is a Phase 3 concept):
+  - `critical` — dest quarantined, or dest has `shell_exec`/`dynamic_eval` + data_tags contain `pii`/`credentials`
+  - `high`     — dest has `net_egress` + data_tags contain `pii`/`credentials`
+  - `medium`   — dest has `net_egress`
+  - `low`      — otherwise
+- **Routes** (API key auth, same as all other `/api/v1/*` routes):
+  - `POST /api/v1/lineage` — record a flow. Body: `{ source_server, dest_server, agent_id?, session_id?, source_tool?, dest_tool?, data_tags?, ledger_entry_ids? }`. Resolves both URLs against `mcp_servers` (by `hosted_endpoint` then `url`), computes risk, inserts row.
+  - `GET /api/v1/lineage` — list flows. Params: `session_id`, `agent_id`, `risk_level`, `dest_has_net_egress=true`, `limit` (max 200), `before` (ISO cursor).
+  - `GET /api/v1/lineage/sessions` — distinct sessions with stats (flow count, highest risk, distinct server count, time range). Calls `get_lineage_sessions(profile_id)` Postgres RPC.
+- **MCP tool** `track_data_flow(source_server, dest_server, session_id?, data_tags?)` — records a lineage flow via the MCP interface.
+- **Dashboard** `/dashboard/lineage` — flow table with source→dest arrow, session filter (click a session_id), egress-only filter, session chain header (Server A → B → C), and a 7-day risk banner when net-egress flows are present.
+- **`session_id` contract**: caller-supplied, opaque string. Strata does not issue session IDs — pass a LangChain `run_id`, LlamaIndex trace ID, or any UUID your application generates. Sessions are just a `GROUP BY session_id` — no session table.
+
 ### Database schema (Supabase Postgres)
 
 Key tables in `supabase/migrations/`:

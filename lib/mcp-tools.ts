@@ -5,6 +5,7 @@ import { embed } from './embeddings'
 import { freshnessEnvelope } from './freshness'
 import { verifyX402Endpoint } from './x402-verifier'
 import { verifyCredential, isCredentialError } from './agent-credentials'
+import { computeLineageRisk, VALID_DATA_TAGS } from './lineage'
 
 export type MCPToolResult = CallToolResult
 
@@ -169,6 +170,52 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         },
       },
       required: ['url'],
+    },
+  },
+  {
+    name: 'track_data_flow',
+    description:
+      'Records a data flow between two MCP servers for lineage tracking. Call ' +
+      'this after your agent reads data from one server and sends it to another — ' +
+      'it creates an auditable record of where your data traveled and flags if the ' +
+      'destination has net_egress or other risky capabilities. The flow is ' +
+      'immediately visible in the Strata dashboard under Data Lineage.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        source_server: {
+          type: 'string',
+          description: 'https:// URL of the server data was READ from.',
+        },
+        dest_server: {
+          type: 'string',
+          description: 'https:// URL of the server data was SENT to.',
+        },
+        session_id: {
+          type: 'string',
+          description:
+            'Optional. Opaque run/trace ID that groups related flows together ' +
+            '(e.g. a LangChain run_id or your own UUID). All flows sharing a ' +
+            'session_id appear as one agent run in the dashboard.',
+        },
+        data_tags: {
+          type: 'array',
+          items: { type: 'string' },
+          description:
+            "Optional. Classify what kind of data moved. Allowed values: " +
+            "'pii', 'credentials', 'financial', 'internal'. Raises the risk " +
+            "level when combined with net_egress on the destination.",
+        },
+        source_tool: {
+          type: 'string',
+          description: 'Optional. Name of the tool called on the source server.',
+        },
+        dest_tool: {
+          type: 'string',
+          description: 'Optional. Name of the tool called on the destination server.',
+        },
+      },
+      required: ['source_server', 'dest_server'],
     },
   },
   {
@@ -505,6 +552,68 @@ export async function handleToolCall(
 
     await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'mcp-servers', ecosystem: 'mcp', statusCode: 200 })
     return ok({ query, results }, rows.map(r => r.id))
+  }
+
+  if (name === 'track_data_flow') {
+    const rawSource = typeof args.source_server === 'string' ? args.source_server.trim() : ''
+    const rawDest   = typeof args.dest_server   === 'string' ? args.dest_server.trim()   : ''
+    if (!rawSource) return err('Error: source_server is required', 400)
+    if (!rawDest)   return err('Error: dest_server is required', 400)
+
+    let sourceUrl: string, destUrl: string
+    try { sourceUrl = new URL(rawSource).toString() } catch { return err('Error: source_server is not a valid URL', 400) }
+    try { destUrl   = new URL(rawDest).toString()   } catch { return err('Error: dest_server is not a valid URL', 400) }
+    if (sourceUrl === destUrl) return err('Error: source_server and dest_server must be different', 400)
+    if (!sourceUrl.startsWith('https:')) return err('Error: source_server must be https', 400)
+    if (!destUrl.startsWith('https:'))   return err('Error: dest_server must be https', 400)
+
+    const sessionId  = typeof args.session_id  === 'string' ? args.session_id.trim().slice(0, 200)  : null
+    const sourceTool = typeof args.source_tool === 'string' ? args.source_tool.trim().slice(0, 120) : null
+    const destTool   = typeof args.dest_tool   === 'string' ? args.dest_tool.trim().slice(0, 120)   : null
+
+    let dataTags: string[] = []
+    if (Array.isArray(args.data_tags)) {
+      dataTags = (args.data_tags as unknown[])
+        .filter((t): t is string => typeof t === 'string' && VALID_DATA_TAGS.has(t))
+        .slice(0, 10)
+    }
+
+    // Resolve mcp_servers for both URLs (parallel).
+    type McpServerRow = { id: string; capability_flags: string[] | null; is_quarantined: boolean | null }
+    const [{ data: srcMcp }, { data: dstMcp }] = await Promise.all([
+      supabase.from('mcp_servers').select('id, capability_flags, is_quarantined').eq('hosted_endpoint', sourceUrl).limit(1).maybeSingle<McpServerRow>(),
+      supabase.from('mcp_servers').select('id, capability_flags, is_quarantined').eq('hosted_endpoint', destUrl).limit(1).maybeSingle<McpServerRow>(),
+    ])
+
+    const sourceFlags = srcMcp?.capability_flags ?? []
+    const destFlags   = dstMcp?.capability_flags ?? []
+    const riskLevel   = computeLineageRisk(destFlags, dataTags, dstMcp?.is_quarantined === true)
+
+    const { data: inserted, error: insErr } = await supabase
+      .from('data_lineage_flows')
+      .insert({
+        profile_id:              profile.id,
+        agent_id:                null,
+        session_id:              sessionId,
+        source_server_url:       sourceUrl,
+        source_tool:             sourceTool,
+        source_mcp_server_id:    srcMcp?.id ?? null,
+        dest_server_url:         destUrl,
+        dest_tool:               destTool,
+        dest_mcp_server_id:      dstMcp?.id ?? null,
+        source_capability_flags: sourceFlags.length > 0 ? sourceFlags : null,
+        dest_capability_flags:   destFlags.length   > 0 ? destFlags   : null,
+        dest_has_net_egress:     destFlags.includes('net_egress'),
+        data_tags:               dataTags.length > 0 ? dataTags : null,
+        risk_level:              riskLevel,
+      })
+      .select('id, risk_level, dest_has_net_egress')
+      .single()
+
+    if (insErr) return err('Error: failed to record lineage flow', 503)
+
+    await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'track-data-flow', ecosystem: 'lineage', statusCode: 200 })
+    return ok({ recorded: true, id: (inserted as { id: string }).id, risk_level: riskLevel, dest_has_net_egress: destFlags.includes('net_egress') })
   }
 
   if (name === 'verify_payment_endpoint') {
