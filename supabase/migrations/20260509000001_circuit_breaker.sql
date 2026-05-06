@@ -71,6 +71,12 @@ BEGIN
       circuit_broken_reason = NULL
     WHERE id = NEW.server_id
       AND circuit_broken = true;
+
+    -- Drop per-profile bypasses so a future re-trip requires fresh acknowledgement.
+    -- A user's reset covered a specific threat instance; if the server cycles
+    -- through clear → re-trip, the new threat must be re-evaluated by the user.
+    DELETE FROM public.circuit_breaker_resets
+    WHERE server_id = NEW.server_id;
   END IF;
 
   RETURN NEW;

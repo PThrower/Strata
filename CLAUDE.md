@@ -69,6 +69,8 @@ Nine tools registered in both the HTTP route and stdio script: `get_best_practic
 
 **Policy enforcement hook**: `handleToolCall` evaluates `evaluatePolicy()` immediately after auth, before any tool branch. This is the single enforcement point for the Policy Engine.
 
+**Circuit breaker enforcement model**: Circuit breakers are advisory in `handleToolCall` — Strata surfaces `circuit_broken: true` in `mcp/verify` responses and `find_mcp_servers` results; agents enforce by not connecting. Hard blocking at the MCP tool layer is not implemented because Strata tools do not directly invoke external MCP servers. Known limitation: `find_mcp_servers` with `exclude_circuit_broken=true` ignores per-profile resets — it filters on the global `circuit_broken` flag only, erring on the side of safety. A future fix should honour per-profile bypasses from `circuit_breaker_resets`.
+
 All tool results strip quarantined items. MCP auth (`lib/mcp-auth.ts`) accepts both `X-API-Key` and `Authorization: Bearer`.
 
 ### SSRF protection (`lib/ssrf-guard.ts`)
