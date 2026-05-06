@@ -9,6 +9,7 @@ const BASE_ITEMS = [
   { label: 'Ledger',      href: '/dashboard/ledger' },
   { label: 'Lineage',     href: '/dashboard/lineage' },
   { label: 'Agents',      href: '/dashboard/agents' },
+  { label: 'Threats',     href: '/dashboard/threats' },
   { label: 'Policies',    href: '/dashboard/policies' },
   { label: 'Submit',      href: '/dashboard/submit' },
   { label: 'Submissions', href: '/dashboard/submissions' },

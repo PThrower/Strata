@@ -138,6 +138,23 @@ async function main() {
     console.log(`${YELLOW}    audit-log GC failed: ${String(err)}${RESET}`)
   }
 
+  // ── Threat feed retention (90-day) ────────────────────────────
+  try {
+    const supabase = getServiceClient()
+    const cutoff   = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
+    const { error: pruneErr, count: pruned } = await supabase
+      .from('threat_feed')
+      .delete({ count: 'exact' })
+      .lt('created_at', cutoff)
+    if (pruneErr) {
+      console.log(`${YELLOW}    threat-feed GC failed: ${pruneErr.message}${RESET}`)
+    } else if (pruned && pruned > 0) {
+      console.log(`${DIM}    threat-feed GC pruned ${pruned} rows older than 90 days${RESET}`)
+    }
+  } catch (err) {
+    console.log(`${YELLOW}    threat-feed GC threw: ${String(err)}${RESET}`)
+  }
+
   // ── MCP Runtime Behavioral Scoring ────────────────────────────
   console.log(`\n${CYAN}  ◆ mcp-runtime${RESET}`)
   try {

@@ -65,6 +65,26 @@ export default async function DashboardPage() {
     .order('created_at', { ascending: false })
     .limit(10)
 
+  // ── Threat feed ambient alert ──────────────────────────────────────────────
+  // Count critical/high threats in last 7 days for servers this user has used.
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString()
+  const { data: userServerUrls } = await serviceClient
+    .from('agent_activity_ledger')
+    .select('server_url')
+    .eq('profile_id', user.id)
+    .not('server_url', 'is', null)
+  const urlSet = [...new Set((userServerUrls ?? []).map((r: { server_url: string }) => r.server_url).filter(Boolean))]
+  let threatCount = 0
+  if (urlSet.length > 0) {
+    const { count } = await serviceClient
+      .from('threat_feed')
+      .select('id', { count: 'exact', head: true })
+      .in('server_url', urlSet)
+      .in('severity', ['critical', 'high'])
+      .gte('created_at', sevenDaysAgo)
+    threatCount = count ?? 0
+  }
+
   const limit    = profile.tier === 'pro' ? PRO_LIMIT : FREE_LIMIT
   const pct      = Math.min((profile.calls_used / limit) * 100, 100)
   const resetDate = formatResetDate(profile.calls_reset_at)
@@ -78,6 +98,26 @@ export default async function DashboardPage() {
       }}>
         Overview
       </h1>
+
+      {/* ── Threat alert banner ── */}
+      {threatCount > 0 && (
+        <div
+          className="rounded-lg px-4 py-3 mb-5 flex items-center justify-between gap-4"
+          style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)' }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-red-400">⚠</span>
+            <p className="text-sm text-red-300">
+              <strong>{threatCount}</strong> server{threatCount === 1 ? '' : 's'} you&apos;ve connected to
+              {threatCount === 1 ? ' has' : ' have'} a new critical or high threat in the last 7 days.
+            </p>
+          </div>
+          <Link href="/dashboard/threats" className="text-xs px-3 py-1.5 rounded-md shrink-0"
+            style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.40)', color: '#fca5a5' }}>
+            View threats →
+          </Link>
+        </div>
+      )}
 
       {/* ── Stat cards ── */}
       <div className="grid grid-cols-2 gap-4 mb-4">

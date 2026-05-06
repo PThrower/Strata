@@ -239,6 +239,37 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       required: ['credential'],
     },
   },
+  {
+    name: 'get_threat_feed',
+    description:
+      'Returns recent risk-signal changes for MCP servers — quarantines, new dangerous ' +
+      'capability flags, security score drops, and injection detections. Use this to ' +
+      'check whether any server you rely on has changed risk profile recently. Set ' +
+      'affected_only=true to filter to servers you have actually connected to.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        since: {
+          type: 'string',
+          description:
+            'Optional ISO 8601 date. Return events after this timestamp. ' +
+            'Default: last 7 days.',
+        },
+        affected_only: {
+          type: 'boolean',
+          description:
+            'Optional. If true, return only events for servers you have connected ' +
+            'to (based on your activity ledger). Default: false.',
+        },
+        severity: {
+          type: 'string',
+          description:
+            "Optional. Filter by severity: 'critical', 'high', 'medium', or 'low'.",
+        },
+      },
+      required: [],
+    },
+  },
 ]
 
 export async function handleToolCall(
@@ -686,6 +717,46 @@ export async function handleToolCall(
       .then(() => {}, (err) => console.error('[mcp-tools] last_verified_at update failed:', err))
 
     return ok({ valid: true, agent_id: claims.agentId, profile_id: claims.profileId, name: claims.name, capabilities: claims.capabilities, expires_at: claims.expiresAt })
+  }
+
+  if (name === 'get_threat_feed') {
+    const sinceRaw     = typeof args.since === 'string' ? args.since : null
+    const affectedOnly = args.affected_only === true
+    const severityRaw  = typeof args.severity === 'string' ? args.severity : null
+
+    const sinceDate = sinceRaw && !isNaN(Date.parse(sinceRaw))
+      ? new Date(sinceRaw).toISOString()
+      : new Date(Date.now() - 7 * 86_400_000).toISOString()
+
+    let affectedUrls: string[] | null = null
+    if (affectedOnly) {
+      const { data: ledgerRows } = await supabase
+        .from('agent_activity_ledger')
+        .select('server_url')
+        .eq('profile_id', profile.id)
+        .not('server_url', 'is', null)
+      affectedUrls = [...new Set((ledgerRows ?? []).map((r: { server_url: string }) => r.server_url).filter(Boolean))]
+    }
+
+    let query = supabase
+      .from('threat_feed')
+      .select('id, server_url, server_name, event_type, severity, detail, created_at')
+      .gte('created_at', sinceDate)
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (severityRaw) query = query.eq('severity', severityRaw)
+    if (affectedUrls && affectedUrls.length > 0) query = query.in('server_url', affectedUrls)
+    if (affectedUrls && affectedUrls.length === 0) {
+      await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'threats', ecosystem: 'threats', statusCode: 200 })
+      return ok({ events: [], total: 0, note: 'No connected servers found in activity ledger' })
+    }
+
+    const { data: events, error: feedErr } = await query
+    if (feedErr) return err('Error: Threat feed unavailable', 503)
+
+    await logApiRequest(supabase, { apiKey: profile.api_key, tool: 'threats', ecosystem: 'threats', statusCode: 200 })
+    return ok({ events: events ?? [], total: (events ?? []).length })
   }
 
   return err(`Error: Unknown tool: ${name}`, 400)

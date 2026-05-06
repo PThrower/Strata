@@ -217,6 +217,19 @@ Explicit agent-declared data flows: "I read from Server A and sent it to Server 
 - **Dashboard** `/dashboard/lineage` — flow table with source→dest arrow, session filter (click a session_id), egress-only filter, session chain header (Server A → B → C), and a 7-day risk banner when net-egress flows are present.
 - **`session_id` contract**: caller-supplied, opaque string. Strata does not issue session IDs — pass a LangChain `run_id`, LlamaIndex trace ID, or any UUID your application generates. Sessions are just a `GROUP BY session_id` — no session table.
 
+### Real-Time Threat Feed
+
+Append-only log of meaningful risk signal changes on mcp_servers. Written by a Postgres trigger; never written by application code. Pruned to 90 days by the refresh pipeline.
+
+- **Table** `threat_feed` — `server_id` (FK to mcp_servers), `server_url`/`server_name` (denormalized), `event_type`, `severity` (critical/high/medium/low), `old_value`/`new_value` (jsonb), `detail` (human-readable), `created_at`. No `profile_id` — global signal table; per-user filtering at query time via `agent_activity_ledger` JOIN.
+- **Trigger** `mcp_servers_threat_trigger` (AFTER UPDATE on mcp_servers) — fires on 6 event types: `quarantine_added` (critical), `quarantine_removed` (medium), `capability_flag_added` (high — dangerous flags only: shell_exec, dynamic_eval, arbitrary_sql, fs_write, secret_read, process_spawn; NOT net_egress), `score_critical_drop` (critical — drop ≥25 AND new < 20), `score_significant_drop` (high — drop ≥25, new ≥ 20), `injection_detected` (critical — injection_risk_score crosses ≥ 6).
+- **Route** `GET /api/v1/threats` — API key auth. Params: `since`, `severity`, `server_id`, `affected_only=true` (filters to caller's connected servers via ledger JOIN), `limit` (max 200), `before` cursor.
+- **MCP tool** `get_threat_feed(since?, affected_only?, severity?)` — registered in `lib/mcp-tools.ts`.
+- **Dashboard** `/dashboard/threats` — feed table with filter tabs (All / Critical+High / My servers). Summary cards for critical/high/my-server counts. "Block this flag" button on `capability_flag_added` rows → links to `/dashboard/policies?prefill=capability_flag&value=<flag>`.
+- **Ambient banner** on `/dashboard` — shows when there are critical/high threats for the user's connected servers in the last 7 days.
+- **90-day prune** — runs in `scripts/refresh/index.ts` alongside the audit-log GC.
+- **policies-client.tsx** — reads `?prefill=capability_flag&value=<flag>` URL params on mount (via `useEffect` + `window.location.search`) and pre-fills the create form. Cleans the URL after reading.
+
 ### Compliance Reporting
 
 One-click SOC 2 / ISO 27001 audit evidence packages generated from the Agent Activity Ledger.
