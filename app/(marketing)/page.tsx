@@ -126,6 +126,13 @@ const tools = [
     params: '{ source, dest }',
     transport: 'rest+mcp',
   },
+  {
+    fn: 'get_threat_feed()',
+    ret: 'events[]',
+    desc: 'Poll the real-time threat feed. Get alerts when MCP servers change risk profile, gain dangerous capabilities, or are quarantined.',
+    params: '{ since?, severity?, affected_only? }',
+    transport: 'rest+mcp',
+  },
 ]
 
 const founderFeatures = [
@@ -417,7 +424,7 @@ export default async function LandingPage() {
             {
               step: '03',
               title: 'Ship safely',
-              body: 'Block dangerous servers before your agent connects. shell_exec, dynamic_eval, arbitrary_sql — flagged automatically.',
+              body: 'Block dangerous servers before your agent connects. Define policies — "no shell_exec in production" — enforced at the Strata layer. Get real-time alerts when connected servers change risk profile.',
               accent: false,
             },
           ].map(({ step, title, body, accent }) => (
@@ -470,6 +477,50 @@ export default async function LandingPage() {
           directory from inside Claude Code or Cursor.
         </p>
         <TerminalDemo />
+      </section>
+
+      {/* ══ Phase 3 — Now Live ══ */}
+      <section style={{ padding: '72px 0', borderTop: '1px solid var(--hair)' }}>
+        <p style={{
+          fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500,
+          letterSpacing: '0.20em', textTransform: 'uppercase', color: '#00c472',
+          margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 14,
+        }}>
+          <span aria-hidden="true" style={{ width: 32, height: 1, background: 'rgba(0,196,114,0.35)', display: 'inline-block', flexShrink: 0 }} />
+          Phase 3 — Now Live
+        </p>
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16,
+          marginTop: 24,
+        }} className="hiw-steps-grid">
+          {[
+            {
+              label: 'Policy Engine',
+              body: 'Define rules that govern what your agents are allowed to do. "No shell_exec in production." Enforced before any tool call executes.',
+            },
+            {
+              label: 'Compliance Reporting',
+              body: 'One-click SOC 2 and ISO 27001 audit evidence packages. Tamper-evident ledger with HMAC verification. JSON and CSV export.',
+            },
+            {
+              label: 'Real-Time Threat Feed',
+              body: 'Push alerts when connected servers change risk profile, gain dangerous capabilities, or get quarantined. Turn alerts into policies in one click.',
+            },
+          ].map(({ label, body }) => (
+            <Glass key={label} style={{ padding: '28px 28px 24px' }}>
+              <h3 style={{
+                fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600,
+                letterSpacing: '0.12em', textTransform: 'uppercase',
+                color: '#00c472', margin: '0 0 12px',
+              }}>
+                {label}
+              </h3>
+              <p style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.65, margin: 0 }}>
+                {body}
+              </p>
+            </Glass>
+          ))}
+        </div>
       </section>
 
       {/* ══ Ecosystems ══ */}
@@ -584,7 +635,7 @@ export default async function LandingPage() {
               Connect once
             </h3>
             <p style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.6, margin: '0 0 18px' }}>
-              Add to Claude Desktop, Cursor, or any MCP client — all 8 tools available instantly. MCP server verification, agent identity, payment trust, and data lineage in one connection.
+              Add to Claude Desktop, Cursor, or any MCP client — all 9 tools available instantly. MCP server verification, agent identity, payment trust, data lineage, and real-time threat alerts in one connection.
             </p>
             <code style={{
               display: 'block',
@@ -606,7 +657,7 @@ export default async function LandingPage() {
 
       {/* ══ API Methods ══ */}
       <section style={{ padding: '72px 0' }} id="methods">
-        <SectionHeading title="One MCP server. Eight tools." meta="api/v1 · rest + mcp" />
+        <SectionHeading title="One MCP server. Nine tools." meta="api/v1 · rest + mcp" />
         <Glass style={{ padding: 14 }}>
           {tools.map((tool, i) => (
             <div
@@ -930,7 +981,7 @@ export default async function LandingPage() {
           letterSpacing: '0.15em', textTransform: 'uppercase',
           color: 'var(--ink-faint)', margin: 0,
         }}>
-          Coming in Phase 3 &mdash; Policy Engine &middot; Compliance Reporting &middot; Real-Time Threat Feed &middot; Behavioral Anomaly Detection
+          Now in Phase 3 &mdash; Policy Engine &middot; Compliance Reporting &middot; Real-Time Threat Feed &ensp;&middot;&ensp; Coming in Phase 4 &mdash; Behavioral Anomaly Detection &middot; Circuit Breaker &middot; Dependency Graph
         </p>
       </div>
     </>
