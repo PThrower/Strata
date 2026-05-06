@@ -394,9 +394,19 @@ export default async function LandingPage() {
             )}
           </div>
 
-          {/* ── Right: aggregation graphic ── */}
-          <div className="hero-graphic-col">
-            <AggregationGraphic />
+          {/* ── Right: slogan ── */}
+          <div className="hero-graphic-col" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: 36, fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 6px' }}>
+                Know what&rsquo;s connected.
+              </p>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: 36, fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.02em', color: '#00c472', fontStyle: 'italic', margin: '0 0 6px' }}>
+                Block what&rsquo;s dangerous.
+              </p>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: 36, fontWeight: 500, lineHeight: 1.1, letterSpacing: '-0.02em', color: 'var(--ink)', margin: 0 }}>
+                Prove what happened.
+              </p>
+            </div>
           </div>
         </div>
       </section>
