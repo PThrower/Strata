@@ -497,7 +497,7 @@ export default async function LandingPage() {
           margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 14,
         }}>
           <span aria-hidden="true" style={{ width: 32, height: 1, background: 'rgba(0,196,114,0.35)', display: 'inline-block', flexShrink: 0 }} />
-          Phase 3 — Now Live
+          Phases 3 &amp; 4 — Now Live
         </p>
         <div style={{
           display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16,
@@ -515,6 +515,18 @@ export default async function LandingPage() {
             {
               label: 'Real-Time Threat Feed',
               body: 'Push alerts when connected servers change risk profile, gain dangerous capabilities, or get quarantined. Turn alerts into policies in one click.',
+            },
+            {
+              label: 'Circuit Breaker',
+              body: 'Automatic disconnection when connected servers cross critical risk thresholds. Agents continue in degraded-safe mode. No human intervention required.',
+            },
+            {
+              label: 'Dependency Graph',
+              body: 'Visual map of every MCP server your agents depend on. Risk scores, capability flags, circuit breaker status, and data flow relationships in one view.',
+            },
+            {
+              label: 'Behavioral Anomaly Detection',
+              body: 'Baseline normal agent behavior. Alert when volume spikes, high-risk server usage surges, or net-egress floods deviate from the baseline. Hourly detection.',
             },
           ].map(({ label, body }) => (
             <Glass key={label} style={{ padding: '28px 28px 24px' }}>
@@ -923,7 +935,7 @@ export default async function LandingPage() {
           letterSpacing: '0.15em', textTransform: 'uppercase',
           color: 'var(--ink-faint)', margin: 0,
         }}>
-          Now in Phase 3 &mdash; Policy Engine &middot; Compliance Reporting &middot; Real-Time Threat Feed &ensp;&middot;&ensp; Coming in Phase 4 &mdash; Behavioral Anomaly Detection &middot; Circuit Breaker &middot; Dependency Graph
+          Now live &mdash; Policy Engine &middot; Compliance Reporting &middot; Threat Feed &middot; Circuit Breaker &middot; Dependency Graph &middot; Behavioral Anomaly Detection &ensp;&middot;&ensp; Coming in Phase 5 &mdash; Multi-Agent Trust
         </p>
       </div>
     </>

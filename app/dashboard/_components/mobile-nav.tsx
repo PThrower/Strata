@@ -6,20 +6,23 @@ import { usePathname } from 'next/navigation'
 import { signoutAction } from '@/app/actions/auth'
 
 const NAV_ITEMS = [
-  { label: 'Overview',    href: '/dashboard' },
-  { label: 'Analytics',   href: '/dashboard/analytics' },
-  { label: 'Ledger',      href: '/dashboard/ledger' },
-  { label: 'Lineage',     href: '/dashboard/lineage' },
-  { label: 'Agents',      href: '/dashboard/agents' },
-  { label: 'Threats',     href: '/dashboard/threats' },
-  { label: 'Policies',    href: '/dashboard/policies' },
-  { label: 'Submit',      href: '/dashboard/submit' },
-  { label: 'Submissions', href: '/dashboard/submissions' },
-  { label: 'Submit MCP',  href: '/submit-mcp' },
-  { label: 'Suggest',     href: '/dashboard/suggest' },
-  { label: 'Docs',        href: '/docs' },
-  { label: 'SDK Docs',    href: '/docs/sdk' },
-  { label: 'Billing',     href: '/dashboard/billing' },
+  { label: 'Overview',         href: '/dashboard' },
+  { label: 'Analytics',        href: '/dashboard/analytics' },
+  { label: 'Ledger',           href: '/dashboard/ledger' },
+  { label: 'Agents',           href: '/dashboard/agents' },
+  { label: 'Lineage',          href: '/dashboard/lineage' },
+  { label: 'Policies',         href: '/dashboard/policies' },
+  { label: 'Threats',          href: '/dashboard/threats' },
+  { label: 'Circuit Breakers', href: '/dashboard/circuit-breakers' },
+  { label: 'Dependency Graph', href: '/dashboard/dependency-graph' },
+  { label: 'Anomalies',        href: '/dashboard/anomalies' },
+  { label: 'Submit',           href: '/dashboard/submit' },
+  { label: 'Submissions',      href: '/dashboard/submissions' },
+  { label: 'Submit MCP',       href: '/submit-mcp' },
+  { label: 'Suggest',          href: '/dashboard/suggest' },
+  { label: 'Docs',             href: '/docs' },
+  { label: 'SDK Docs',         href: '/docs/sdk' },
+  { label: 'Billing',          href: '/dashboard/billing' },
 ]
 
 export default function MobileNav({ isAdmin, email }: { isAdmin?: boolean; email?: string }) {
