@@ -71,6 +71,8 @@ Nine tools registered in both the HTTP route and stdio script: `get_best_practic
 
 **Circuit breaker enforcement model**: Circuit breakers are advisory in `handleToolCall` — Strata surfaces `circuit_broken: true` in `mcp/verify` responses and `find_mcp_servers` results; agents enforce by not connecting. Hard blocking at the MCP tool layer is not implemented because Strata tools do not directly invoke external MCP servers. Known limitation: `find_mcp_servers` with `exclude_circuit_broken=true` ignores per-profile resets — it filters on the global `circuit_broken` flag only, erring on the side of safety. A future fix should honour per-profile bypasses from `circuit_breaker_resets`.
 
+**Dependency graph policy_blocked**: `assembleDepGraph` in `lib/dependency-graph.ts` computes `policy_blocked` using only `match_capability_flags` AND `match_risk_level_gte` — it ignores `match_tool_names`, time windows, and `agent_id` scoping. This is intentional (the graph is a server-centric view, not per-call), but it means `policy_blocked: true` can appear on a server that the live policy engine would actually allow if the policy also restricts by tool name, time, or agent.
+
 All tool results strip quarantined items. MCP auth (`lib/mcp-auth.ts`) accepts both `X-API-Key` and `Authorization: Bearer`.
 
 ### SSRF protection (`lib/ssrf-guard.ts`)
