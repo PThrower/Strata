@@ -86,7 +86,7 @@ export function MarketingHeader() {
             className="sm:hidden"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              padding: '10px 8px', display: 'flex', flexDirection: 'column',
+              padding: '10px 8px', flexDirection: 'column',
               gap: 5, alignItems: 'center',
             }}
           >
