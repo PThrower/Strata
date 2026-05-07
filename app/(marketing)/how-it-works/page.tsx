@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 function CodeBlock({ children }: { children: string }) {
   return (
-    <Glass elevated={false} radius="sm" style={{ marginTop: 16 }}>
+    <Glass elevated={false} radius="sm" className="hiw-code-block" style={{ marginTop: 16 }}>
       <span style={{
         display: 'block',
         fontFamily: 'var(--font-mono)',
@@ -48,7 +48,7 @@ function SectionHeading({ eyebrow, heading, subtext }: { eyebrow: string; headin
       }}>
         {eyebrow}
       </p>
-      <h2 style={{
+      <h2 className="hiw-section-h2" style={{
         fontFamily: 'var(--font-serif)', fontSize: 36, fontWeight: 400,
         letterSpacing: '-0.02em', lineHeight: 1.1,
         color: 'var(--ink)', margin: '0 0 14px',
@@ -73,7 +73,7 @@ const hr: React.CSSProperties = {
 
 export default function HowItWorksPage() {
   return (
-    <article style={{ maxWidth: 672, margin: '0 auto', padding: '80px 0 64px' }}>
+    <article className="hiw-article" style={{ maxWidth: 672, margin: '0 auto', padding: '80px 0 64px' }}>
 
       {/* ── Page header ── */}
       <p style={{
@@ -102,7 +102,7 @@ export default function HowItWorksPage() {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 1 — MCP Server Security Scoring                               */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      <div style={hr}>
+      <div className="hiw-section-hr" style={hr}>
         <SectionHeading
           eyebrow="Security Scoring"
           heading="How Strata scores 2,179 MCP servers."
@@ -115,7 +115,7 @@ export default function HowItWorksPage() {
             <StepLabel n="STEP 01" />
             <div style={{ flex: 1, width: 1, background: 'var(--hair)', marginTop: 12 }} />
           </div>
-          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4 }}>
+          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4, minWidth: 0, wordBreak: 'break-word' }}>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: '0 0 10px', letterSpacing: '-0.01em' }}>
               Source Collection
             </h3>
@@ -133,7 +133,7 @@ export default function HowItWorksPage() {
             <StepLabel n="STEP 02" />
             <div style={{ flex: 1, width: 1, background: 'var(--hair)', marginTop: 12 }} />
           </div>
-          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4 }}>
+          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4, minWidth: 0, wordBreak: 'break-word' }}>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: '0 0 10px', letterSpacing: '-0.01em' }}>
               Static Analysis
             </h3>
@@ -152,7 +152,7 @@ export default function HowItWorksPage() {
             <StepLabel n="STEP 03" />
             <div style={{ flex: 1, width: 1, background: 'var(--hair)', marginTop: 12 }} />
           </div>
-          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4 }}>
+          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4, minWidth: 0, wordBreak: 'break-word' }}>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: '0 0 10px', letterSpacing: '-0.01em' }}>
               Injection Scanning
             </h3>
@@ -171,7 +171,7 @@ export default function HowItWorksPage() {
             <StepLabel n="STEP 04" />
             <div style={{ flex: 1, width: 1, background: 'var(--hair)', marginTop: 12 }} />
           </div>
-          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4 }}>
+          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4, minWidth: 0, wordBreak: 'break-word' }}>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: '0 0 10px', letterSpacing: '-0.01em' }}>
               Live Endpoint Probing
             </h3>
@@ -190,7 +190,7 @@ export default function HowItWorksPage() {
             <StepLabel n="STEP 05" />
             <div style={{ flex: 1, width: 1, background: 'var(--hair)', marginTop: 12 }} />
           </div>
-          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4 }}>
+          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4, minWidth: 0, wordBreak: 'break-word' }}>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: '0 0 10px', letterSpacing: '-0.01em' }}>
               Per-Tool Scoring
             </h3>
@@ -207,7 +207,7 @@ export default function HowItWorksPage() {
           <div style={{ flexShrink: 0 }}>
             <StepLabel n="STEP 06" />
           </div>
-          <div style={{ flex: 1, paddingLeft: 4 }}>
+          <div style={{ flex: 1, paddingLeft: 4, minWidth: 0, wordBreak: 'break-word' }}>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: '0 0 10px', letterSpacing: '-0.01em' }}>
               Published to Directory
             </h3>
@@ -223,7 +223,7 @@ export default function HowItWorksPage() {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 2 — Content Intelligence Pipeline                             */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      <div style={hr}>
+      <div className="hiw-section-hr" style={hr}>
         <SectionHeading
           eyebrow="Content Intelligence"
           heading="How Strata validates ecosystem information."
@@ -236,7 +236,7 @@ export default function HowItWorksPage() {
             <StepLabel n="STEP 01" />
             <div style={{ flex: 1, width: 1, background: 'var(--hair)', marginTop: 12 }} />
           </div>
-          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4 }}>
+          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4, minWidth: 0, wordBreak: 'break-word' }}>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: '0 0 10px', letterSpacing: '-0.01em' }}>
               Source Collection
             </h3>
@@ -254,7 +254,7 @@ export default function HowItWorksPage() {
             <StepLabel n="STEP 02" />
             <div style={{ flex: 1, width: 1, background: 'var(--hair)', marginTop: 12 }} />
           </div>
-          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4 }}>
+          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4, minWidth: 0, wordBreak: 'break-word' }}>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: '0 0 10px', letterSpacing: '-0.01em' }}>
               Recency Filter
             </h3>
@@ -271,7 +271,7 @@ export default function HowItWorksPage() {
             <StepLabel n="STEP 03" />
             <div style={{ flex: 1, width: 1, background: 'var(--hair)', marginTop: 12 }} />
           </div>
-          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4 }}>
+          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4, minWidth: 0, wordBreak: 'break-word' }}>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: '0 0 10px', letterSpacing: '-0.01em' }}>
               Deduplication
             </h3>
@@ -289,7 +289,7 @@ export default function HowItWorksPage() {
             <StepLabel n="STEP 04" />
             <div style={{ flex: 1, width: 1, background: 'var(--hair)', marginTop: 12 }} />
           </div>
-          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4 }}>
+          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4, minWidth: 0, wordBreak: 'break-word' }}>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: '0 0 10px', letterSpacing: '-0.01em' }}>
               AI Validation
             </h3>
@@ -333,7 +333,7 @@ export default function HowItWorksPage() {
             <StepLabel n="STEP 05" />
             <div style={{ flex: 1, width: 1, background: 'var(--hair)', marginTop: 12 }} />
           </div>
-          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4 }}>
+          <div style={{ flex: 1, paddingBottom: 52, paddingLeft: 4, minWidth: 0, wordBreak: 'break-word' }}>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: '0 0 10px', letterSpacing: '-0.01em' }}>
               Near-Duplicate Removal
             </h3>
@@ -350,7 +350,7 @@ export default function HowItWorksPage() {
           <div style={{ flexShrink: 0 }}>
             <StepLabel n="STEP 06" />
           </div>
-          <div style={{ flex: 1, paddingLeft: 4 }}>
+          <div style={{ flex: 1, paddingLeft: 4, minWidth: 0, wordBreak: 'break-word' }}>
             <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 20, fontWeight: 400, color: 'var(--ink)', margin: '0 0 10px', letterSpacing: '-0.01em' }}>
               Community Submissions
             </h3>
@@ -366,7 +366,7 @@ export default function HowItWorksPage() {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 3 — Governance Layer                                          */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      <div style={hr}>
+      <div className="hiw-section-hr" style={hr}>
         <SectionHeading
           eyebrow="Phase 3 — Live"
           heading="Policy, compliance, and threat monitoring."
@@ -405,7 +405,7 @@ export default function HowItWorksPage() {
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 4 — Runtime Intelligence (Phase 4)                            */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
-      <div style={hr}>
+      <div className="hiw-section-hr" style={hr}>
         <SectionHeading
           eyebrow="Phase 4 — Live"
           heading="Runtime intelligence."

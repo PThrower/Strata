@@ -642,6 +642,23 @@ body {
   /* How-it-works: inner 2-col and 3-col grids → single column */
   .hiw-inner-2col { grid-template-columns: 1fr !important; }
   .hiw-inner-3col { grid-template-columns: 1fr !important; }
+
+  /* ── How-it-works page mobile fixes ── */
+  .hiw-article     { padding: 48px 0 40px !important; }
+  .hiw-section-hr  { padding-top: 40px !important; margin-top: 40px !important; }
+  .hiw-section-h2  { font-size: 26px !important; }
+  /* Code blocks: horizontal scroll on mobile */
+  .hiw-code-block  { overflow-x: auto !important; overflow-y: hidden !important; }
+
+  /* ── HUD page Zone A chips: 2-per-row ── */
+  .hud-chip   { flex: 1 1 calc(50% - 4px) !important; min-width: 0; }
+  /* ── HUD page Zone C: full-width action buttons ── */
+  .hud-action { flex: 1 1 100% !important; justify-content: center !important; text-align: center; }
+
+  /* ── Dependency graph node cards and chips ── */
+  .dep-graph-node-card { min-height: 110px !important; }
+  .dep-graph-hostname  { font-size: 14px !important; }
+  .dep-graph-chip      { flex: 1 1 calc(50% - 4px) !important; min-width: 0; }
 }
 
 /* ── Dashboard header flex rows: stack on narrow screens */

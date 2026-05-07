@@ -444,7 +444,7 @@ export default function DependencyGraphClient({
           { label: 'Circuit broken', value: graph.summary.circuit_broken_count, c: graph.summary.circuit_broken_count > 0 ? '#ef4444' : 'var(--ink-muted)' },
           { label: 'With threats',   value: withThreats,                        c: withThreats > 0 ? '#f97316' : 'var(--ink-muted)' },
         ].map(({ label, value, c }) => (
-          <div key={label} style={CHIP_BASE}>
+          <div key={label} className="dep-graph-chip" style={CHIP_BASE}>
             <span style={{ color: 'var(--ink-faint)', marginRight: 2 }}>{label}</span>
             <strong style={{ fontVariantNumeric: 'tabular-nums', color: c }}>{value}</strong>
           </div>

@@ -225,15 +225,15 @@ export default async function DashboardPage() {
 
       {/* ── ZONE A: Status bar ── */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-        <Link href="/dashboard" style={CHIP_ZINC}>
+        <Link className="hud-chip" href="/dashboard" style={CHIP_ZINC}>
           <span>Servers</span>
           <strong>{(serverCount ?? 2179).toLocaleString()}</strong>
         </Link>
-        <Link href="/dashboard/agents" style={CHIP_ZINC}>
+        <Link className="hud-chip" href="/dashboard/agents" style={CHIP_ZINC}>
           <span>Agents</span>
           <strong>{agentCount ?? 0}</strong>
         </Link>
-        <Link href="/dashboard/policies" style={CHIP_ZINC}>
+        <Link className="hud-chip" href="/dashboard/policies" style={CHIP_ZINC}>
           <span>Policies</span>
           <strong>{policyCount ?? 0}</strong>
         </Link>
@@ -256,7 +256,7 @@ export default async function DashboardPage() {
         <style>{`@media(max-width:900px){.hud-grid{grid-template-columns:1fr!important}}`}</style>
 
         {/* Column 1: Threat Intelligence */}
-        <div style={CARD}>
+        <div style={{ ...CARD, padding: 16 }}>
           <p style={COL_LABEL}>Threat Intelligence</p>
 
           {/* Recent threats */}
@@ -326,7 +326,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Column 2: Agent Activity */}
-        <div style={CARD}>
+        <div style={{ ...CARD, padding: 16 }}>
           <p style={COL_LABEL}>Agent Activity</p>
 
           {/* API usage */}
@@ -383,7 +383,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Column 3: Policy Status */}
-        <div style={CARD}>
+        <div style={{ ...CARD, padding: 16 }}>
           <p style={COL_LABEL}>Policy Status</p>
 
           {policies.length === 0 ? (
@@ -443,6 +443,7 @@ export default async function DashboardPage() {
           <Link
             key={href}
             href={href}
+            className="hud-action"
             style={{
               fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 400,
               padding: '7px 14px', borderRadius: 8, textDecoration: 'none',
@@ -455,6 +456,7 @@ export default async function DashboardPage() {
           </Link>
         ))}
         <a
+          className="hud-action"
           href="/api/compliance/report?format=json&period=90d&standard=soc2"
           target="_blank"
           rel="noopener noreferrer"

@@ -164,26 +164,48 @@ export default async function LineagePage({
       )}
 
       {/* ── Filter bar ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 mb-4 text-sm filter-tab-row">
+      <div className="flex items-center gap-3 mb-4 filter-tab-row">
         <Link
           href="/dashboard/lineage"
-          className={`px-3 py-1.5 rounded-md border transition-colors ${!egressOnly && !sessionFilter ? 'border-border bg-zinc-100 dark:bg-zinc-800 font-medium' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+          style={{
+            fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500,
+            padding: '6px 12px', borderRadius: 8, textDecoration: 'none',
+            color: (!egressOnly && !sessionFilter) ? 'var(--ink)' : 'var(--ink-faint)',
+            borderBottom: (!egressOnly && !sessionFilter) ? '2px solid #00c472' : '2px solid transparent',
+            background: 'none',
+            transition: 'color 150ms',
+          }}
         >
           All flows
         </Link>
         <Link
           href="/dashboard/lineage?egress=1"
-          className={`px-3 py-1.5 rounded-md border transition-colors ${egressOnly ? 'border-amber-400/50 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 font-medium' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
+          style={{
+            fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 500,
+            padding: '6px 12px', borderRadius: 8, textDecoration: 'none',
+            color: egressOnly ? '#f5b042' : 'var(--ink-faint)',
+            borderBottom: egressOnly ? '2px solid #f5b042' : '2px solid transparent',
+            background: 'none',
+            transition: 'color 150ms',
+          }}
         >
           ⚠ Egress risks only
         </Link>
         {sessionFilter && (
-          <span className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-border bg-zinc-100 dark:bg-zinc-800 font-medium font-mono text-xs">
+          <span style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '5px 10px', borderRadius: 8,
+            fontFamily: 'var(--font-mono)', fontSize: 11,
+            color: 'var(--ink-soft)',
+            border: '1px solid var(--hair)', background: 'rgba(255,255,255,0.04)',
+          }}>
             Session: {sessionFilter.length > 24 ? sessionFilter.slice(0, 24) + '…' : sessionFilter}
-            <Link href="/dashboard/lineage" className="text-muted-foreground hover:text-foreground">✕</Link>
+            <Link href="/dashboard/lineage" style={{ color: 'var(--ink-faint)', textDecoration: 'none' }}>✕</Link>
           </span>
         )}
-        <span className="text-muted-foreground text-xs ml-auto">{total} flow{total === 1 ? '' : 's'}</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-faint)', marginLeft: 'auto' }}>
+          {total} flow{total === 1 ? '' : 's'}
+        </span>
       </div>
 
       {/* ── Session chain ─────────────────────────────────────────────────── */}

@@ -34,6 +34,7 @@ const NAV_GROUPS = [
     items: [
       { label: 'Analytics',   href: '/dashboard/analytics' },
       { label: 'Submissions', href: '/dashboard/submissions' },
+      { label: 'Suggest',     href: '/dashboard/suggest' },
       { label: 'Billing',     href: '/dashboard/billing' },
       { label: 'Docs',        href: '/docs' },
     ],

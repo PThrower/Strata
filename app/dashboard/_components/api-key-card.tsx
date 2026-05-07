@@ -3,6 +3,22 @@
 import { useState, useTransition } from 'react'
 import { regenerateApiKeyAction } from '@/app/actions/profile'
 
+const btnStyle: React.CSSProperties = {
+  fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500,
+  padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
+  border: '1px solid rgba(0,196,114,0.30)',
+  background: 'transparent', color: '#00c472',
+  transition: 'opacity 150ms', flexShrink: 0,
+}
+
+const btnDangerStyle: React.CSSProperties = {
+  fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500,
+  padding: '5px 10px', borderRadius: 6, cursor: 'pointer',
+  border: '1px solid rgba(255,122,69,0.30)',
+  background: 'transparent', color: '#ff7a45',
+  transition: 'opacity 150ms', flexShrink: 0,
+}
+
 export default function ApiKeyCard({ apiKey }: { apiKey: string }) {
   const [isVisible, setIsVisible] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
@@ -25,51 +41,66 @@ export default function ApiKeyCard({ apiKey }: { apiKey: string }) {
     })
   }
 
-  const btnClass =
-    'text-xs text-muted-foreground hover:text-foreground px-2 py-2 border border-border rounded-md bg-background hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shrink-0'
-
   return (
     <>
-      <div className="flex items-center gap-2">
-        <code className="font-mono text-sm bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-md border border-border flex-1 truncate">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+        <code style={{
+          fontFamily: 'var(--font-mono)', fontSize: 12,
+          background: 'rgba(255,255,255,0.06)',
+          border: '1px solid var(--hair)',
+          color: 'var(--ink-soft)',
+          padding: '7px 12px', borderRadius: 8,
+          flex: '1 1 0', minWidth: 0,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          display: 'block',
+        }}>
           {displayKey}
         </code>
-        <button onClick={() => setIsVisible((v) => !v)} className={btnClass}>
+        <button onClick={() => setIsVisible(v => !v)} style={btnStyle} disabled={isPending}>
           {isVisible ? 'Hide' : 'Show'}
         </button>
-        <button onClick={handleCopy} className={`${btnClass} min-w-[52px]`}>
+        <button onClick={handleCopy} style={{ ...btnStyle, minWidth: 52 }} disabled={isPending}>
           {isCopied ? 'Copied!' : 'Copy'}
         </button>
-        <button
-          onClick={() => setIsConfirmOpen(true)}
-          className="text-xs text-muted-foreground hover:text-red-600 px-2 py-2 border border-border rounded-md bg-background hover:bg-red-50 dark:hover:bg-red-950 transition-colors shrink-0"
-        >
+        <button onClick={() => setIsConfirmOpen(true)} style={btnDangerStyle} disabled={isPending}>
           Regenerate
         </button>
       </div>
 
       {isConfirmOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-zinc-900 rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl border border-border">
-            <p className="text-sm font-medium mb-1">Regenerate API key?</p>
-            <p className="text-sm text-muted-foreground mb-5">
-              This will invalidate your current key immediately. Any integrations
-              using it will stop working.
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 50,
+          background: 'rgba(4,5,12,0.65)',
+          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 16,
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 35%, rgba(0,196,114,0.05) 100%)',
+            backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
+            border: '1px solid rgba(255,255,255,0.16)',
+            borderRadius: 22, padding: 24, maxWidth: 380, width: '100%',
+          }}>
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 14, fontWeight: 500, color: 'var(--ink)', marginBottom: 8 }}>
+              Regenerate API key?
             </p>
-            <div className="flex gap-3 justify-end">
+            <p style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: 'var(--ink-muted)', marginBottom: 20, lineHeight: 1.5 }}>
+              This will invalidate your current key immediately. Any integrations using it will stop working.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => setIsConfirmOpen(false)}
                 disabled={isPending}
-                className="text-sm px-4 py-2 border border-border rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                style={btnStyle}
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmRegenerate}
                 disabled={isPending}
-                className="text-sm px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-60"
+                style={{ ...btnDangerStyle, opacity: isPending ? 0.6 : 1 }}
               >
-                {isPending ? 'Regenerating...' : 'Regenerate'}
+                {isPending ? 'Regenerating…' : 'Regenerate'}
               </button>
             </div>
           </div>
